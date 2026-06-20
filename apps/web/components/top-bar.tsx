@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Sparkles } from "lucide-react";
+import { LogOut, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
@@ -72,6 +72,15 @@ export function TopBar({
             {aiConnected ? `AI: ${aiProvider ?? "on"}` : "AI: off"}
           </span>
         </button>
+        {aiConnected && (
+          <Link
+            href="/settings/ai"
+            title="Manage AI settings"
+            className="flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-2 py-1.5 text-fg-muted backdrop-blur transition-colors hover:text-fg"
+          >
+            <Settings className="size-3.5" />
+          </Link>
+        )}
         <button
           type="button"
           onClick={handleSignOut}

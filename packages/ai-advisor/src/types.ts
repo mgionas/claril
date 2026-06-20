@@ -11,11 +11,16 @@ export interface LLMProviderConfig {
   baseUrl?: string;
 }
 
-/** Default model per provider. Anthropic uses the latest Opus. */
-export const DEFAULT_MODELS: Record<AiProvider, string | undefined> = {
+/**
+ * Default (recommended) model per provider. Every provider has a real default
+ * so resolving a config never throws "model id required" — these mirror the
+ * `recommended` entries in the model catalog (see `./models`). Anthropic uses
+ * the latest Opus.
+ */
+export const DEFAULT_MODELS: Record<AiProvider, string> = {
   anthropic: "claude-opus-4-8",
-  openai: undefined,
-  google: undefined,
-  mistral: undefined,
-  ollama: undefined,
+  openai: "gpt-5.1",
+  google: "gemini-2.5-pro",
+  mistral: "mistral-large-latest",
+  ollama: "llama3.1",
 };

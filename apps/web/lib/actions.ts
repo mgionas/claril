@@ -9,6 +9,7 @@ import {
   advise,
   generateProcessDoc,
   answerQuestion,
+  DEFAULT_MODELS,
   type AiProvider,
 } from "@claril/ai-advisor";
 import { auth } from "@/lib/auth";
@@ -71,6 +72,49 @@ export async function getAiStatus(): Promise<AiStatus> {
   return { connected: true, provider: config.provider, model: config.model };
 }
 
+export interface AiConfigView {
+  provider: AiProvider;
+  model?: string;
+  baseUrl?: string;
+  /** Whether an encrypted key is stored. The key itself is never returned. */
+  hasKey: boolean;
+  /** Whether the current user may edit (owner/admin). */
+  canEdit: boolean;
+}
+
+/** Current org AI config for the settings page — never returns the key. */
+export async function getAiConfigForSettings(): Promise<AiConfigView | null> {
+  const userId = await requireUserId();
+  const orgId = await getUserOrgId(userId);
+  if (!orgId) return null;
+
+  const membership = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, orgId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0];
+  const canEdit = membership?.role === "owner" || membership?.role === "admin";
+
+  const row = (
+    await db
+      .select()
+      .from(schema.aiProviderConfig)
+      .where(eq(schema.aiProviderConfig.organizationId, orgId))
+      .limit(1)
+  )[0];
+
+  if (!row) return null;
+  return {
+    provider: row.provider as AiProvider,
+    model: row.model ?? undefined,
+    baseUrl: row.baseUrl ?? undefined,
+    hasKey: Boolean(row.encryptedKey),
+    canEdit,
+  };
+}
+
 export interface SaveAiConfigInput {
   provider: AiProvider;
   model?: string;
@@ -107,9 +151,17 @@ export async function saveAiConfig(input: SaveAiConfigInput): Promise<void> {
       ? encryptSecret(input.apiKey)
       : (existing?.encryptedKey ?? null);
 
+  // Always persist a concrete model id: use the user's pick, else the
+  // previously saved one, else the provider's recommended default. This is the
+  // belt-and-suspenders fix for the "model id required" throw downstream.
+  const model =
+    (input.model && input.model.length > 0 ? input.model : null) ??
+    (existing && existing.provider === input.provider ? existing.model : null) ??
+    DEFAULT_MODELS[input.provider];
+
   const values = {
     provider: input.provider,
-    model: input.model && input.model.length > 0 ? input.model : null,
+    model,
     baseUrl: input.baseUrl && input.baseUrl.length > 0 ? input.baseUrl : null,
     encryptedKey,
     updatedAt: new Date(),
