@@ -9,10 +9,25 @@ import { PROVIDER_META, providerMeta } from "@/lib/ai-providers";
 import { testProviderConnection } from "@/lib/ai-models";
 import { saveAiConfig } from "@/lib/actions";
 import { ModelPicker } from "@/components/ai/model-picker";
+import { ProviderIcon } from "@/components/ai/provider-icon";
 import { cn } from "@/lib/utils";
-
-const fieldClass =
-  "rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors focus:border-accent";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Step = 0 | 1 | 2;
 const STEP_LABELS = ["Provider", "API key", "Model"] as const;
@@ -49,7 +64,6 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
     }
   }, [open, initialProvider]);
 
-  if (!open) return null;
   const meta = providerMeta(provider);
 
   function goModelStep() {
@@ -94,26 +108,18 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-[10px] border border-hairline bg-panel p-6"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
         aria-label="AI provider setup"
+        className="max-w-md gap-0 rounded-[10px] border-hairline bg-panel/95 p-6 backdrop-blur-md"
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-base font-medium">Set up AI provider</h2>
-            <p className="mt-1 text-sm text-fg-muted">
-              Bring your own key — stored encrypted, per organization. Claril works fully without
-              AI; this only enables the advisor and other AI features.
-            </p>
-          </div>
-        </div>
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-base font-medium">Set up AI provider</DialogTitle>
+          <DialogDescription className="text-sm text-fg-muted">
+            Bring your own key — stored encrypted, per organization. Claril works fully without AI;
+            this only enables the advisor and other AI features.
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Step indicator */}
         <ol className="mt-4 flex items-center gap-2" aria-label="Setup steps">
@@ -146,37 +152,52 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
 
         <div key={step} className="mt-5 flex animate-[fadeIn_160ms_ease] flex-col gap-3">
           {step === 0 && (
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-fg-muted">Provider</span>
-              <select
-                className={fieldClass}
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-fg-muted" htmlFor="provider-select">
+                Provider
+              </Label>
+              <Select
                 value={provider}
-                onChange={(e) => {
-                  setProvider(e.target.value as AiProvider);
+                onValueChange={(v) => {
+                  setProvider(v as AiProvider);
                   setModel("");
                   setTestResult(null);
                 }}
               >
-                {PROVIDER_META.map((p) => (
-                  <option key={p.value} value={p.value} className="bg-panel">
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="provider-select" className="w-full bg-elevated">
+                  <SelectValue>
+                    <span className="flex items-center gap-2">
+                      <ProviderIcon provider={provider} className="size-4 text-fg-muted" />
+                      {meta.label}
+                    </span>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="border-hairline bg-panel">
+                  {PROVIDER_META.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      <ProviderIcon provider={p.value} className="size-4 text-fg-muted" />
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="mt-1 text-[11px] text-fg-subtle">
                 Provider-agnostic. Switch any time — keys are stored per provider, encrypted.
               </p>
-            </label>
+            </div>
           )}
 
           {step === 1 && (
             <>
               {meta.needsKey ? (
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-fg-muted">API key</span>
-                  <input
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs text-fg-muted" htmlFor="api-key">
+                    API key
+                  </Label>
+                  <Input
+                    id="api-key"
                     type="password"
-                    className={fieldClass}
+                    className="bg-elevated"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="Leave blank to keep the existing key"
@@ -194,18 +215,19 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
                       {meta.keyUrlLabel} →
                     </a>
                   </p>
-                </label>
+                </div>
               ) : (
                 <p className="text-sm text-fg-muted">{meta.keyHint}</p>
               )}
 
               {(provider === "ollama" || provider === "openai") && (
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-fg-muted">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs text-fg-muted" htmlFor="base-url">
                     Base URL {provider === "openai" ? "(optional, for compatible proxies)" : ""}
-                  </span>
-                  <input
-                    className={fieldClass}
+                  </Label>
+                  <Input
+                    id="base-url"
+                    className="bg-elevated"
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
                     placeholder={
@@ -214,7 +236,7 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
                         : "https://api.openai.com/v1"
                     }
                   />
-                </label>
+                </div>
               )}
             </>
           )}
@@ -231,21 +253,20 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
               />
 
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={onTest}
                   disabled={testing || !model}
-                  className="flex items-center gap-1.5 rounded-[6px] border border-hairline px-3 py-1.5 text-xs text-fg-muted transition-colors hover:border-fg-subtle disabled:opacity-50"
+                  className="gap-1.5 text-fg-muted"
                 >
                   {testing && <Loader2 className="size-3 animate-spin" />}
                   {testing ? "Testing…" : "Test connection"}
-                </button>
+                </Button>
                 {testResult && (
                   <span
-                    className={cn(
-                      "text-[11px]",
-                      testResult.ok ? "text-success" : "text-error",
-                    )}
+                    className={cn("text-[11px]", testResult.ok ? "text-success" : "text-error")}
                   >
                     {testResult.message}
                   </span>
@@ -268,35 +289,30 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
 
           <div className="flex gap-2">
             {step > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setStep((s) => (s - 1) as Step)}
-                className="rounded-[6px] px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-elevated"
+                className="text-fg-muted"
               >
                 Back
-              </button>
+              </Button>
             )}
             {step < 2 ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => (step === 1 ? goModelStep() : setStep((s) => (s + 1) as Step))}
-                className="rounded-[6px] bg-accent px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
               >
                 Next
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={saving || !model}
-                className="rounded-[6px] bg-accent px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-              >
+              <Button type="button" onClick={onSave} disabled={saving || !model}>
                 {saving ? "Saving…" : "Save"}
-              </button>
+              </Button>
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
