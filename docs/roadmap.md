@@ -30,20 +30,20 @@ The recent push turned the AI from advisor → **co-editor**: tabbed Chat/Proble
 | W7 | Sequence + C4 editors (Mermaid-based) |
 | W9 | AI drawer redesign (tabbed Chat + Problems, proposal cards, doc viewer + DB persistence, token usage) |
 | W10 | History & review batch — **F1** auto-versioning + top-bar History dropdown; **F2** AI-edit review (violet marks + Approve/Roll back/Keep refining); **F3** persistent chat + DB knowledge cache + surrogate sanitizer. Spec/plans in `docs/superpowers/{specs,plans}/2026-06-20-*` |
-| W11 | BPMN-expert AI editing — **Phases 1–3 deployed**, **Phase 4 built (branch)**. P1–3: move/reassign-lane, reconnect, full task/gateway palette, sub-process, conditional/default flows, event definitions, activity markers + robustness (provider-neutral planner, lane/pool + message-flow grounding, geometric lane membership, deterministic plan validation + self-repair). P4: data objects/stores + text annotations (+ associations), `setDocumentation`. Spec `docs/superpowers/specs/2026-06-21-bpmn-editing-capabilities.md` |
+| W11 | BPMN-expert AI editing — **Phases 1–3 deployed**, **Phase 4 built (branch)**. P1–3: move/reassign-lane, reconnect, full task/gateway palette, sub-process, conditional/default flows, event definitions, activity markers + robustness (provider-neutral planner, lane/pool + message-flow grounding, geometric lane membership, deterministic plan validation + self-repair). P4: data objects/stores + text annotations (+ associations), `setDocumentation`. **Phase 5.1–5.2 built (branch)**: scope guard + soundness validation in the planner self-repair (curbs over-engineering); P5.3 relayout deferred. Spec `docs/superpowers/specs/2026-06-21-bpmn-editing-capabilities.md` |
 
 ## Known issues (open)
 
-- **★ AI editing plan quality** — on complex/ambiguous requests the planner still **over-engineers** (e.g. invents a new pool + message flow + deletes tasks for a simple "notify" / "move" request). The deterministic validator catches structural faults (orphans, bad refs) but not over-scoped-yet-valid plans. **Needs a scope/soundness guard** (reject or down-scope plans that create pools / delete elements / split processes without an explicit request) and a **real layout pass**. *Deferred — revisit as the next AI-editing focus.*
+- **AI editing plan quality** — the over-engineering drift (inventing pools / message flows / deleting tasks for a simple "notify"/"move") is now guarded deterministically: **scope guard** (rejects pool/lane/message-flow/node-delete ops the instruction didn't authorize) + **soundness validation** (simulates the plan and rejects results with new structural errors), both folded into the planner's self-repair retry (W11 Phase 5.1–5.2, on branch). *Pending live confirmation it's enough; a full pool-safe relayout (Phase 5.3) is deferred — make-space handles the common case.*
 - **Live smoke tests pending** for W10 (F1/F2/F3) and W11 (P1–P3) — exercised informally during dev; formal pass + sign-off still outstanding.
 
 ## Next steps (proposed priority)
 
-1. **Harden AI-editing quality** (the active pain): W11 **Phase 5** — post-plan **scope/soundness validation** (run the inspector on the proposed result; reject/correct over-scoped plans that create pools / delete elements / split processes without an explicit ask) + pool-safe **auto-layout** so applied edits look clean. Highest-leverage fix for the current frustration.
+1. **Confirm AI-editing quality live** — verify the Phase 5 scope + soundness guards actually stop the over-engineering on the real failing prompts; if layout still looks messy, decide whether the deferred **Phase 5.3 pool-safe relayout** is worth the risk.
 2. **W8 — Provider-connect wizard** (guided BYOK setup + AI Gateway + optional Google OAuth→Vertex). *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
 3. **P4 — Collaboration** (comments → review workflow → multiplayer) once the single-user editing loop is trustworthy.
 
-*(W11 Phase 4 — data objects/stores + text annotations + `setDocumentation` — done, on branch awaiting deploy. User-task assignment + asset-binding-via-proposeEdit deferred as noted.)*
+*Deferred: W11 Phase 5.3 (pool-safe relayout — runtime-risky); user-task assignment + asset-binding-via-proposeEdit (Phase 4); the two Phase-4 minors (associate connection-hint, artifact ids in synopsis id table).*
 
 ## Backlog / follow-ups
 
