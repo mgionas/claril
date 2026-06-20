@@ -18,3 +18,13 @@ export {
   type GroundedAsset,
   type GroundedField,
 } from "./grounding";
+export {
+  EditPlanSchema,
+  OpSchema,
+  orderOps,
+  collectPlanRefs,
+  NODE_TYPES,
+  type EditPlan,
+  type Op,
+} from "./edit-plan";
+export { planEdits, buildPlannerPrompt, type PlanEditsInput } from "./planner";
