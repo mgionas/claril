@@ -2,114 +2,52 @@
 
 Sequencing principle: **prove the moat (deterministic inspector on a beautiful canvas) before the expensive collaboration plumbing.** Each phase is independently shippable.
 
-## P0 — Foundation
-Monorepo (pnpm + Turborepo) · Next.js 16 app shell with the canvas-maximal layout · bpmn-js canvas with themed rendering · BPMN XML import/export · save/load to Postgres (Drizzle) · Better Auth (org/workspace/project + roles) · docker-compose.
-**Outcome:** draw, save, reopen a themed BPMN diagram, self-hosted, with auth and tenancy.
+## Phases (north star)
 
-## P1 — Logic Inspector ★ (the wedge)
-`packages/logic-inspector`: graph model + structural rules + best-practice rules · live findings panel with fly-to + quick-fixes · **CLI / MCP lint mode**.
-**Outcome:** the thing nobody else does well — releasable on its own.
+- **P0 — Foundation** · monorepo, Next.js 16 app shell, themed bpmn-js canvas, BPMN import/export, Postgres (Drizzle), Better Auth (org→workspace→project), docker-compose. **✅ shipped**
+- **P1 — Logic Inspector ★** · graph model + structural/best-practice rules, findings panel (fly-to + quick-fixes), CLI/MCP lint mode. **✅ shipped**
+- **P2 — AI Advisor + Asset Catalog** · provider-agnostic BYOK `LLMProvider`, advisor grounded on findings, doc-gen, built-in asset types, 3-tier UX. **✅ shipped** — since matured into a full AI **co-editor** (see W9–W11).
+- **P3 — Versioning & multi-diagram** · named/auto versions, visual diff, restore; Sequence + C4 editors; cross-diagram asset binding. **✅ shipped** (versioning via W10/F1; Sequence + C4 are Mermaid-based).
+- **P4 — Team & collaboration** · RBAC polish, comments/@mentions, review workflow, real-time multiplayer (Yjs + Hocuspocus), SSO/SCIM. **◻ not started**
+- **P5 — Platform & ecosystem** · full user-defined Asset Catalog + impact analysis, DMN, simulation, executable export (Zeebe/Flowable), plugin SDK, integrations. **◻ not started**
 
-## P2 — AI Advisor + built-in Asset Catalog
-`packages/ai-advisor` (Vercel AI SDK, `LLMProvider`, BYOK, Ollama) · advisor grounded on findings · doc-gen · Q&A · **built-in asset types** to ground the AI · the 3-tier UX (status pill, ✦ badges).
-**Outcome:** the "AI architecture tool" story is real — and it degrades gracefully to T1.
+## Where we are (2026-06-21)
 
-## P3 — Versioning & multi-diagram
-Named versions · visual diff (bpmn-js-differ) · restore · **Sequence** and **C4** editors alongside BPMN in a project · cross-diagram element binding to catalog assets.
-**Outcome:** trustworthy for real architecture work across notations.
+P0–P3 are **built and deployed to production on Vercel** (`apps/web`, Neon Postgres, migrations through **0008**). The product today: self-hostable, authed, multi-tenant; draw/save/version BPMN on a polished canvas; a deterministic inspector (also CLI/MCP); an Asset Catalog; and an AI assistant that chats, documents, reviews, and **edits the diagram** (BYOK, brand-agnostic).
 
-## P4 — Team & collaboration
-Full RBAC polish · comments/@mentions · review workflow · **real-time multiplayer (Yjs + Hocuspocus)** · org enterprise features begin (SSO/SCIM).
-**Outcome:** delivers the team-support goal; enterprise-ready foundations.
+The recent push turned the AI from advisor → **co-editor**: tabbed Chat/Problems drawer (W9), History + AI-edit review + persistent chat (W10), and a broad BPMN editing op-set (W11). The AI editing **works end-to-end on all providers** (incl. the Gemini fixes) but its **plan quality is not yet trustworthy** — see Known issues.
 
-## P5 — Platform & ecosystem
-Full **Asset Catalog** (user-defined object types + custom fields + references + impact analysis) · DMN decision tables · simulation (token-flow, bottleneck) · executable export (Zeebe/Flowable) · plugin SDK · integrations (Jira/Confluence, Git).
-**Outcome:** a platform, not just a tool.
+## Shipped workstreams
 
----
+| ID | Workstream |
+|----|-----------|
+| W1 | Multi-diagram navigation + project/diagram CRUD |
+| W2 | CLI + MCP lint server over the inspector |
+| W3 | Asset Catalog foundation (schema, CRUD, in-canvas element→asset binding, advisor grounding) |
+| W4 | Versioning (named versions, diff, restore) — completed/extended by W10/F1 |
+| W5 | Self-host (Dockerfile + docker-compose + docs) |
+| W6 | Advisor doc-gen + Q&A |
+| W7 | Sequence + C4 editors (Mermaid-based) |
+| W9 | AI drawer redesign (tabbed Chat + Problems, proposal cards, doc viewer + DB persistence, token usage) |
+| W10 | History & review batch — **F1** auto-versioning + top-bar History dropdown; **F2** AI-edit review (violet marks + Approve/Roll back/Keep refining); **F3** persistent chat + DB knowledge cache + surrogate sanitizer. Spec/plans in `docs/superpowers/{specs,plans}/2026-06-20-*` |
+| W11 | BPMN-expert AI editing **Phases 1–3** — move/reassign-lane, reconnect, full task/gateway palette, sub-process, conditional/default flows, event definitions, activity markers; + robustness (provider-neutral planner, lane/pool + message-flow grounding, geometric lane membership, deterministic plan validation + self-repair). Spec `docs/superpowers/specs/2026-06-21-bpmn-editing-capabilities.md` |
 
-## Current status (2026-06-20)
+## Known issues (open)
 
-P0–P2 core is built and **deployed to production on Vercel** (root dir `apps/web`). The
-canvas has had a full UX pass (custom palette, grouped right-click menu, in-flow
-push Inspector drawer, connect handles, finding overlays + "View problem" → drawer).
+- **★ AI editing plan quality** — on complex/ambiguous requests the planner still **over-engineers** (e.g. invents a new pool + message flow + deletes tasks for a simple "notify" / "move" request). The deterministic validator catches structural faults (orphans, bad refs) but not over-scoped-yet-valid plans. **Needs a scope/soundness guard** (reject or down-scope plans that create pools / delete elements / split processes without an explicit request) and a **real layout pass**. *Deferred — revisit as the next AI-editing focus.*
+- **Live smoke tests pending** for W10 (F1/F2/F3) and W11 (P1–P3) — exercised informally during dev; formal pass + sign-off still outstanding.
 
-**Done**
-- [x] Repo, license, README, docs, agent team, Archmantic manifest
-- [x] Monorepo: pnpm-workspace, turbo.json, base tsconfig, eslint/prettier
-- [x] `packages/shared` (types + zod), `packages/logic-inspector` (engine + 14 tests)
-- [x] `apps/web`: Next.js 16 + Tailwind 4 baseline, dark theme tokens
-- [x] bpmn-js canvas: themed rendering + import/export + UX polish
-- [x] `packages/db`: Drizzle schema (org→workspace→project→diagram→version) + migrations (Neon)
-- [x] Better Auth wiring (org plugin) + sign-in/sign-up
-- [x] Save/load diagram to Postgres (server actions, debounced autosave)
-- [x] P1 inspector: structural + best-practice rules, fly-to, executable quick-fixes
-- [x] P2 ai-advisor: `LLMProvider` (Vercel AI SDK), BYOK, advisor grounded on findings; 3-tier UX
-- [x] Production deploy on Vercel
+## Next steps (proposed priority)
 
-**P0–P2 gaps — all closed**
-- [x] **G1 — Self-host**: `Dockerfile` (standalone, 193MB) + `docker-compose.yml` (web + migrate + postgres) + `docs/self-hosting.md` (W5)
-- [x] **G2 — CLI / MCP lint mode**: `@claril/bpmn-parse` (headless) + `claril lint`/`claril mcp` with CI exit codes + `lint_bpmn` MCP tool (W2)
-- [x] **G3 — Built-in Asset Catalog**: org-scoped `asset_type`/`asset`/`asset_link`/`element_asset_binding` + custom-field engine + `/catalog` admin + in-canvas element→asset binding + advisor grounding (W3 + binding follow-up)
-- [x] **G4 — doc-gen + Q&A** advisor modes: `generateProcessDoc` + `answerQuestion`, command-bar Q&A + Docs panel (W6)
-- [x] **G5 — Multi-diagram navigation**: projects → diagrams dashboard, per-diagram `/d/[id]` route, authorized CRUD (W1)
+1. **Harden AI-editing quality** (the active pain): bring forward W11 **Phase 5** — post-plan **scope/soundness validation** (run the inspector on the proposed result; reject/correct over-scoped plans) + pool-safe **auto-layout** so applied edits look clean. This is the highest-leverage fix for the current frustration.
+2. **W11 Phase 4** — data objects/stores + artifacts, and property ops (documentation, user-task assignment, asset binding via `proposeEdit`).
+3. **W8 — Provider-connect wizard** (guided BYOK setup + AI Gateway + optional Google OAuth→Vertex). *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
+4. **P4 — Collaboration** (comments → review workflow → multiplayer) once the single-user editing loop is trustworthy.
 
-> The logic-inspector was built early because it's pure TS, framework-free, and the
-> product's core IP. With G1–G5 closed and deployed, the moat is independently
-> shippable (CLI/MCP), the app is usable across many diagrams, and the catalog
-> differentiation layer is live. Next: P3 depth (versioning, more notations).
+## Backlog / follow-ups
 
-## Next plan — workstreams
-
-Mapped to the agent team so they can run in parallel where independent.
-
-| ID | Workstream | Agent | Status |
-|----|-----------|-------|--------|
-| **W1** | Multi-diagram navigation + project/diagram CRUD (G5) | `ui-engineer` | ✅ shipped |
-| **W2** | CLI + MCP lint server over the inspector (G2) | `backend-engineer` | ✅ shipped |
-| **W3** | Asset Catalog foundation: schema, CRUD, element binding (G3) | `catalog-engineer` | ✅ shipped (+ canvas binding) |
-| **W4** | Versioning: named versions, list, restore, visual diff (P3) | `db-architect` + `canvas-engineer` | 🔄 in progress |
-| **W5** | Self-host: Dockerfile + docker-compose (G1) | `backend-engineer` | ✅ shipped |
-| **W6** | Advisor doc-gen + Q&A modes (G4) | `ai-advisor-engineer` | ✅ shipped |
-| **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | 🔄 in progress |
-| **W8** | Provider connect: guided AI-setup wizard (steps/animation/instructions) + Vercel AI Gateway + BYOK + optional Google OAuth→Vertex | `ai-advisor-engineer` + `ui-engineer` | queued |
-| **W9** | AI drawer redesign: tabbed Chat + Problems, sent/received bubbles, specialized proposal cards, progressive phases, markdown doc viewer + DB persistence + Regenerate, token usage (Settings + chat) | `ui-engineer` + `ai-advisor-engineer` | ✅ merged to `main` (deployed) |
-| **W11** | BPMN-expert AI editing — full capability set (move/reassign lane, reconnect, all task/gateway types, sub-process, conditional/default flows, event defs, data objects, layout, soundness validation) | `ai-advisor-engineer` + `canvas-engineer` | ✅ **Phases 1–3 deployed** to `main` (move/reconnect; full task/gateway palette + sub-process; conditional/default flows + event defs + markers) + AI-editing robustness (Gemini provider-neutral planner, lane/pool + message-flow grounding, geometric lane membership, container-by-name resolution, deterministic plan validation + self-repair retry, minimal-change/no-over-engineering guards, element chips, roll-back labelling). Spec `docs/superpowers/specs/2026-06-21-bpmn-editing-capabilities.md` — Phases 4–5 (data objects/artifacts, relayout, soundness) queued |
-| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | ✅ **F1+F2+F3 merged to `main`** (deployed; migrations 0006–0008 applied) — live smoke tests (F1.7/F2.4/F3.4) still pending |
-
-Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
-inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
-Vertex OAuth instead.
-
-### W10 — History & review batch (F-tasks)
-
-Spec: `docs/superpowers/specs/2026-06-20-history-ai-review-chat-memory-design.md`. Built in order F1 → F2 → F3, each its own plan.
-
-**F1 — History** (auto-versioning + top-bar dropdown, replaces Archive). Plan: `docs/superpowers/plans/2026-06-20-f1-history.md`. Status: **built, reviewed green; pending live smoke test.**
-- [x] F1.1 — Revert diagram-archive (top-bar button, dashboard section, actions, `listProjects` filter); `archivedAt` column kept dormant
-- [x] F1.2 — `version.source` column (`manual|auto|ai|import|restore`) + migration 0006 (**applied to Neon**)
-- [x] F1.3 — `source` server actions + `autosnapshotVersion` (no-op-guarded insert from client XML)
-- [x] F1.4 — Smart-throttled auto-versioning coalescer (10s idle / 2min cap) + workbench wiring + force-snapshot on AI apply (unit-tested)
-- [x] F1.5 — `history-menu.tsx` dropdown (Popover + ScrollArea timeline, source badges, Diff + Restore)
-- [x] F1.6 — Wire History into top-bar (before Settings); remove `VersionsPanel` + right-edge toggle; share `DiffMarks` type
-- [ ] F1.7 — Manual smoke test (auto/AI/import/restore badges; diff colors + clears; restore reload; dashboard has no Archived)
-
-**F2 — AI-edit review** (mark on board + Approve / Roll back / Keep refining). No DB change. Plan: `docs/superpowers/plans/2026-06-20-f2-ai-edit-review.md`. Status: **built, reviewed green; pending live smoke test.**
-- [x] F2.1 — Distinct on-board marking for AI-applied elements (violet `.claril-ai-edit` + glow); parallel `markAiEdit`/`clearAiEdit` canvas API, independent of version-diff marks
-- [x] F2.2 — ProposalCard actions → **Approve** (clear marks, snapshot `ai` via F1 forceSnapshot), **Roll back** (revert `preEditXml`, clear marks), **Keep refining** (focus composer)
-- [x] F2.3 — Pending-state UX ("Applied to canvas — review:"); review state keyed by `toolCallId` (only the active proposal actionable); `busy`-gated; `focusComposer` on the chat handle
-- [ ] F2.4 — Manual smoke test (violet marks; Approve→AI version; Roll back reverts; Keep refining focuses composer; coexists with History diff) — needs AI provider
-
-**F3 — Chat memory + token cut** (persist chat + DB knowledge cache + surrogate sanitize). DB: `chat_message` (0007), `diagram_knowledge` (0008) — both applied. Plan: `docs/superpowers/plans/2026-06-20-f3-chat-memory-knowledge.md`. Status: **built, reviewed green; pending live smoke test.**
-- [x] F3.1 — Surrogate sanitizer (`stripLoneSurrogates`) on grounding + message text before `streamText` — **fixes the live `400 invalid high surrogate`**
-- [x] F3.2 — `chat_message` table (0007) + `appendChatMessages`/`getChatMessages`/`clearChat`; hydrate `useChat({messages})` on reload; Clear chip; `seenProposals` seeded from history so hydrated proposals don't re-apply
-- [x] F3.3 — `diagram_knowledge` table (0008): cached compact synopsis (shape + decisions + sequence flows + id↔name) keyed by `graphHash`; chat route grounds on synopsis + findings + assets instead of the full dump (`proposeEdit` still gets the full graph)
-- [ ] F3.4 — Manual smoke test (reload restores chat; Clear; emoji no 400; compact grounding; proposeEdit precision; synopsis regen on graph change) — needs AI provider
-
-### Future improvements
-- [ ] **Hybrid AI grounding** — keep the compact `ProcessGraph` synopsis as the default per-turn context (cheap, high-signal), but add an **on-demand raw-BPMN-XML tool** the model can call when it needs a detail the synopsis omits (and/or send DI-stripped semantic XML). The current extract-to-`ProcessGraph` approach is lossy — every un-modelled detail is an AI blind spot (the lane/membership/message-flow gaps we kept hitting). A hybrid gives completeness without paying full-XML token cost every message. Reconsider if extraction gaps keep recurring.
-
-### Remaining W3 tails (follow-ups)
-- [ ] Asset-link management UI + impact/usage panel (actions exist: `createAssetLink`, `getAssetUsage`)
-- [ ] Reference-field picker (engine supports `reference`; editor treats it as text)
-- [ ] F1 cleanup: `createDiagramVersion` is now callerless (kept as manual-snapshot API) — remove or wire to a "Save named version" control
+- **Hybrid AI grounding** — compact `ProcessGraph` synopsis by default + an **on-demand raw-BPMN-XML tool** for completeness (extraction is lossy; every un-modelled detail is an AI blind spot). Adopt if extraction gaps keep recurring.
+- Asset-link management UI + impact/usage panel (actions exist: `createAssetLink`, `getAssetUsage`).
+- Reference-field picker (engine supports `reference`; editor treats it as text).
+- `createDiagramVersion` is now callerless — remove or wire to a "Save named version" control.
+- Drop the dormant `diagram.archivedAt` column (deferred cleanup from F1).
