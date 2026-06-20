@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,8 @@ export function InspectorPanel({
   aiBusy,
   aiError,
 }: InspectorPanelProps) {
-  // Minimized by default — expands on demand or when the AI is working.
+  // Minimized by default — a slim tab on the right edge. Expands on demand or
+  // when the AI is working.
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (aiBusy || aiError) setOpen(true);
@@ -36,16 +37,43 @@ export function InspectorPanel({
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const hasAdvice = findings.some((f) => f.source === "advisor");
 
-  return (
-    <aside
-      className={cn(
-        "absolute right-3 top-16 z-10 flex w-80 flex-col rounded-[10px] border border-hairline bg-panel/80 backdrop-blur",
-        open && "max-h-[70vh]",
-      )}
-    >
+  // Collapsed: a left-arrow tab pinned to the right edge (no details).
+  if (!open) {
+    return (
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(true)}
+        title="Open Inspector"
+        className="absolute right-0 top-24 z-10 flex flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated"
+      >
+        <ChevronLeft className="size-4 text-fg-muted" />
+        {(errors > 0 || warnings > 0) && (
+          <span className="flex flex-col items-center gap-1 text-[10px] text-fg-muted">
+            {errors > 0 && (
+              <span className="flex items-center gap-0.5">
+                <span className="size-1.5 rounded-full bg-error" />
+                {errors}
+              </span>
+            )}
+            {warnings > 0 && (
+              <span className="flex items-center gap-0.5">
+                <span className="size-1.5 rounded-full bg-warning" />
+                {warnings}
+              </span>
+            )}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  // Expanded: a right-docked panel; height capped so it never covers the minimap.
+  return (
+    <aside className="absolute right-3 top-16 z-10 flex max-h-[calc(100vh-14rem)] w-80 flex-col rounded-[10px] border border-hairline bg-panel/85 backdrop-blur">
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        title="Collapse Inspector"
         className="flex items-center justify-between px-3 py-2 text-left"
       >
         <span className="text-sm font-medium">Inspector</span>
@@ -58,80 +86,78 @@ export function InspectorPanel({
             <span className="size-1.5 rounded-full bg-warning" />
             {warnings}
           </span>
-          <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+          <ChevronRight className="size-3.5" />
         </div>
       </button>
 
-      {open && (
-        <div className="overflow-y-auto border-t border-hairline p-2">
-          {aiBusy && <p className="px-2 py-2 text-xs text-accent">✦ Asking the AI advisor…</p>}
-          {aiError && <p className="px-2 py-2 text-xs text-error">{aiError}</p>}
+      <div className="overflow-y-auto border-t border-hairline p-2">
+        {aiBusy && <p className="px-2 py-2 text-xs text-accent">✦ Asking the AI advisor…</p>}
+        {aiError && <p className="px-2 py-2 text-xs text-error">{aiError}</p>}
 
-          {findings.length === 0 && !aiBusy ? (
-            <p className="px-2 py-6 text-center text-sm text-fg-subtle">No issues found ✓</p>
-          ) : (
-            <ul className="flex flex-col gap-1">
-              {findings.map((finding, index) => {
-                const clickable = Boolean(finding.elementId && onSelect);
-                const isAdvice = finding.source === "advisor";
-                return (
-                  <li
-                    key={`${finding.ruleId}-${finding.elementId ?? index}-${index}`}
-                    className="flex items-start gap-1 rounded-[6px] hover:bg-elevated"
+        {findings.length === 0 && !aiBusy ? (
+          <p className="px-2 py-6 text-center text-sm text-fg-subtle">No issues found ✓</p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {findings.map((finding, index) => {
+              const clickable = Boolean(finding.elementId && onSelect);
+              const isAdvice = finding.source === "advisor";
+              return (
+                <li
+                  key={`${finding.ruleId}-${finding.elementId ?? index}-${index}`}
+                  className="flex items-start gap-1 rounded-[6px] hover:bg-elevated"
+                >
+                  <button
+                    type="button"
+                    disabled={!clickable}
+                    onClick={() => finding.elementId && onSelect?.(finding.elementId)}
+                    className={cn(
+                      "flex flex-1 gap-2 px-2 py-2 text-left",
+                      clickable ? "cursor-pointer" : "cursor-default",
+                    )}
                   >
+                    <span
+                      className={cn(
+                        "mt-1.5 size-1.5 shrink-0 rounded-full",
+                        severityDot[finding.severity],
+                      )}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm leading-snug">{finding.message}</p>
+                      {finding.quickFix && (
+                        <p className="mt-0.5 text-xs text-fg-subtle">{finding.quickFix}</p>
+                      )}
+                      <p
+                        className={cn(
+                          "mt-1 font-mono text-[10px]",
+                          isAdvice ? "text-accent" : "text-fg-subtle",
+                        )}
+                      >
+                        {isAdvice ? "✦ AI advisor" : finding.ruleId}
+                      </p>
+                    </div>
+                  </button>
+                  {finding.fix && onApplyFix && (
                     <button
                       type="button"
-                      disabled={!clickable}
-                      onClick={() => finding.elementId && onSelect?.(finding.elementId)}
-                      className={cn(
-                        "flex flex-1 gap-2 px-2 py-2 text-left",
-                        clickable ? "cursor-pointer" : "cursor-default",
-                      )}
+                      onClick={() => onApplyFix(finding.fix as QuickFix)}
+                      title="Apply this fix"
+                      className="mr-1 mt-1.5 shrink-0 rounded-[6px] border border-hairline px-2 py-1 text-[11px] text-accent transition-colors hover:bg-accent/10"
                     >
-                      <span
-                        className={cn(
-                          "mt-1.5 size-1.5 shrink-0 rounded-full",
-                          severityDot[finding.severity],
-                        )}
-                      />
-                      <div className="min-w-0">
-                        <p className="text-sm leading-snug">{finding.message}</p>
-                        {finding.quickFix && (
-                          <p className="mt-0.5 text-xs text-fg-subtle">{finding.quickFix}</p>
-                        )}
-                        <p
-                          className={cn(
-                            "mt-1 font-mono text-[10px]",
-                            isAdvice ? "text-accent" : "text-fg-subtle",
-                          )}
-                        >
-                          {isAdvice ? "✦ AI advisor" : finding.ruleId}
-                        </p>
-                      </div>
+                      Fix
                     </button>
-                    {finding.fix && onApplyFix && (
-                      <button
-                        type="button"
-                        onClick={() => onApplyFix(finding.fix as QuickFix)}
-                        title="Apply this fix"
-                        className="mr-1 mt-1.5 shrink-0 rounded-[6px] border border-hairline px-2 py-1 text-[11px] text-accent transition-colors hover:bg-accent/10"
-                      >
-                        Fix
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
-          {hasAdvice && (
-            <p className="px-2 pt-2 text-[10px] text-fg-subtle">
-              AI advice is suggestive — verify before acting.
-            </p>
-          )}
-        </div>
-      )}
+        {hasAdvice && (
+          <p className="px-2 pt-2 text-[10px] text-fg-subtle">
+            AI advice is suggestive — verify before acting.
+          </p>
+        )}
+      </div>
     </aside>
   );
 }

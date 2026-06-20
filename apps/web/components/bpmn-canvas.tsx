@@ -46,7 +46,7 @@ export default function BpmnCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
   const markedRef = useRef<string[]>([]);
-  const findingsRef = useRef<Finding[]>([]);
+  const connectHandleRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
@@ -121,7 +121,6 @@ export default function BpmnCanvas({
         const registry = modeler.get("elementRegistry") as unknown as ElementRegistryLike;
         const graph = bpmnRegistryToGraph(registry);
         const findings = inspect(graph);
-        findingsRef.current = findings;
         onGraphChange?.(graph);
         onFindingsChange?.(findings);
         renderFindings(findings);
@@ -155,6 +154,51 @@ export default function BpmnCanvas({
         canvas.zoom("fit-viewport", "auto");
         runInspection();
         modeler.on("commandStack.changed", onChanged);
+
+        // Connection handle: a drag node on the selected shape that starts a
+        // directional connection (source = the selected element).
+        const overlays = modeler.get("overlays") as unknown as {
+          add: (id: string, type: string, opts: unknown) => string;
+          remove: (id: string) => void;
+        };
+        const connectService = modeler.get("connect") as unknown as {
+          start: (event: Event, source: unknown) => void;
+        };
+        const showConnectHandle = (el: any) => {
+          if (connectHandleRef.current) {
+            try {
+              overlays.remove(connectHandleRef.current);
+            } catch {
+              /* ignore */
+            }
+            connectHandleRef.current = null;
+          }
+          if (!el || el.waypoints || !el.businessObject || el.type === "label") return;
+          const node = document.createElement("div");
+          node.className = "claril-connect-handle";
+          node.title = "Drag to connect";
+          node.addEventListener("mousedown", (ev) => {
+            ev.stopPropagation();
+            try {
+              connectService.start(ev, el);
+            } catch {
+              /* ignore */
+            }
+          });
+          try {
+            connectHandleRef.current = overlays.add(el.id, "claril-connect", {
+              position: { right: -8, top: (el.height ?? 36) / 2 - 6 },
+              html: node,
+            });
+          } catch {
+            /* ignore */
+          }
+        };
+        modeler.on("selection.changed", (e: { newSelection?: unknown[] }) => {
+          const sel = e.newSelection;
+          showConnectHandle(sel && sel.length === 1 ? sel[0] : null);
+        });
+
         setReady(true);
         onReady?.({
           applyFix: (fix) => {
@@ -219,7 +263,6 @@ export default function BpmnCanvas({
         <CanvasContextMenu
           menu={menu}
           modeler={modelerRef.current}
-          findings={findingsRef.current}
           onClose={() => setMenu(null)}
           onCreateMore={(x, y) => {
             setMenu(null);

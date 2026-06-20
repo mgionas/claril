@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, type ComponentType, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  type ComponentType,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
 import {
   BoxSelect,
   CircleDot,
@@ -17,9 +23,6 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
-import type { Finding, QuickFix, Severity } from "@claril/shared";
-import { applyQuickFix } from "@/lib/apply-fix";
-import { cn } from "@/lib/utils";
 
 interface ModelerServices {
   get(name: string): any;
@@ -30,12 +33,6 @@ export interface MenuState {
   y: number;
   elementId: string | null;
 }
-
-const severityDot: Record<Severity, string> = {
-  error: "bg-error",
-  warning: "bg-warning",
-  info: "bg-info",
-};
 
 /** Map a bpmn-js context-pad entry id to a Lucide icon. */
 function iconForEntry(id: string): ComponentType<{ className?: string }> {
@@ -53,25 +50,16 @@ function iconForEntry(id: string): ComponentType<{ className?: string }> {
 interface CanvasContextMenuProps {
   menu: MenuState;
   modeler: ModelerServices;
-  findings: Finding[];
   onClose: () => void;
   onCreateMore: (x: number, y: number) => void;
 }
 
 /**
- * The single action hub. For an object it surfaces that object's own actions
- * (append / connect / change-type / delete) pulled straight from bpmn-js's
- * context-pad providers — so behavior matches bpmn.io exactly (and Connect
- * starts FROM the selected element, fixing the direction). On empty canvas it
- * offers create + tools + fit.
+ * The action hub, grouped logically: OBJECT (the selected element's own actions,
+ * pulled from bpmn-js's context-pad providers) and CANVAS / TOOLS (global).
+ * Problems/findings live in the Inspector, not here.
  */
-export function CanvasContextMenu({
-  menu,
-  modeler,
-  findings,
-  onClose,
-  onCreateMore,
-}: CanvasContextMenuProps) {
+export function CanvasContextMenu({ menu, modeler, onClose, onCreateMore }: CanvasContextMenuProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -82,7 +70,6 @@ export function CanvasContextMenu({
 
   const element = menu.elementId ? modeler.get("elementRegistry").get(menu.elementId) : null;
 
-  // Pull the element's own actions from bpmn-js's context-pad providers.
   const padEntries = useMemo(() => {
     if (!element) return [];
     try {
@@ -100,9 +87,18 @@ export function CanvasContextMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [element]);
 
-  function runPad(entry: { run: (event: Event, el: unknown) => void }, event: ReactMouseEvent) {
+  function runPad(
+    entry: { id: string; run: (event: Event, el: unknown) => void },
+    event: ReactMouseEvent,
+  ) {
     try {
-      entry.run(event.nativeEvent, element);
+      if (entry.id.includes("replace")) {
+        modeler
+          .get("popupMenu")
+          .open(element, "bpmn-replace", { x: menu.x, y: menu.y }, { title: "Change element" });
+      } else {
+        entry.run(event.nativeEvent, element);
+      }
     } catch {
       /* ignore */
     }
@@ -136,15 +132,6 @@ export function CanvasContextMenu({
     onClose();
   }
 
-  function fix(quickFix: QuickFix) {
-    applyQuickFix(modeler, quickFix);
-    onClose();
-  }
-
-  const elementFindings = menu.elementId
-    ? findings.filter((f) => f.elementId === menu.elementId)
-    : [];
-
   const left = Math.min(menu.x, window.innerWidth - 248);
   const top = Math.min(menu.y, window.innerHeight - 420);
 
@@ -162,8 +149,9 @@ export function CanvasContextMenu({
         style={{ left, top }}
         onClick={(e) => e.stopPropagation()}
       >
-        {element ? (
+        {element && (
           <>
+            <GroupLabel>Object</GroupLabel>
             {padEntries.map((entry) => (
               <MenuItem
                 key={entry.id}
@@ -172,51 +160,29 @@ export function CanvasContextMenu({
                 onClick={(e) => runPad(entry, e)}
               />
             ))}
-            <Separator />
             <MenuItem icon={Pencil} label="Rename" onClick={rename} />
-          </>
-        ) : (
-          <>
-            <MenuItem icon={Plus} label="Create element…" onClick={() => onCreateMore(menu.x, menu.y)} />
             <Separator />
-            <p className="px-3 pb-1 pt-1 text-[10px] uppercase tracking-wide text-fg-subtle">Tools</p>
-            <MenuItem icon={Hand} label="Hand (pan)" onClick={() => tool("handTool")} />
-            <MenuItem icon={BoxSelect} label="Lasso select" onClick={() => tool("lassoTool")} />
-            <MenuItem icon={Move} label="Space tool" onClick={() => tool("spaceTool")} />
-            <MenuItem icon={Spline} label="Global connect" onClick={() => tool("globalConnect")} />
-            <Separator />
-            <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
           </>
         )}
 
-        {elementFindings.length > 0 && (
-          <>
-            <Separator />
-            <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-fg-subtle">Findings</p>
-            {elementFindings.map((f, i) => (
-              <div key={`${f.ruleId}-${i}`} className="flex items-start gap-2 px-3 py-1.5">
-                <span
-                  className={cn("mt-1 size-1.5 shrink-0 rounded-full", severityDot[f.severity])}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs leading-snug">{f.message}</p>
-                  {f.quickFix && <p className="text-[10px] text-fg-subtle">{f.quickFix}</p>}
-                </div>
-                {f.fix && (
-                  <button
-                    type="button"
-                    onClick={() => f.fix && fix(f.fix)}
-                    className="shrink-0 rounded-[6px] border border-hairline px-2 py-0.5 text-[11px] text-accent transition-colors hover:bg-accent/10"
-                  >
-                    Fix
-                  </button>
-                )}
-              </div>
-            ))}
-          </>
-        )}
+        <GroupLabel>Canvas</GroupLabel>
+        <MenuItem icon={Plus} label="Create element…" onClick={() => onCreateMore(menu.x, menu.y)} />
+        <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
+
+        <Separator />
+        <GroupLabel>Tools</GroupLabel>
+        <MenuItem icon={Hand} label="Hand (pan)" onClick={() => tool("handTool")} />
+        <MenuItem icon={BoxSelect} label="Lasso select" onClick={() => tool("lassoTool")} />
+        <MenuItem icon={Move} label="Space tool" onClick={() => tool("spaceTool")} />
+        <MenuItem icon={Spline} label="Global connect" onClick={() => tool("globalConnect")} />
       </div>
     </div>
+  );
+}
+
+function GroupLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="px-3 pb-1 pt-2 text-[10px] uppercase tracking-wide text-fg-subtle">{children}</p>
   );
 }
 

@@ -200,6 +200,20 @@ body {
   background: var(--color-info);
 }
 
+/* connection handle — drag node on the selected element to start a connection */
+.claril-connect-handle {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-canvas);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  cursor: crosshair;
+}
+.claril-connect-handle:hover {
+  transform: scale(1.15);
+}
+
 .djs-element.claril-flagged-error .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   stroke: var(--color-error) !important;
 }
