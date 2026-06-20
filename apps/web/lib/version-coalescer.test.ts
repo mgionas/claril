@@ -36,4 +36,15 @@ describe("version coalescer", () => {
     vi.advanceTimersByTime(200_000);
     expect(flush).not.toHaveBeenCalled();
   });
+
+  it("re-arms a fresh window after firing", () => {
+    const flush = vi.fn();
+    const c = createVersionCoalescer(flush, { idleMs: 10_000, capMs: 120_000 });
+    c.onChange();
+    vi.advanceTimersByTime(10_000); // first idle window fires
+    expect(flush).toHaveBeenCalledTimes(1);
+    c.onChange(); // must start a brand-new window (idle + cap timers reset)
+    vi.advanceTimersByTime(10_000);
+    expect(flush).toHaveBeenCalledTimes(2);
+  });
 });

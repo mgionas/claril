@@ -228,7 +228,7 @@ export function BpmnWorkbench({
 
   const handleApplyPlan = useCallback(() => {
     canvasApiRef.current?.clearDiff();
-    setPlanApplied(true); // change already on the model; autosave already fired
+    setPlanApplied(true); // change already applied to the model; snapshot it as an AI version
     forceSnapshot("ai", "AI edit");
   }, [forceSnapshot]);
 
