@@ -1,5 +1,64 @@
 import { describe, it, expect } from "vitest";
-import { EditPlanSchema, orderOps, collectPlanRefs } from "./edit-plan";
+import { EditPlanSchema, orderOps, collectPlanRefs, validateEditPlan } from "./edit-plan";
+
+const graph = {
+  nodes: [
+    { id: "Start_1", type: "startEvent", name: "Start" },
+    { id: "Task_1", type: "task", name: "Money received" },
+    { id: "End_1", type: "endEvent", name: "close case" },
+  ],
+  flows: [
+    { id: "Flow_1", sourceRef: "Start_1", targetRef: "Task_1" },
+    { id: "Flow_2", sourceRef: "Task_1", targetRef: "End_1" },
+  ],
+  lanes: [{ id: "Lane_back", name: "Back", nodeIds: [] }],
+  pools: [],
+} as never;
+
+describe("validateEditPlan", () => {
+  it("passes a clean insert plan", () => {
+    const errors = validateEditPlan(
+      {
+        summary: "insert Inform Back",
+        ops: [
+          { kind: "deleteElement", elementId: "Flow_2" },
+          { kind: "addNode", tempId: "t1", type: "task", name: "Inform Back" },
+          { kind: "connect", fromRef: "Task_1", toRef: "t1", flow: "sequence" },
+          { kind: "connect", fromRef: "t1", toRef: "End_1", flow: "sequence" },
+        ],
+      },
+      graph,
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it("flags an orphan (unconnected) added node", () => {
+    const errors = validateEditPlan(
+      { summary: "x", ops: [{ kind: "addNode", tempId: "t1", type: "task", name: "Inform Back" }] },
+      graph,
+    );
+    expect(errors.some((e) => /not connected/.test(e))).toBe(true);
+  });
+
+  it("flags a connect to an unknown id", () => {
+    const errors = validateEditPlan(
+      {
+        summary: "x",
+        ops: [{ kind: "connect", fromRef: "Task_1", toRef: "Ghost_99", flow: "sequence" }],
+      },
+      graph,
+    );
+    expect(errors.some((e) => /Ghost_99/.test(e))).toBe(true);
+  });
+
+  it("accepts a containerRef given as a lane NAME", () => {
+    const errors = validateEditPlan(
+      { summary: "x", ops: [{ kind: "moveToContainer", elementId: "Task_1", containerRef: "Back" }] },
+      graph,
+    );
+    expect(errors).toEqual([]);
+  });
+});
 
 describe("EditPlanSchema", () => {
   it("accepts a valid plan and rejects an unknown op kind", () => {

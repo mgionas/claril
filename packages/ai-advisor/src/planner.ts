@@ -6,7 +6,7 @@ import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
 import type { AssetContext } from "./grounding";
 import { describeGrounding } from "./advisor";
-import { EditPlanSchema, NODE_TYPES, type EditPlan } from "./edit-plan";
+import { EditPlanSchema, NODE_TYPES, validateEditPlan, type EditPlan } from "./edit-plan";
 
 export interface PlanEditsInput {
   graph: ProcessGraph;
@@ -32,6 +32,10 @@ Rules:
 - To INSERT a node INTO an existing connection (e.g. "add X before/after/between …"): first deleteElement the existing sequenceFlow that currently joins those two nodes (reference it by its flow id, shown as "id: source -> target" in FLOWS), then addNode the new node and connect predecessor -> newNode and newNode -> successor. NEVER just connect the new node to one side and leave the original flow in place — that creates a duplicate/branched path. If you cannot find the existing flow's id in FLOWS, do not guess.
 - A subProcess is a CONTAINER: after addNode with type "subProcess", you can place new nodes inside it by setting their containerRef to the subProcess's tempId, and move existing elements into it with moveToContainer (containerRef = the subProcess id). Wire the subProcess into the flow like any other node.
 - You can ONLY use the operations defined in OUTPUT FORMAT below, and updateElement changes an element's NAME only — it cannot move, reparent, restyle, or reconfigure anything. If the request needs an operation that isn't available (e.g. add a data object, data store, or text annotation; set element documentation; assign a user task; bind an element to a catalog asset), DO NOT emit no-op or unrelated ops. Instead return {"summary": "<one line: what isn't supported yet + the closest supported alternative>", "ops": []}.
+- CONNECT EVERYTHING: every node you create with addNode MUST be wired into the flow with connect ops (an incoming and/or outgoing sequence flow). Never leave an added node floating/disconnected.
+- DO NOT DELETE existing elements unless the user explicitly asks to delete, remove, or replace them. The only removal allowed otherwise is the single sequenceFlow you split when inserting a node into a flow.
+- "notify / inform / send to / alert <party>" is an ordinary TASK in the current process (e.g. a sendTask) — do NOT create a pool, participant, separate process, or message flow for it unless the user explicitly says "pool", "participant", or "separate process".
+- Do NOT create a second element with the same name as one already in the ELEMENT ID ↔ NAME map — reuse the existing one.
 - "summary" is a one-line human description of the change.
 
 OUTPUT FORMAT — respond with ONLY a single JSON object (no markdown, no code fences, no prose before or after):
@@ -87,16 +91,54 @@ export function parseEditPlanResponse(text: string): EditPlan {
   return EditPlanSchema.parse(parsed);
 }
 
+function sumUsage(a: LanguageModelUsage, b: LanguageModelUsage): LanguageModelUsage {
+  return {
+    ...a,
+    inputTokens: (a.inputTokens ?? 0) + (b.inputTokens ?? 0),
+    outputTokens: (a.outputTokens ?? 0) + (b.outputTokens ?? 0),
+    totalTokens: (a.totalTokens ?? 0) + (b.totalTokens ?? 0),
+  };
+}
+
 export async function planEditsWithUsage(
   input: PlanEditsInput,
   config: LLMProviderConfig,
 ): Promise<{ plan: EditPlan; usage: LanguageModelUsage }> {
-  const { text, usage } = await generateText({
-    model: createModel(config),
-    system: PLANNER_SYSTEM_PROMPT,
-    prompt: buildPlannerPrompt(input),
-  });
-  return { plan: parseEditPlanResponse(text), usage };
+  const model = createModel(config);
+  const base = buildPlannerPrompt(input);
+
+  const first = await generateText({ model, system: PLANNER_SYSTEM_PROMPT, prompt: base });
+  let plan = parseEditPlanResponse(first.text);
+  let usage = first.usage;
+
+  // Deterministic validation + one self-repair pass: hand the model its own
+  // plan and the concrete problems (orphan nodes, unknown refs) so it corrects
+  // them before the user ever sees the card.
+  const errors = validateEditPlan(plan, input.graph);
+  if (errors.length > 0) {
+    const repairPrompt = [
+      base,
+      "",
+      "Your previous plan was INVALID:",
+      JSON.stringify(plan),
+      "",
+      "Problems to fix:",
+      ...errors.map((e) => `- ${e}`),
+      "",
+      "Return a corrected JSON plan. Connect every node you add; only reference ids/names shown in CURRENT MODEL or tempIds you define in this plan; do not delete existing elements unless the user asked to.",
+    ].join("\n");
+    try {
+      const second = await generateText({ model, system: PLANNER_SYSTEM_PROMPT, prompt: repairPrompt });
+      const repaired = parseEditPlanResponse(second.text);
+      usage = sumUsage(usage, second.usage);
+      // Accept the repair only if it's no worse than the original.
+      if (validateEditPlan(repaired, input.graph).length <= errors.length) plan = repaired;
+    } catch {
+      /* keep the first plan if the repair attempt fails to parse */
+    }
+  }
+
+  return { plan, usage };
 }
 
 /** Produce a validated EditPlan from a natural-language instruction (BYOK). */

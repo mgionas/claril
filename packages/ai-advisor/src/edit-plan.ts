@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ProcessGraph } from "@claril/logic-inspector";
 
 /** Node types the planner may create (kept aligned with bpmn-js create types). */
 export const NODE_TYPES = [
@@ -137,4 +138,93 @@ export function collectPlanRefs(plan: EditPlan): { defined: Set<string> } {
     }
   }
   return { defined };
+}
+
+/**
+ * Deterministically validate a plan against the current graph BEFORE it is
+ * applied, catching the classes of bad plans LLMs produce:
+ *  - references to ids that don't exist (and aren't tempIds defined in the plan)
+ *    → ops that would silently no-op,
+ *  - newly-added flow nodes that are never connected → floating/orphan nodes.
+ * Returns a list of human-readable problems (empty = valid). Used to drive a
+ * single self-repair retry of the planner.
+ */
+export function validateEditPlan(plan: EditPlan, graph: ProcessGraph): string[] {
+  const errors: string[] = [];
+
+  const tempIds = new Set<string>();
+  for (const op of plan.ops) {
+    if (op.kind === "addPool" || op.kind === "addLane" || op.kind === "addNode") tempIds.add(op.tempId);
+  }
+
+  const existing = new Set<string>([
+    ...graph.nodes.map((n) => n.id),
+    ...(graph.flows ?? []).map((f) => f.id),
+    ...(graph.lanes ?? []).map((l) => l.id),
+    ...(graph.pools ?? []).map((p) => p.id),
+  ]);
+  const containerNames = new Set<string>(
+    [
+      ...(graph.lanes ?? []).map((l) => l.name),
+      ...(graph.pools ?? []).map((p) => p.name),
+    ]
+      .filter((n): n is string => Boolean(n))
+      .map((n) => n.toLowerCase()),
+  );
+
+  const known = (ref: string) => tempIds.has(ref) || existing.has(ref);
+  const knownContainer = (ref: string) => known(ref) || containerNames.has(ref.trim().toLowerCase());
+  const ref = (label: string, value: string, ok: boolean) => {
+    if (!ok) errors.push(`${label} "${value}" does not match any existing element or a tempId in this plan`);
+  };
+
+  const connectedTemps = new Set<string>();
+  for (const op of plan.ops) {
+    switch (op.kind) {
+      case "connect":
+        ref("connect.fromRef", op.fromRef, known(op.fromRef));
+        ref("connect.toRef", op.toRef, known(op.toRef));
+        connectedTemps.add(op.fromRef);
+        connectedTemps.add(op.toRef);
+        break;
+      case "addLane":
+        ref("addLane.poolRef", op.poolRef, knownContainer(op.poolRef));
+        break;
+      case "addNode":
+        if (op.containerRef) ref("addNode.containerRef", op.containerRef, knownContainer(op.containerRef));
+        break;
+      case "moveToContainer":
+        ref("moveToContainer.elementId", op.elementId, known(op.elementId));
+        ref("moveToContainer.containerRef", op.containerRef, knownContainer(op.containerRef));
+        break;
+      case "reconnect":
+        ref("reconnect.flowId", op.flowId, known(op.flowId));
+        if (op.newSourceRef) ref("reconnect.newSourceRef", op.newSourceRef, known(op.newSourceRef));
+        if (op.newTargetRef) ref("reconnect.newTargetRef", op.newTargetRef, known(op.newTargetRef));
+        break;
+      case "setFlow":
+        ref("setFlow.flowId", op.flowId, known(op.flowId));
+        break;
+      case "setMarker":
+        ref("setMarker.elementId", op.elementId, known(op.elementId));
+        break;
+      case "updateElement":
+        ref("updateElement.elementId", op.elementId, known(op.elementId));
+        break;
+      case "deleteElement":
+        ref("deleteElement.elementId", op.elementId, known(op.elementId));
+        break;
+    }
+  }
+
+  // Orphan check: every newly-added FLOW node must be wired into the flow.
+  for (const op of plan.ops) {
+    if (op.kind === "addNode" && !connectedTemps.has(op.tempId)) {
+      errors.push(
+        `added node "${op.name ?? op.tempId}" is not connected to anything — add connect ops wiring it into the flow`,
+      );
+    }
+  }
+
+  return errors;
 }
