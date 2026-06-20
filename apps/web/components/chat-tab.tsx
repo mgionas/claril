@@ -36,6 +36,8 @@ interface ChatTabProps {
   onKeepRefining: () => void;
   onGenerateDocs: () => void;
   onReview: () => void;
+  /** Select + fly to an element on the canvas (from a chat element chip). */
+  onSelectElement: (elementId: string) => void;
 }
 
 export function ChatTab(props: ChatTabProps) {
@@ -152,6 +154,24 @@ export function ChatTab(props: ChatTabProps) {
 
   const busy = status === "submitted" || status === "streaming";
 
+  // Resolve element chips in assistant messages against the live graph/findings.
+  const ctx = props.getContext();
+  const typeById = new Map((ctx.graph?.nodes ?? []).map((n) => [n.id, n.type]));
+  const severityRank: Record<string, number> = { error: 3, warning: 2, info: 1 };
+  const severityById = new Map<string, "error" | "warning" | "info">();
+  for (const f of ctx.findings) {
+    if (!f.elementId) continue;
+    const prev = severityById.get(f.elementId);
+    if (!prev || severityRank[f.severity] > severityRank[prev]) {
+      severityById.set(f.elementId, f.severity);
+    }
+  }
+  const elementRefs = {
+    resolveType: (id: string) => typeById.get(id),
+    findingSeverity: (id: string) => severityById.get(id),
+    onSelect: props.onSelectElement,
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
@@ -169,7 +189,7 @@ export function ChatTab(props: ChatTabProps) {
                     {part.text}
                   </ChatBubble>
                 ) : (
-                  <ChatBubble key={i} role="assistant" markdown={part.text} />
+                  <ChatBubble key={i} role="assistant" markdown={part.text} elementRefs={elementRefs} />
                 );
               }
               if (part.type === "tool-proposeEdit") {

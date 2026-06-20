@@ -97,6 +97,7 @@ export function AiDrawer(props: AiDrawerProps) {
                 onKeepRefining={props.onKeepRefining}
                 onGenerateDocs={props.onGenerateDocs}
                 onReview={props.onReview}
+                onSelectElement={props.onSelect ?? (() => {})}
               />
             </TabsContent>
             <TabsContent value="problems" className="mt-2 min-h-0 flex-1 overflow-y-auto">
