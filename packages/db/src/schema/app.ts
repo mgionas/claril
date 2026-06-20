@@ -99,6 +99,10 @@ export const version = pgTable(
       .notNull()
       .references(() => diagram.id, { onDelete: "cascade" }),
     label: text("label"),
+    // How this version was created. Drives the History timeline badge.
+    // manual | auto | ai | import | restore. Defaults to 'manual' for
+    // pre-existing rows.
+    source: text("source").notNull().default("manual"),
     content: text("content").notNull(),
     createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
