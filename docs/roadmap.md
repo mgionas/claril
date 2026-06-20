@@ -74,7 +74,7 @@ Mapped to the agent team so they can run in parallel where independent.
 | **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | 🔄 in progress |
 | **W8** | Provider connect: guided AI-setup wizard (steps/animation/instructions) + Vercel AI Gateway + BYOK + optional Google OAuth→Vertex | `ai-advisor-engineer` + `ui-engineer` | queued |
 | **W9** | AI drawer redesign: tabbed Chat + Problems, sent/received bubbles, specialized proposal cards, progressive phases, markdown doc viewer + DB persistence + Regenerate, token usage (Settings + chat) | `ui-engineer` + `ai-advisor-engineer` | ✅ merged to `main` (deployed) |
-| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | 🔄 **F1 merged to `main`** (deployed; migration 0006 applied) — pending live smoke test; **F2/F3 plans next** |
+| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | 🔄 **F1 deployed to `main`**; **F2 built** (branch `feat/ai-review-chat-memory`, reviewed green); **F3 plan next** |
 
 Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
 inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
@@ -93,10 +93,11 @@ Spec: `docs/superpowers/specs/2026-06-20-history-ai-review-chat-memory-design.md
 - [x] F1.6 — Wire History into top-bar (before Settings); remove `VersionsPanel` + right-edge toggle; share `DiffMarks` type
 - [ ] F1.7 — Manual smoke test (auto/AI/import/restore badges; diff colors + clears; restore reload; dashboard has no Archived)
 
-**F2 — AI-edit review** (mark on board + Approve / Roll back / Keep refining). No DB change. Status: **planned (spec only).**
-- [ ] F2.1 — Distinct on-board marking for AI-applied elements (`claril-ai-edit`, accent/violet); extend `DiffMarks` with `aiEdit` bucket
-- [ ] F2.2 — ProposalCard actions → **Approve** (clear marks, snapshot `ai`), **Roll back** (revert `preEditXml`, clear marks), **Keep refining** (focus composer)
-- [ ] F2.3 — Pending-state UX; marks persist while pending; wire `onApplyPlan`/`onDiscardPlan`/`onKeepRefining`
+**F2 — AI-edit review** (mark on board + Approve / Roll back / Keep refining). No DB change. Plan: `docs/superpowers/plans/2026-06-20-f2-ai-edit-review.md`. Status: **built, reviewed green; pending live smoke test.**
+- [x] F2.1 — Distinct on-board marking for AI-applied elements (violet `.claril-ai-edit` + glow); parallel `markAiEdit`/`clearAiEdit` canvas API, independent of version-diff marks
+- [x] F2.2 — ProposalCard actions → **Approve** (clear marks, snapshot `ai` via F1 forceSnapshot), **Roll back** (revert `preEditXml`, clear marks), **Keep refining** (focus composer)
+- [x] F2.3 — Pending-state UX ("Applied to canvas — review:"); review state keyed by `toolCallId` (only the active proposal actionable); `busy`-gated; `focusComposer` on the chat handle
+- [ ] F2.4 — Manual smoke test (violet marks; Approve→AI version; Roll back reverts; Keep refining focuses composer; coexists with History diff) — needs AI provider
 
 **F3 — Chat memory + token cut** (persist chat + DB knowledge cache + surrogate sanitize). DB: `chat_message`, `diagram_knowledge`. Status: **planned (spec only).**
 - [ ] F3.1 — `chat_message` table + `appendChatMessages`/`getChatMessages`/`clearChat`; hydrate `useChat({messages})` on reload; Clear-chat control
