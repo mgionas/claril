@@ -106,6 +106,9 @@ Spec: `docs/superpowers/specs/2026-06-20-history-ai-review-chat-memory-design.md
 - [x] F3.3 — `diagram_knowledge` table (0008): cached compact synopsis (shape + decisions + sequence flows + id↔name) keyed by `graphHash`; chat route grounds on synopsis + findings + assets instead of the full dump (`proposeEdit` still gets the full graph)
 - [ ] F3.4 — Manual smoke test (reload restores chat; Clear; emoji no 400; compact grounding; proposeEdit precision; synopsis regen on graph change) — needs AI provider
 
+### Future improvements
+- [ ] **Hybrid AI grounding** — keep the compact `ProcessGraph` synopsis as the default per-turn context (cheap, high-signal), but add an **on-demand raw-BPMN-XML tool** the model can call when it needs a detail the synopsis omits (and/or send DI-stripped semantic XML). The current extract-to-`ProcessGraph` approach is lossy — every un-modelled detail is an AI blind spot (the lane/membership/message-flow gaps we kept hitting). A hybrid gives completeness without paying full-XML token cost every message. Reconsider if extraction gaps keep recurring.
+
 ### Remaining W3 tails (follow-ups)
 - [ ] Asset-link management UI + impact/usage panel (actions exist: `createAssetLink`, `getAssetUsage`)
 - [ ] Reference-field picker (engine supports `reference`; editor treats it as text)
