@@ -108,7 +108,39 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/bpmn-canvas.tsx:26",
+          "ref": "apps/web/components/bpmn-canvas.tsx:34",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/canvas-context-menu.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `CanvasContextMenu` in apps/web/components/canvas-context-menu.tsx",
+      "id": "cap:apps/web/components/canvas-context-menu.tsx#CanvasContextMenu",
+      "name": "Canvas Context Menu",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/canvas-context-menu.tsx:38",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/canvas-palette.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `CanvasPalette` in apps/web/components/canvas-palette.tsx",
+      "id": "cap:apps/web/components/canvas-palette.tsx#CanvasPalette",
+      "name": "Canvas Palette",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/canvas-palette.tsx:41",
           "source": "code"
         }
       ]
@@ -140,7 +172,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/inspector-panel.tsx:17",
+          "ref": "apps/web/components/inspector-panel.tsx:18",
           "source": "code"
         }
       ]
@@ -172,7 +204,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/workbench.tsx:25",
+          "ref": "apps/web/components/workbench.tsx:26",
           "source": "code"
         }
       ]
@@ -285,6 +317,22 @@
         {
           "confidence": 0.6,
           "ref": "apps/web/lib/ai.ts:7",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/apply-fix.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `applyQuickFix` in apps/web/lib/apply-fix.ts",
+      "id": "cap:apps/web/lib/apply-fix.ts#applyQuickFix",
+      "name": "Apply Quick Fix",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/apply-fix.ts:12",
           "source": "code"
         }
       ]
@@ -702,6 +750,40 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/canvas-context-menu.tsx",
+      "kind": "module",
+      "name": "apps/web/components/canvas-context-menu.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-context-menu.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/canvas-palette.tsx",
+      "kind": "module",
+      "name": "apps/web/components/canvas-palette.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-palette.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/components/command-bar.tsx",
       "kind": "module",
       "name": "apps/web/components/command-bar.tsx",
@@ -795,6 +877,23 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/lib/ai.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/apply-fix.ts",
+      "kind": "module",
+      "name": "apps/web/lib/apply-fix.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/apply-fix.ts:1",
           "source": "code"
         }
       ],
@@ -2159,7 +2258,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-06-20T11:48:05.563Z",
+  "generatedAt": "2026-06-20T12:27:03.060Z",
   "groups": [
     {
       "confidence": 0.85,
@@ -2174,12 +2273,15 @@
         "comp:apps/web/components/ai-settings-dialog.tsx",
         "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
+        "comp:apps/web/components/canvas-context-menu.tsx",
+        "comp:apps/web/components/canvas-palette.tsx",
         "comp:apps/web/components/command-bar.tsx",
         "comp:apps/web/components/inspector-panel.tsx",
         "comp:apps/web/components/top-bar.tsx",
         "comp:apps/web/components/workbench.tsx",
         "comp:apps/web/lib/actions.ts",
         "comp:apps/web/lib/ai.ts",
+        "comp:apps/web/lib/apply-fix.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
@@ -2321,6 +2423,7 @@
       "members": [
         "comp:apps/web/lib/actions.ts",
         "comp:apps/web/lib/ai.ts",
+        "comp:apps/web/lib/apply-fix.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
@@ -2369,6 +2472,8 @@
         "comp:apps/web/components/ai-settings-dialog.tsx",
         "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
+        "comp:apps/web/components/canvas-context-menu.tsx",
+        "comp:apps/web/components/canvas-palette.tsx",
         "comp:apps/web/components/command-bar.tsx",
         "comp:apps/web/components/inspector-panel.tsx",
         "comp:apps/web/components/top-bar.tsx",
@@ -2811,18 +2916,43 @@
     {
       "confidence": 0.95,
       "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:@/components",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:@/components",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:5",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
       "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:@/lib",
       "kind": "depends_on",
       "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:@/lib",
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:7",
+          "ref": "apps/web/components/bpmn-canvas.tsx:9",
           "source": "code"
         },
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:8",
+          "ref": "apps/web/components/bpmn-canvas.tsx:10",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:11",
           "source": "code"
         }
       ],
@@ -2837,7 +2967,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:6",
+          "ref": "apps/web/components/bpmn-canvas.tsx:8",
           "source": "code"
         }
       ],
@@ -2852,7 +2982,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:5",
+          "ref": "apps/web/components/bpmn-canvas.tsx:7",
           "source": "code"
         }
       ],
@@ -2872,12 +3002,12 @@
         },
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:10",
+          "ref": "apps/web/components/bpmn-canvas.tsx:17",
           "source": "code"
         },
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:11",
+          "ref": "apps/web/components/bpmn-canvas.tsx:18",
           "source": "code"
         }
       ],
@@ -2893,6 +3023,101 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/components/bpmn-canvas.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/canvas-context-menu.tsx",
+      "id": "rel:comp:apps/web/components/canvas-context-menu.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/canvas-context-menu.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-context-menu.tsx:6",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-context-menu.tsx:7",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/canvas-context-menu.tsx",
+      "id": "rel:comp:apps/web/components/canvas-context-menu.tsx=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/canvas-context-menu.tsx → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-context-menu.tsx:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/canvas-context-menu.tsx",
+      "id": "rel:comp:apps/web/components/canvas-context-menu.tsx=>sys:ext:lucide-react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/canvas-context-menu.tsx → sys:ext:lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-context-menu.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:lucide-react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/canvas-context-menu.tsx",
+      "id": "rel:comp:apps/web/components/canvas-context-menu.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/canvas-context-menu.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-context-menu.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/canvas-palette.tsx",
+      "id": "rel:comp:apps/web/components/canvas-palette.tsx=>sys:ext:lucide-react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/canvas-palette.tsx → sys:ext:lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-palette.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:lucide-react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/canvas-palette.tsx",
+      "id": "rel:comp:apps/web/components/canvas-palette.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/canvas-palette.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/canvas-palette.tsx:3",
           "source": "code"
         }
       ],
@@ -3018,6 +3243,11 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/components/workbench.tsx:11",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:12",
           "source": "code"
         }
       ],
@@ -3272,6 +3502,21 @@
         }
       ],
       "to": "sys:ext:drizzle-orm"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/apply-fix.ts",
+      "id": "rel:comp:apps/web/lib/apply-fix.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/apply-fix.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/apply-fix.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
     },
     {
       "confidence": 0.95,
