@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, ArrowRight, Pencil, Trash2, Check, Undo2 } from "lucide-react";
+import { Plus, ArrowRight, Pencil, Trash2, Check, RotateCcw, MessageCirclePlus } from "lucide-react";
 import type { EditPlan, Op } from "@claril/ai-advisor";
 
 export interface OpGroups {
@@ -38,12 +38,14 @@ export function ProposalCard({
   busy,
   onApply,
   onDiscard,
+  onKeepRefining,
 }: {
   plan: EditPlan;
   applied: boolean;
   busy?: boolean;
   onApply: () => void;
   onDiscard: () => void;
+  onKeepRefining: () => void;
 }) {
   const groups = groupOps(plan.ops);
   const empty = plan.ops.length === 0;
@@ -77,24 +79,59 @@ export function ProposalCard({
         </div>
       )}
       {!empty && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={applied || busy}
-            onClick={onApply}
-            className="flex items-center gap-1 rounded-[6px] bg-accent px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40"
-          >
-            {applied ? <Check className="size-3.5" /> : null}
-            {applied ? "Applied" : "Apply"}
-          </button>
-          <button
-            type="button"
-            onClick={onDiscard}
-            className="flex items-center gap-1 rounded-[6px] border border-hairline px-3 py-1 text-[12px] text-fg-muted transition-colors hover:bg-elevated"
-          >
-            {applied ? <Undo2 className="size-3.5" /> : null}
-            {applied ? "Undo" : "Discard"}
-          </button>
+        <div className="space-y-2">
+          {applied && (
+            <p className="text-[11px] text-fg-subtle">Applied to canvas — review:</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {!applied ? (
+              <>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={onApply}
+                  className="flex items-center gap-1 rounded-[6px] bg-accent px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40"
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  onClick={onDiscard}
+                  className="flex items-center gap-1 rounded-[6px] border border-hairline px-3 py-1 text-[12px] text-fg-muted transition-colors hover:bg-elevated"
+                >
+                  Discard
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={onApply}
+                  className="flex items-center gap-1 rounded-[6px] bg-accent px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40"
+                >
+                  <Check className="size-3.5" />
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  onClick={onDiscard}
+                  className="flex items-center gap-1 rounded-[6px] border border-hairline px-3 py-1 text-[12px] text-fg-muted transition-colors hover:bg-elevated"
+                >
+                  <RotateCcw className="size-3.5" />
+                  Roll back
+                </button>
+                <button
+                  type="button"
+                  onClick={onKeepRefining}
+                  className="flex items-center gap-1 rounded-[6px] border border-hairline px-3 py-1 text-[12px] text-fg-muted transition-colors hover:bg-elevated"
+                >
+                  <MessageCirclePlus className="size-3.5" />
+                  Keep refining
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

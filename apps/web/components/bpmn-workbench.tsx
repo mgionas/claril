@@ -215,26 +215,33 @@ export function BpmnWorkbench({
     if (!docMarkdown) void generateDocs();
   }, [aiConnected, docMarkdown, generateDocs]);
 
-  // Apply the AI's proposed plan live (snapshot first so Discard can revert).
+  // Apply the AI's proposed plan live, marked violet pending review.
   const handleProposal = useCallback((proposed: EditPlan) => {
     setPlanApplied(false);
     if (proposed.ops.length > 0) {
       preEditXmlRef.current = currentXmlRef.current;
       const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
-      canvasApiRef.current?.showDiff({ added: changed, removed: [], changed: [], layout: [] });
+      canvasApiRef.current?.markAiEdit(changed);
+      setPlanApplied(true); // applied to canvas; awaiting Approve / Roll back
     }
   }, []);
 
   const handleApplyPlan = useCallback(() => {
-    canvasApiRef.current?.clearDiff();
-    setPlanApplied(true); // change already applied to the model; snapshot it as an AI version
-    forceSnapshot("ai", "AI edit");
+    canvasApiRef.current?.clearAiEdit();
+    setPlanApplied(false); // resolved
+    forceSnapshot("ai", "AI edit"); // change already applied to the model; snapshot it
   }, [forceSnapshot]);
 
   const handleDiscardPlan = useCallback(() => {
-    canvasApiRef.current?.clearDiff();
+    canvasApiRef.current?.clearAiEdit();
     void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
     setPlanApplied(false);
+  }, []);
+
+  const handleKeepRefining = useCallback(() => {
+    setInspectorOpen(true);
+    setActiveTab("chat");
+    chatHandleRef.current?.focusComposer();
   }, []);
 
   // "Ask AI" from a problem: jump to Chat and seed an instruction.
@@ -346,6 +353,7 @@ export function BpmnWorkbench({
         onProposal={handleProposal}
         onApplyPlan={handleApplyPlan}
         onDiscardPlan={handleDiscardPlan}
+        onKeepRefining={handleKeepRefining}
         onGenerateDocs={handleGenerateDocs}
         onReview={handleAskAi}
         onSelect={handleSelectFinding}

@@ -13,6 +13,8 @@ import { ProposalCard } from "@/components/proposal-card";
 export interface ChatTabHandle {
   /** Inject a message into the transcript (used by "Ask AI" from Problems). */
   ask: (text: string) => void;
+  /** Focus the composer textarea (used by "Keep refining"). */
+  focusComposer: () => void;
 }
 
 interface ChatContext {
@@ -29,6 +31,7 @@ interface ChatTabProps {
   planApplied: boolean;
   onApplyPlan: () => void;
   onDiscardPlan: () => void;
+  onKeepRefining: () => void;
   onGenerateDocs: () => void;
   onReview: () => void;
 }
@@ -70,7 +73,17 @@ export function ChatTab(props: ChatTabProps) {
     requestAnimationFrame(resizeComposer);
   };
 
-  useImperativeHandle(props.handleRef, () => ({ ask: (text) => send(text) }));
+  useImperativeHandle(props.handleRef, () => ({
+    ask: (text) => send(text),
+    focusComposer: () => {
+      const el = textareaRef.current;
+      if (el) {
+        el.focus();
+        const len = el.value.length;
+        el.setSelectionRange(len, len);
+      }
+    },
+  }));
 
   // Live-apply each new proposeEdit tool output exactly once.
   useEffect(() => {
@@ -134,6 +147,7 @@ export function ChatTab(props: ChatTabProps) {
                       applied={props.planApplied}
                       onApply={props.onApplyPlan}
                       onDiscard={props.onDiscardPlan}
+                      onKeepRefining={props.onKeepRefining}
                     />
                   );
                 }

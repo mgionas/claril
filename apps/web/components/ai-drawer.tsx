@@ -28,6 +28,7 @@ export interface AiDrawerProps {
   onProposal: (plan: EditPlan) => void;
   onApplyPlan: () => void;
   onDiscardPlan: () => void;
+  onKeepRefining: () => void;
   onGenerateDocs: () => void;
   onReview: () => void;
   // problems wiring
@@ -91,6 +92,7 @@ export function AiDrawer(props: AiDrawerProps) {
                 onProposal={props.onProposal}
                 onApplyPlan={props.onApplyPlan}
                 onDiscardPlan={props.onDiscardPlan}
+                onKeepRefining={props.onKeepRefining}
                 onGenerateDocs={props.onGenerateDocs}
                 onReview={props.onReview}
               />
