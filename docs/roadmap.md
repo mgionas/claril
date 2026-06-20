@@ -30,7 +30,7 @@ The recent push turned the AI from advisor → **co-editor**: tabbed Chat/Proble
 | W7 | Sequence + C4 editors (Mermaid-based) |
 | W9 | AI drawer redesign (tabbed Chat + Problems, proposal cards, doc viewer + DB persistence, token usage) |
 | W10 | History & review batch — **F1** auto-versioning + top-bar History dropdown; **F2** AI-edit review (violet marks + Approve/Roll back/Keep refining); **F3** persistent chat + DB knowledge cache + surrogate sanitizer. Spec/plans in `docs/superpowers/{specs,plans}/2026-06-20-*` |
-| W11 | BPMN-expert AI editing **Phases 1–3** — move/reassign-lane, reconnect, full task/gateway palette, sub-process, conditional/default flows, event definitions, activity markers; + robustness (provider-neutral planner, lane/pool + message-flow grounding, geometric lane membership, deterministic plan validation + self-repair). Spec `docs/superpowers/specs/2026-06-21-bpmn-editing-capabilities.md` |
+| W11 | BPMN-expert AI editing — **Phases 1–3 deployed**, **Phase 4 built (branch)**. P1–3: move/reassign-lane, reconnect, full task/gateway palette, sub-process, conditional/default flows, event definitions, activity markers + robustness (provider-neutral planner, lane/pool + message-flow grounding, geometric lane membership, deterministic plan validation + self-repair). P4: data objects/stores + text annotations (+ associations), `setDocumentation`. Spec `docs/superpowers/specs/2026-06-21-bpmn-editing-capabilities.md` |
 
 ## Known issues (open)
 
@@ -39,10 +39,11 @@ The recent push turned the AI from advisor → **co-editor**: tabbed Chat/Proble
 
 ## Next steps (proposed priority)
 
-1. **Harden AI-editing quality** (the active pain): bring forward W11 **Phase 5** — post-plan **scope/soundness validation** (run the inspector on the proposed result; reject/correct over-scoped plans) + pool-safe **auto-layout** so applied edits look clean. This is the highest-leverage fix for the current frustration.
-2. **W11 Phase 4** — data objects/stores + artifacts, and property ops (documentation, user-task assignment, asset binding via `proposeEdit`).
-3. **W8 — Provider-connect wizard** (guided BYOK setup + AI Gateway + optional Google OAuth→Vertex). *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
-4. **P4 — Collaboration** (comments → review workflow → multiplayer) once the single-user editing loop is trustworthy.
+1. **Harden AI-editing quality** (the active pain): W11 **Phase 5** — post-plan **scope/soundness validation** (run the inspector on the proposed result; reject/correct over-scoped plans that create pools / delete elements / split processes without an explicit ask) + pool-safe **auto-layout** so applied edits look clean. Highest-leverage fix for the current frustration.
+2. **W8 — Provider-connect wizard** (guided BYOK setup + AI Gateway + optional Google OAuth→Vertex). *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
+3. **P4 — Collaboration** (comments → review workflow → multiplayer) once the single-user editing loop is trustworthy.
+
+*(W11 Phase 4 — data objects/stores + text annotations + `setDocumentation` — done, on branch awaiting deploy. User-task assignment + asset-binding-via-proposeEdit deferred as noted.)*
 
 ## Backlog / follow-ups
 
