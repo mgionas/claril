@@ -210,8 +210,20 @@ export default function BpmnCanvas({
       }
     })();
 
+    // Keep the bpmn viewport correct when the container resizes (e.g. when the
+    // Inspector drawer pushes the canvas narrower).
+    const resizeObserver = new ResizeObserver(() => {
+      try {
+        (modeler.get("canvas") as unknown as { resized: () => void }).resized();
+      } catch {
+        /* ignore */
+      }
+    });
+    resizeObserver.observe(container);
+
     return () => {
       disposed = true;
+      resizeObserver.disconnect();
       modeler.destroy();
       modelerRef.current = null;
       markedRef.current = [];

@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ChevronLeft } from "lucide-react";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +10,7 @@ const severityDot: Record<Severity, string> = {
 };
 
 interface InspectorPanelProps {
+  open: boolean;
   findings: Finding[];
   onSelect?: (elementId: string) => void;
   onApplyFix?: (fix: QuickFix) => void;
@@ -19,20 +18,19 @@ interface InspectorPanelProps {
   aiError?: string | null;
 }
 
+/**
+ * In-flow, full-height drawer. It takes layout width (animated), so opening it
+ * shrinks the canvas region rather than overlaying it. Toggled from the
+ * Workbench tab.
+ */
 export function InspectorPanel({
+  open,
   findings,
   onSelect,
   onApplyFix,
   aiBusy,
   aiError,
 }: InspectorPanelProps) {
-  // Minimized by default — slides out from the right edge on demand (or when
-  // the AI is working).
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (aiBusy || aiError) setOpen(true);
-  }, [aiBusy, aiError]);
-
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const hasAdvice = findings.some((f) => f.source === "advisor");
@@ -40,39 +38,10 @@ export function InspectorPanel({
   return (
     <aside
       className={cn(
-        "absolute inset-y-0 right-0 z-20 w-80 transition-transform duration-200 ease-out",
-        open ? "translate-x-0" : "translate-x-full",
+        "h-full shrink-0 overflow-hidden transition-[width] duration-200 ease-out",
+        open ? "w-80" : "w-0",
       )}
     >
-      {/* Peek tab — always visible on the right edge; toggles the drawer. */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        title={open ? "Collapse Inspector" : "Open Inspector"}
-        className="absolute -left-9 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated"
-      >
-        <ChevronLeft
-          className={cn("size-4 text-fg-muted transition-transform", open && "rotate-180")}
-        />
-        {!open && (errors > 0 || warnings > 0) && (
-          <span className="flex flex-col items-center gap-1 text-[10px] text-fg-muted">
-            {errors > 0 && (
-              <span className="flex items-center gap-0.5">
-                <span className="size-1.5 rounded-full bg-error" />
-                {errors}
-              </span>
-            )}
-            {warnings > 0 && (
-              <span className="flex items-center gap-0.5">
-                <span className="size-1.5 rounded-full bg-warning" />
-                {warnings}
-              </span>
-            )}
-          </span>
-        )}
-      </button>
-
-      {/* Full-height drawer body. */}
       <div className="flex h-full w-80 flex-col border-l border-hairline bg-panel/90 backdrop-blur">
         <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
           <span className="text-sm font-medium">Inspector</span>
@@ -88,7 +57,7 @@ export function InspectorPanel({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {aiBusy && <p className="px-2 py-2 text-xs text-accent">✦ Asking the AI advisor…</p>}
           {aiError && <p className="px-2 py-2 text-xs text-error">{aiError}</p>}
 
@@ -108,6 +77,7 @@ export function InspectorPanel({
                       type="button"
                       disabled={!clickable}
                       onClick={() => finding.elementId && onSelect?.(finding.elementId)}
+                      title={clickable ? "Show on canvas" : undefined}
                       className={cn(
                         "flex flex-1 gap-2 px-2 py-2 text-left",
                         clickable ? "cursor-pointer" : "cursor-default",
