@@ -26,6 +26,10 @@ export interface BpmnNode {
   id: string;
   type: BpmnNodeType;
   name?: string;
+  /** Name of the lane the node sits in, when the diagram uses swimlanes. */
+  lane?: string;
+  /** Name of the pool/participant the node belongs to, when present. */
+  pool?: string;
 }
 
 export interface SequenceFlow {
@@ -35,8 +39,28 @@ export interface SequenceFlow {
   name?: string;
 }
 
+/** A swimlane (and the pool it belongs to) with the nodes it contains. */
+export interface LaneInfo {
+  id: string;
+  name?: string;
+  pool?: string;
+  nodeIds: string[];
+}
+
+/** A pool / participant in a collaboration. */
+export interface PoolInfo {
+  id: string;
+  name?: string;
+}
+
 export interface ProcessGraph {
   id?: string;
   nodes: BpmnNode[];
   flows: SequenceFlow[];
+  /** Swimlanes, when the diagram has them (optional; analysis ignores them). */
+  lanes?: LaneInfo[];
+  /** Pools / participants, when the diagram is a collaboration. */
+  pools?: PoolInfo[];
+  /** Message flows between pools (distinct from sequence flows). */
+  messageFlows?: SequenceFlow[];
 }

@@ -49,12 +49,42 @@ export interface AdviseInput {
 
 export function describeGraph(graph: ProcessGraph): string {
   const nodes = graph.nodes
-    .map((n) => `- ${n.id} [${n.type}]${n.name ? ` "${n.name}"` : ""}`)
+    .map(
+      (n) =>
+        `- ${n.id} [${n.type}]${n.name ? ` "${n.name}"` : ""}${n.lane ? ` {lane: ${n.lane}}` : ""}`,
+    )
     .join("\n");
   const flows = (graph.flows ?? [])
     .map((f) => `- ${f.id}: ${f.sourceRef} -> ${f.targetRef}${f.name ? ` (${f.name})` : ""}`)
     .join("\n");
-  return `NODES:\n${nodes || "(none)"}\n\nFLOWS:\n${flows || "(none)"}`;
+
+  const sections = [`NODES:\n${nodes || "(none)"}`, `FLOWS:\n${flows || "(none)"}`];
+
+  const pools = graph.pools ?? [];
+  const lanes = graph.lanes ?? [];
+  if (pools.length > 0 || lanes.length > 0) {
+    const laneLines = lanes
+      .map(
+        (l) => `- ${l.id}${l.name ? ` "${l.name}"` : ""}${l.pool ? ` (pool: ${l.pool})` : ""}`,
+      )
+      .join("\n");
+    const poolLine = pools.length
+      ? `Pools: ${pools.map((p) => p.name || p.id).join(", ")}\n`
+      : "";
+    sections.push(
+      `POOLS & LANES (use a lane id as containerRef to place a node in that lane):\n${poolLine}${laneLines}`,
+    );
+  }
+
+  const messageFlows = graph.messageFlows ?? [];
+  if (messageFlows.length > 0) {
+    const mf = messageFlows
+      .map((f) => `- ${f.id}: ${f.sourceRef} -> ${f.targetRef}${f.name ? ` (${f.name})` : ""}`)
+      .join("\n");
+    sections.push(`MESSAGE FLOWS (between pools):\n${mf}`);
+  }
+
+  return sections.join("\n\n");
 }
 
 export function describeFindings(findings: Finding[]): string {
