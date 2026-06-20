@@ -24,6 +24,7 @@ const BPMN_TYPE: Record<string, string> = {
   complexGateway: "bpmn:ComplexGateway",
   intermediateThrowEvent: "bpmn:IntermediateThrowEvent",
   intermediateCatchEvent: "bpmn:IntermediateCatchEvent",
+  subProcess: "bpmn:SubProcess",
 };
 
 /**
@@ -182,7 +183,10 @@ export function applyEditPlan(
       }
       case "addNode": {
         const type = BPMN_TYPE[op.type];
-        const shape = elementFactory.createShape({ type });
+        const shape =
+          op.type === "subProcess"
+            ? elementFactory.createShape({ type, isExpanded: true, width: 350, height: 200 })
+            : elementFactory.createShape({ type });
         const explicit = op.containerRef ? resolve(op.containerRef) : null;
         const pred = explicit ? null : findNeighbor(op.tempId, "in");
         const succ = explicit ? null : findNeighbor(op.tempId, "out");

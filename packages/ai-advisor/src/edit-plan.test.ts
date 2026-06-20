@@ -32,6 +32,17 @@ describe("EditPlanSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts a subProcess node + a child placed via containerRef", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Add a subprocess with a task inside",
+      ops: [
+        { kind: "addNode", tempId: "sp", type: "subProcess", name: "Handle claim" },
+        { kind: "addNode", tempId: "t1", type: "task", name: "Assess", containerRef: "sp" },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it("accepts a reconnect op", () => {
     const parsed = EditPlanSchema.safeParse({
       summary: "Re-point a flow",

@@ -20,6 +20,7 @@ export const NODE_TYPES = [
   "complexGateway",
   "intermediateThrowEvent",
   "intermediateCatchEvent",
+  "subProcess",
 ] as const;
 
 const AddPool = z.object({ kind: z.literal("addPool"), tempId: z.string(), name: z.string() });
