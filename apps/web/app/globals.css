@@ -105,6 +105,12 @@ body {
   display: none !important;
 }
 
+/* Remove bpmn-js's default context pad (the white hover item-actions). Claril
+   uses the left palette + right-click menu + global-connect tool instead. */
+.djs-context-pad {
+  display: none !important;
+}
+
 /* Context pad (contextual actions next to an element) + popups: dark frosted. */
 .djs-context-pad .group,
 .djs-popup {

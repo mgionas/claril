@@ -108,7 +108,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/bpmn-canvas.tsx:34",
+          "ref": "apps/web/components/bpmn-canvas.tsx:36",
           "source": "code"
         }
       ]
@@ -131,22 +131,6 @@
     },
     {
       "componentIds": [
-        "comp:apps/web/components/canvas-palette.tsx"
-      ],
-      "confidence": 0.6,
-      "description": "Exported function `CanvasPalette` in apps/web/components/canvas-palette.tsx",
-      "id": "cap:apps/web/components/canvas-palette.tsx#CanvasPalette",
-      "name": "Canvas Palette",
-      "provenance": [
-        {
-          "confidence": 0.6,
-          "ref": "apps/web/components/canvas-palette.tsx:41",
-          "source": "code"
-        }
-      ]
-    },
-    {
-      "componentIds": [
         "comp:apps/web/components/command-bar.tsx"
       ],
       "confidence": 0.6,
@@ -163,6 +147,22 @@
     },
     {
       "componentIds": [
+        "comp:apps/web/components/element-picker.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `ElementPicker` in apps/web/components/element-picker.tsx",
+      "id": "cap:apps/web/components/element-picker.tsx#ElementPicker",
+      "name": "Element Picker",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/element-picker.tsx:18",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
         "comp:apps/web/components/inspector-panel.tsx"
       ],
       "confidence": 0.6,
@@ -172,7 +172,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/inspector-panel.tsx:18",
+          "ref": "apps/web/components/inspector-panel.tsx:22",
           "source": "code"
         }
       ]
@@ -767,14 +767,14 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
-      "id": "comp:apps/web/components/canvas-palette.tsx",
+      "id": "comp:apps/web/components/command-bar.tsx",
       "kind": "module",
-      "name": "apps/web/components/canvas-palette.tsx",
+      "name": "apps/web/components/command-bar.tsx",
       "package": "apps/web",
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/canvas-palette.tsx:1",
+          "ref": "apps/web/components/command-bar.tsx:1",
           "source": "code"
         }
       ],
@@ -784,14 +784,14 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
-      "id": "comp:apps/web/components/command-bar.tsx",
+      "id": "comp:apps/web/components/element-picker.tsx",
       "kind": "module",
-      "name": "apps/web/components/command-bar.tsx",
+      "name": "apps/web/components/element-picker.tsx",
       "package": "apps/web",
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/command-bar.tsx:1",
+          "ref": "apps/web/components/element-picker.tsx:1",
           "source": "code"
         }
       ],
@@ -928,6 +928,23 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/lib/auth.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/bpmn-elements.ts",
+      "kind": "module",
+      "name": "apps/web/lib/bpmn-elements.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/bpmn-elements.ts:1",
           "source": "code"
         }
       ],
@@ -2258,7 +2275,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-06-20T12:27:03.060Z",
+  "generatedAt": "2026-06-20T13:01:01.049Z",
   "groups": [
     {
       "confidence": 0.85,
@@ -2274,8 +2291,8 @@
         "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
         "comp:apps/web/components/canvas-context-menu.tsx",
-        "comp:apps/web/components/canvas-palette.tsx",
         "comp:apps/web/components/command-bar.tsx",
+        "comp:apps/web/components/element-picker.tsx",
         "comp:apps/web/components/inspector-panel.tsx",
         "comp:apps/web/components/top-bar.tsx",
         "comp:apps/web/components/workbench.tsx",
@@ -2284,6 +2301,7 @@
         "comp:apps/web/lib/apply-fix.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
+        "comp:apps/web/lib/bpmn-elements.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
         "comp:apps/web/lib/crypto.ts",
         "comp:apps/web/lib/data.ts",
@@ -2426,6 +2444,7 @@
         "comp:apps/web/lib/apply-fix.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
+        "comp:apps/web/lib/bpmn-elements.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
         "comp:apps/web/lib/crypto.ts",
         "comp:apps/web/lib/data.ts",
@@ -2473,8 +2492,8 @@
         "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
         "comp:apps/web/components/canvas-context-menu.tsx",
-        "comp:apps/web/components/canvas-palette.tsx",
         "comp:apps/web/components/command-bar.tsx",
+        "comp:apps/web/components/element-picker.tsx",
         "comp:apps/web/components/inspector-panel.tsx",
         "comp:apps/web/components/top-bar.tsx",
         "comp:apps/web/components/workbench.tsx"
@@ -2922,12 +2941,12 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:5",
+          "ref": "apps/web/components/bpmn-canvas.tsx:6",
           "source": "code"
         },
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:6",
+          "ref": "apps/web/components/bpmn-canvas.tsx:7",
           "source": "code"
         }
       ],
@@ -2942,17 +2961,17 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:9",
-          "source": "code"
-        },
-        {
-          "confidence": 0.95,
           "ref": "apps/web/components/bpmn-canvas.tsx:10",
           "source": "code"
         },
         {
           "confidence": 0.95,
           "ref": "apps/web/components/bpmn-canvas.tsx:11",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:12",
           "source": "code"
         }
       ],
@@ -2967,7 +2986,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:8",
+          "ref": "apps/web/components/bpmn-canvas.tsx:9",
           "source": "code"
         }
       ],
@@ -2982,7 +3001,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:7",
+          "ref": "apps/web/components/bpmn-canvas.tsx:8",
           "source": "code"
         }
       ],
@@ -3002,16 +3021,36 @@
         },
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:17",
+          "ref": "apps/web/components/bpmn-canvas.tsx:18",
           "source": "code"
         },
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/bpmn-canvas.tsx:18",
+          "ref": "apps/web/components/bpmn-canvas.tsx:19",
           "source": "code"
         }
       ],
       "to": "sys:ext:bpmn-js"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:diagram-js-minimap",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:diagram-js-minimap",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:5",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:20",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:diagram-js-minimap"
     },
     {
       "confidence": 0.95,
@@ -3095,36 +3134,6 @@
     },
     {
       "confidence": 0.95,
-      "from": "comp:apps/web/components/canvas-palette.tsx",
-      "id": "rel:comp:apps/web/components/canvas-palette.tsx=>sys:ext:lucide-react",
-      "kind": "depends_on",
-      "name": "comp:apps/web/components/canvas-palette.tsx → sys:ext:lucide-react",
-      "provenance": [
-        {
-          "confidence": 0.95,
-          "ref": "apps/web/components/canvas-palette.tsx:4",
-          "source": "code"
-        }
-      ],
-      "to": "sys:ext:lucide-react"
-    },
-    {
-      "confidence": 0.95,
-      "from": "comp:apps/web/components/canvas-palette.tsx",
-      "id": "rel:comp:apps/web/components/canvas-palette.tsx=>sys:ext:react",
-      "kind": "depends_on",
-      "name": "comp:apps/web/components/canvas-palette.tsx → sys:ext:react",
-      "provenance": [
-        {
-          "confidence": 0.95,
-          "ref": "apps/web/components/canvas-palette.tsx:3",
-          "source": "code"
-        }
-      ],
-      "to": "sys:ext:react"
-    },
-    {
-      "confidence": 0.95,
       "from": "comp:apps/web/components/command-bar.tsx",
       "id": "rel:comp:apps/web/components/command-bar.tsx=>sys:ext:lucide-react",
       "kind": "depends_on",
@@ -3140,6 +3149,36 @@
     },
     {
       "confidence": 0.95,
+      "from": "comp:apps/web/components/element-picker.tsx",
+      "id": "rel:comp:apps/web/components/element-picker.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/element-picker.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/element-picker.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/element-picker.tsx",
+      "id": "rel:comp:apps/web/components/element-picker.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/element-picker.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/element-picker.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
       "from": "comp:apps/web/components/inspector-panel.tsx",
       "id": "rel:comp:apps/web/components/inspector-panel.tsx=>sys:ext:@/lib",
       "kind": "depends_on",
@@ -3147,7 +3186,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/inspector-panel.tsx:2",
+          "ref": "apps/web/components/inspector-panel.tsx:6",
           "source": "code"
         }
       ],
@@ -3162,11 +3201,41 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/inspector-panel.tsx:1",
+          "ref": "apps/web/components/inspector-panel.tsx:5",
           "source": "code"
         }
       ],
       "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/inspector-panel.tsx",
+      "id": "rel:comp:apps/web/components/inspector-panel.tsx=>sys:ext:lucide-react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/inspector-panel.tsx → sys:ext:lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/inspector-panel.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:lucide-react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/inspector-panel.tsx",
+      "id": "rel:comp:apps/web/components/inspector-panel.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/inspector-panel.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/inspector-panel.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
     },
     {
       "confidence": 0.95,
@@ -3577,6 +3646,21 @@
         }
       ],
       "to": "sys:ext:better-auth"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/bpmn-elements.ts",
+      "id": "rel:comp:apps/web/lib/bpmn-elements.ts=>sys:ext:lucide-react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/bpmn-elements.ts → sys:ext:lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/bpmn-elements.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:lucide-react"
     },
     {
       "confidence": 0.95,
@@ -4699,6 +4783,21 @@
       "confidence": 0.95,
       "description": "External library",
       "externalKind": "library",
+      "id": "sys:ext:diagram-js-minimap",
+      "kind": "external",
+      "name": "diagram-js-minimap",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "diagram-js-minimap",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
       "id": "sys:ext:dotenv",
       "kind": "external",
       "name": "dotenv",
@@ -5041,6 +5140,21 @@
         }
       ],
       "version": "^2.1.1"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (diagram-js-minimap)",
+      "id": "tech:diagram-js-minimap",
+      "name": "diagram-js-minimap",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^5.3.0"
     },
     {
       "category": "orm",

@@ -17,19 +17,19 @@ status: active · author: Giorgi Naskhidashvili
 
 **Links:** [Repository](https://github.com/mgionas/claril) · [Brand domain](https://claril.dev)
 
-45 components · 38 capabilities · 0 endpoints · 14 data entities.
+46 components · 38 capabilities · 0 endpoints · 14 data entities.
 
 **Monorepo** — 5 workspace packages: apps/web, packages/ai-advisor, packages/db, packages/logic-inspector, packages/shared
 
-**Component roles:** 18 module · 10 service · 8 ui · 3 config · 3 page · 1 layout · 1 modal · 1 route
+**Component roles:** 18 module · 11 service · 8 ui · 3 config · 3 page · 1 layout · 1 modal · 1 route
 
-**Domains:** Web (26) · Logic inspector (8) · Db (6) · Ai advisor (4) · Misc (1)
+**Domains:** Web (27) · Logic inspector (8) · Db (6) · Ai advisor (4) · Misc (1)
 
 ### What it does (capabilities)
 - **apps/web/app/** — Home, Root Layout
 - **apps/web/app/sign-in/** — Sign In Page
 - **apps/web/app/sign-up/** — Sign Up Page
-- **apps/web/components/** — Ai Settings Dialog, Auth Form, Bpmn Canvas, Canvas Context Menu, Canvas Palette, Command Bar, Inspector Panel, Top Bar, Workbench
+- **apps/web/components/** — Ai Settings Dialog, Auth Form, Bpmn Canvas, Canvas Context Menu, Command Bar, Element Picker, Inspector Panel, Top Bar, Workbench
 - **apps/web/lib/** — Apply Quick Fix, Bpmn Registry To Graph, Cn, Create Diagram Version, Decrypt Secret, Encrypt Secret, Get Ai Status, Get Or Create User Diagram, Get Org Ai Config, Get User Org Id, Run Advisor, Save Ai Config, Save Diagram Content
 - **packages/ai-advisor/src/** — Advise, Create Model
 - **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From, Strongly Connected Components
@@ -54,7 +54,7 @@ status: active · author: Giorgi Naskhidashvili
 Page → next → @/lib → @/components
 
 **Stack:** ai: Vercel AI SDK · build: Turborepo · framework: Next.js · language: TypeScript · orm: Drizzle · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
-_+ 14 other libraries (see the web Overview)._
+_+ 15 other libraries (see the web Overview)._
 
 _Full detail: `archmantic view` (diagrams + trust) or the Archmantic MCP server (`get_context`, `get_component`, `get_api_surface`, …)._
 <!-- archmantic:end -->
