@@ -4,6 +4,7 @@ import { LogOut, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
+import { HistoryMenu } from "@/components/history-menu";
 import { cn } from "@/lib/utils";
 
 export type SaveState = "saved" | "saving" | "error";
@@ -22,6 +23,14 @@ interface TopBarProps {
   aiConnected: boolean;
   aiProvider?: string;
   onOpenAiSettings: () => void;
+  /** History menu wiring (BPMN workbench only; omit elsewhere). */
+  history?: {
+    getCurrentXml: () => string | null;
+    onRestored: (xml: string) => void;
+    onShowDiff: (
+      marks: { added: string[]; removed: string[]; changed: string[]; layout: string[] } | null,
+    ) => void;
+  };
 }
 
 export function TopBar({
@@ -32,10 +41,9 @@ export function TopBar({
   aiConnected,
   aiProvider,
   onOpenAiSettings,
+  history,
 }: TopBarProps) {
   const router = useRouter();
-  // diagramId is reserved for an upcoming task (version-History trigger).
-  void diagramId;
 
   async function handleSignOut() {
     await signOut();
@@ -76,6 +84,14 @@ export function TopBar({
             {aiConnected ? `AI: ${aiProvider ?? "on"}` : "AI: off"}
           </span>
         </button>
+        {history && (
+          <HistoryMenu
+            diagramId={diagramId}
+            getCurrentXml={history.getCurrentXml}
+            onRestored={history.onRestored}
+            onShowDiff={history.onShowDiff}
+          />
+        )}
         {aiConnected && (
           <Link
             href="/settings/ai"

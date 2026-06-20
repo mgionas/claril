@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { ChevronLeft, History } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { runAdvisor, runDocGen, saveDiagramContent } from "@/lib/actions";
@@ -14,7 +14,6 @@ import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
 import { AiDrawer } from "@/components/ai-drawer";
 import type { ChatTabHandle } from "@/components/chat-tab";
-import { VersionsPanel } from "@/components/versions-panel";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
 import { AiSettingsDialog } from "@/components/ai-settings-dialog";
@@ -56,7 +55,6 @@ export function BpmnWorkbench({
   const [aiError, setAiError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "problems">("chat");
   // Doc-gen (Markdown), shown in its own slide-over; seeded from persisted doc.
   const [docOpen, setDocOpen] = useState(false);
@@ -278,6 +276,11 @@ export function BpmnWorkbench({
           aiConnected={aiConnected}
           aiProvider={aiProvider}
           onOpenAiSettings={() => setSettingsOpen(true)}
+          history={{
+            getCurrentXml,
+            onRestored: handleRestored,
+            onShowDiff: handleShowDiff,
+          }}
         />
         <CommandBar
           onAskAi={handleAskAi}
@@ -296,35 +299,10 @@ export function BpmnWorkbench({
           onRegenerate={generateDocs}
         />
 
-        {/* History toggle — sits just above the Inspector toggle on the right edge. */}
-        <button
-          type="button"
-          onClick={() =>
-            setHistoryOpen((o) => {
-              const next = !o;
-              if (next) setInspectorOpen(false);
-              return next;
-            })
-          }
-          title={historyOpen ? "Close History" : "Version history"}
-          className={cn(
-            "absolute right-0 top-[calc(50%-72px)] z-30 flex -translate-y-1/2 items-center rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated",
-            historyOpen && "text-accent",
-          )}
-        >
-          <History className={cn("size-4", historyOpen ? "text-accent" : "text-fg-muted")} />
-        </button>
-
         {/* Drawer toggle — rides the right edge of the (shrinking) canvas. */}
         <button
           type="button"
-          onClick={() =>
-            setInspectorOpen((o) => {
-              const next = !o;
-              if (next) setHistoryOpen(false);
-              return next;
-            })
-          }
+          onClick={() => setInspectorOpen((o) => !o)}
           title={inspectorOpen ? "Collapse" : aiConnected ? "Open Assistant" : "Open Inspector"}
           className="absolute right-0 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated"
         >
@@ -372,14 +350,6 @@ export function BpmnWorkbench({
         onSelect={handleSelectFinding}
         onApplyFix={handleApplyFix}
         onAskAiAboutFinding={handleAskAiAboutFinding}
-      />
-
-      <VersionsPanel
-        open={historyOpen}
-        diagramId={diagramId}
-        getCurrentXml={getCurrentXml}
-        onRestored={handleRestored}
-        onShowDiff={handleShowDiff}
       />
 
       <AiSettingsDialog
