@@ -24,9 +24,8 @@ pnpm install
 # 1. Start Postgres (or point DATABASE_URL at your own)
 docker compose -f deploy/docker-compose.yml up -d
 
-# 2. Configure env (keep DATABASE_URL IDENTICAL in both — same database!)
-cp .env.example .env                 # used by Drizzle migrations
-cp .env.example apps/web/.env.local  # used by the web app
+# 2. Configure env (one file — the app and migrations both read it)
+cp .env.example apps/web/.env.local
 #   then set BETTER_AUTH_SECRET — e.g. openssl rand -base64 32
 #   (restart the dev server after changing env — Next caches it at boot)
 
