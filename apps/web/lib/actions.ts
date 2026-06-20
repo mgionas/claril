@@ -179,6 +179,28 @@ export async function saveAiConfig(input: SaveAiConfigInput): Promise<void> {
   }
 }
 
+/** Remove the org's AI provider config (key + model). Owner/admin only. */
+export async function removeAiConfig(): Promise<void> {
+  const userId = await requireUserId();
+  const orgId = await getUserOrgId(userId);
+  if (!orgId) throw new Error("No organization.");
+
+  const membership = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, orgId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0];
+  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
+    throw new Error("Only organization owners or admins can configure AI.");
+  }
+
+  await db
+    .delete(schema.aiProviderConfig)
+    .where(eq(schema.aiProviderConfig.organizationId, orgId));
+}
+
 /**
  * Run the AI advisor, grounded on the deterministic findings — and, when a
  * `diagramId` is supplied, on the Asset Catalog assets bound to that diagram

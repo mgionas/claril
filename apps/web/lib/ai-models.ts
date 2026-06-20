@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import {
   MODEL_CATALOG,
   getModelInfo,
@@ -7,6 +8,31 @@ import {
   type AiProvider,
   type ModelInfo,
 } from "@claril/ai-advisor";
+import { auth } from "@/lib/auth";
+import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+
+/**
+ * Fall back to the org's already-saved (decrypted) credential when the caller
+ * didn't pass one — e.g. testing/refreshing on the settings page where the key
+ * field is intentionally blank because a key is already stored. Server-only;
+ * the key is never returned to the client.
+ */
+async function savedCredential(
+  provider: AiProvider,
+): Promise<{ apiKey?: string; baseUrl?: string }> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    const userId = session?.user?.id;
+    if (!userId) return {};
+    const orgId = await getUserOrgId(userId);
+    if (!orgId) return {};
+    const cfg = await getOrgAiConfig(orgId);
+    if (cfg && cfg.provider === provider) return { apiKey: cfg.apiKey, baseUrl: cfg.baseUrl };
+    return {};
+  } catch {
+    return {};
+  }
+}
 
 /**
  * A model option for the picker: a known catalog id carries full metadata; a
@@ -117,6 +143,14 @@ export async function listProviderModels(
   apiKey?: string,
   baseUrl?: string,
 ): Promise<ListProviderModelsResult> {
+  // Fall back to the saved key/baseUrl when the form didn't supply one (e.g.
+  // refreshing on the settings page where the key field is blank by design).
+  if (!apiKey || !baseUrl) {
+    const saved = await savedCredential(provider);
+    apiKey = apiKey || saved.apiKey;
+    baseUrl = baseUrl || saved.baseUrl;
+  }
+
   // Cloud providers need a key to query the live endpoint; without one, serve
   // the curated catalog (no notice — this is the expected first-run state).
   const needsKey = provider !== "ollama";
@@ -211,6 +245,13 @@ export async function testProviderConnection(
   apiKey?: string,
   baseUrl?: string,
 ): Promise<TestConnectionResult> {
+  // Fall back to the saved credential when the key field is blank (a key is
+  // already stored) — so "Test connection" works on the settings page.
+  if (!apiKey || !baseUrl) {
+    const saved = await savedCredential(provider);
+    apiKey = apiKey || saved.apiKey;
+    baseUrl = baseUrl || saved.baseUrl;
+  }
   if (provider !== "ollama" && !apiKey) {
     return { ok: false, message: "Enter an API key first." };
   }
