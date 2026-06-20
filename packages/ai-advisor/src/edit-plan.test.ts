@@ -69,6 +69,17 @@ describe("EditPlanSchema", () => {
     });
     expect(parsed.success).toBe(true);
   });
+
+  it("accepts activity markers", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Make a task multi-instance",
+      ops: [
+        { kind: "addNode", tempId: "t1", type: "task", name: "Review", marker: "multiInstanceParallel" },
+        { kind: "setMarker", elementId: "Task_2", marker: "loop" },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("orderOps", () => {

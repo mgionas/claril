@@ -31,6 +31,7 @@ export function groupOps(ops: Op[]): OpGroups {
         g.updated.push(`flow ${op.flowId}${bits ? ` → ${bits}` : ""}`);
         break;
       }
+      case "setMarker": g.updated.push(`${op.elementId} → ${op.marker}`); break;
       case "moveToContainer": g.moved.push(`${op.elementId} → ${op.containerRef}`); break;
       case "reconnect": g.reconnected.push(op.flowId); break;
       case "updateElement": g.updated.push(`${op.elementId}${op.name ? ` → "${op.name}"` : ""}`); break;

@@ -40,6 +40,9 @@ const AddNode = z.object({
   eventDefinition: z
     .enum(["timer", "message", "error", "signal", "escalation", "conditional", "compensation", "terminate"])
     .optional(),
+  marker: z
+    .enum(["loop", "multiInstanceParallel", "multiInstanceSequential", "compensation"])
+    .optional(),
 });
 const Connect = z.object({
   kind: z.literal("connect"),
@@ -57,6 +60,11 @@ const SetFlow = z.object({
   flowId: z.string(),
   condition: z.string().optional(),
   isDefault: z.boolean().optional(),
+});
+const SetMarker = z.object({
+  kind: z.literal("setMarker"),
+  elementId: z.string(),
+  marker: z.enum(["loop", "multiInstanceParallel", "multiInstanceSequential", "compensation", "none"]),
 });
 const UpdateElement = z.object({
   kind: z.literal("updateElement"),
@@ -87,6 +95,7 @@ export const OpSchema = z.discriminatedUnion("kind", [
   SetFlow,
   MoveToContainer,
   Reconnect,
+  SetMarker,
   UpdateElement,
   DeleteElement,
 ]);
@@ -106,8 +115,9 @@ const ORDER: Record<Op["kind"], number> = {
   setFlow: 4,
   moveToContainer: 5,
   reconnect: 6,
-  updateElement: 7,
-  deleteElement: 8,
+  setMarker: 7,
+  updateElement: 8,
+  deleteElement: 9,
 };
 
 /** Stable sort into a dependency-safe execution order. */

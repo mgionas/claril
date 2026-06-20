@@ -173,6 +173,24 @@ export function applyEditPlan(
     if (isDefault === undefined || !conn.source) return;
     modeling.updateProperties(conn.source, { default: isDefault ? conn.businessObject : undefined });
   };
+  // Set/clear an activity marker (loop / multi-instance / compensation).
+  const applyMarker = (el: any, marker: string) => {
+    if (marker === "compensation") {
+      modeling.updateProperties(el, { isForCompensation: true });
+      return;
+    }
+    if (marker === "none") {
+      modeling.updateProperties(el, { loopCharacteristics: undefined, isForCompensation: false });
+      return;
+    }
+    const lc =
+      marker === "loop"
+        ? bpmnFactory.create("bpmn:StandardLoopCharacteristics")
+        : bpmnFactory.create("bpmn:MultiInstanceLoopCharacteristics", {
+            isSequential: marker === "multiInstanceSequential",
+          });
+    modeling.updateProperties(el, { loopCharacteristics: lc });
+  };
 
   const DEBUG = process.env.NODE_ENV !== "production";
   if (DEBUG) console.log("[applyEditPlan] ops (ordered):", orderOps(plan.ops));
@@ -275,6 +293,9 @@ export function applyEditPlan(
             /* keep the plain event if replace fails */
           }
         }
+        if (op.marker) {
+          try { applyMarker(placed, op.marker); } catch { /* best-effort */ }
+        }
         temp.set(op.tempId, placed);
         changed.add(placed.id);
         return;
@@ -309,6 +330,13 @@ export function applyEditPlan(
         applyCondition(conn, op.condition);
         applyDefault(conn, op.isDefault);
         changed.add(conn.id);
+        return;
+      }
+      case "setMarker": {
+        const el = resolve(op.elementId);
+        if (!el) return;
+        applyMarker(el, op.marker);
+        changed.add(el.id);
         return;
       }
       case "moveToContainer": {
