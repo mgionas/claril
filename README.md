@@ -14,7 +14,39 @@ Claril is a modeling tool that doesn't just *draw* your processes and systems �
 
 ## Status
 
-🚧 Early development. Architecture and roadmap are being defined.
+🚧 Early development. The monorepo, deterministic logic inspector, themed bpmn-js canvas, and auth/persistence layer are in place — see [docs/roadmap.md](docs/roadmap.md).
+
+## Quick start
+
+```bash
+pnpm install
+
+# 1. Start Postgres (or point DATABASE_URL at your own)
+docker compose -f deploy/docker-compose.yml up -d
+
+# 2. Configure env
+cp .env.example .env                 # used by Drizzle migrations
+cp .env.example apps/web/.env.local  # used by the web app
+#   then set BETTER_AUTH_SECRET — e.g. openssl rand -base64 32
+
+# 3. Apply the schema
+pnpm --filter @claril/db db:migrate
+
+# 4. Run the app
+pnpm dev                             # http://localhost:3000
+```
+
+Run the inspector tests with `pnpm test`.
+
+## Project layout
+
+```
+apps/web                  Next.js 16 workbench (canvas + UI)
+packages/logic-inspector  deterministic BPMN analysis engine (core IP)
+packages/db               Drizzle schema + client (Better Auth + tenancy)
+packages/shared           shared types
+docs/                     architecture, design system, roadmap, ADRs
+```
 
 ## Tech
 

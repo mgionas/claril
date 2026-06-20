@@ -17,13 +17,13 @@ status: active · author: Giorgi Naskhidashvili
 
 **Links:** [Repository](https://github.com/mgionas/claril) · [Brand domain](https://claril.dev)
 
-21 components · 18 capabilities · 0 endpoints · 0 data entities.
+30 components · 18 capabilities · 0 endpoints · 13 data entities.
 
-**Monorepo** — 3 workspace packages: apps/web, packages/logic-inspector, packages/shared
+**Monorepo** — 4 workspace packages: apps/web, packages/db, packages/logic-inspector, packages/shared
 
-**Component roles:** 9 module · 5 ui · 3 service · 2 config · 1 layout · 1 page
+**Component roles:** 14 module · 5 service · 5 ui · 3 config · 1 layout · 1 page · 1 route
 
-**Domains:** Web (12) · Logic inspector (8) · Misc (1)
+**Domains:** Web (15) · Logic inspector (8) · Db (6) · Misc (1)
 
 ### What it does (capabilities)
 - **apps/web/app/** — Home, Root Layout
@@ -31,11 +31,26 @@ status: active · author: Giorgi Naskhidashvili
 - **apps/web/lib/** — Bpmn Registry To Graph, Cn
 - **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From
 
-### Primary process: Home process
-Page → @/components
+### Data model
+- **workspace** <sub>packages/db/src/schema/app.ts:13</sub>: id, organizationId, name, slug, createdAt  →text
+- **workspace_member** <sub>packages/db/src/schema/app.ts:27</sub>: id, workspaceId, userId, role, createdAt  →text →text
+- **project** <sub>packages/db/src/schema/app.ts:43</sub>: id, workspaceId, name, description, createdAt, updatedAt  →text
+- **project_member** <sub>packages/db/src/schema/app.ts:58</sub>: id, projectId, userId, role, createdAt  →text →text
+- **diagram** <sub>packages/db/src/schema/app.ts:74</sub>: id, projectId, type, name, createdAt, updatedAt  →text
+- **version** <sub>packages/db/src/schema/app.ts:91</sub>: id, diagramId, label, content, createdBy, createdAt  →text →text
+- **user** <sub>packages/db/src/schema/auth.ts:11</sub>: id, name, email, emailVerified, image, createdAt, updatedAt
+- **session** <sub>packages/db/src/schema/auth.ts:21</sub>: id, token, expiresAt, ipAddress, userAgent, userId, createdAt, updatedAt  →text
+- **account** <sub>packages/db/src/schema/auth.ts:36</sub>: id, accountId, providerId, userId, accessToken, refreshToken, idToken, accessTokenExpiresAt, refreshTokenExpiresAt, scope, password, createdAt, updatedAt  →text
+- **verification** <sub>packages/db/src/schema/auth.ts:54</sub>: id, identifier, value, expiresAt, createdAt, updatedAt
+- **organization** <sub>packages/db/src/schema/auth.ts:65</sub>: id, name, slug, logo, metadata, createdAt
+- **member** <sub>packages/db/src/schema/auth.ts:74</sub>: id, organizationId, userId, createdAt  →text →text
+- **invitation** <sub>packages/db/src/schema/auth.ts:87</sub>: id, organizationId, email, role, status, expiresAt, inviterId  →text →text
 
-**Stack:** build: Turborepo · framework: Next.js · language: TypeScript · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
-_+ 4 other libraries (see the web Overview)._
+### Primary process: Auth all process
+Route → better-auth → @/lib
+
+**Stack:** build: Turborepo · framework: Next.js · language: TypeScript · orm: Drizzle · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
+_+ 7 other libraries (see the web Overview)._
 
 _Full detail: `archmantic view` (diagrams + trust) or the Archmantic MCP server (`get_context`, `get_component`, `get_api_surface`, …)._
 <!-- archmantic:end -->

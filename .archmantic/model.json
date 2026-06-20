@@ -294,6 +294,23 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/app/api/auth/[...all]/route.ts",
+      "kind": "module",
+      "name": "apps/web/app/api/auth/[...all]/route.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "route",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/app/layout.tsx",
       "kind": "module",
       "name": "apps/web/app/layout.tsx",
@@ -413,6 +430,40 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/auth-client.ts",
+      "kind": "module",
+      "name": "apps/web/lib/auth-client.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth-client.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/auth.ts",
+      "kind": "module",
+      "name": "apps/web/lib/auth.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/lib/bpmn-to-graph.ts",
       "kind": "module",
       "name": "apps/web/lib/bpmn-to-graph.ts",
@@ -493,6 +544,108 @@
         }
       ],
       "role": "config",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-db",
+      "id": "comp:packages/db/drizzle.config.ts",
+      "kind": "module",
+      "name": "packages/db/drizzle.config.ts",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/drizzle.config.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "config",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-db",
+      "id": "comp:packages/db/src/client.ts",
+      "kind": "module",
+      "name": "packages/db/src/client.ts",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/client.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-db",
+      "id": "comp:packages/db/src/index.ts",
+      "kind": "module",
+      "name": "packages/db/src/index.ts",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-db",
+      "id": "comp:packages/db/src/schema/app.ts",
+      "kind": "module",
+      "name": "packages/db/src/schema/app.ts",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-db",
+      "id": "comp:packages/db/src/schema/auth.ts",
+      "kind": "module",
+      "name": "packages/db/src/schema/auth.ts",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-db",
+      "id": "comp:packages/db/src/schema/index.ts",
+      "kind": "module",
+      "name": "packages/db/src/schema/index.ts",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
       "systemId": "sys:claril"
     },
     {
@@ -649,9 +802,620 @@
       "systemId": "sys:claril"
     }
   ],
-  "dataEntities": [],
+  "dataEntities": [
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "name": "accountId",
+          "type": "text"
+        },
+        {
+          "name": "providerId",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "userId",
+          "relationTo": "data:user",
+          "type": "text"
+        },
+        {
+          "name": "accessToken",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "refreshToken",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "idToken",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "accessTokenExpiresAt",
+          "optional": true,
+          "type": "timestamp"
+        },
+        {
+          "name": "refreshTokenExpiresAt",
+          "optional": true,
+          "type": "timestamp"
+        },
+        {
+          "name": "scope",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "password",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:account",
+      "name": "account",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:36",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "projectId",
+          "relationTo": "data:project",
+          "type": "text"
+        },
+        {
+          "name": "type",
+          "type": "diagramType"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:diagram",
+      "name": "diagram",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:74",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "organizationId",
+          "relationTo": "data:organization",
+          "type": "text"
+        },
+        {
+          "name": "email",
+          "type": "text"
+        },
+        {
+          "name": "role",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "status",
+          "type": "text"
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp"
+        },
+        {
+          "isForeignKey": true,
+          "name": "inviterId",
+          "relationTo": "data:user",
+          "type": "text"
+        }
+      ],
+      "id": "data:invitation",
+      "name": "invitation",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:87",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "organizationId",
+          "relationTo": "data:organization",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "userId",
+          "relationTo": "data:user",
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:member",
+      "name": "member",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:74",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "isUnique": true,
+          "name": "slug",
+          "type": "text"
+        },
+        {
+          "name": "logo",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "metadata",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:organization",
+      "name": "organization",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:65",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "workspaceId",
+          "relationTo": "data:workspace",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "description",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:project",
+      "name": "project",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:43",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "projectId",
+          "relationTo": "data:project",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "userId",
+          "relationTo": "data:user",
+          "type": "text"
+        },
+        {
+          "name": "role",
+          "type": "projectRole"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:project_member",
+      "name": "project_member",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:58",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isUnique": true,
+          "name": "token",
+          "type": "text"
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "ipAddress",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "userAgent",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "userId",
+          "relationTo": "data:user",
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:session",
+      "name": "session",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:21",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "isUnique": true,
+          "name": "email",
+          "type": "text"
+        },
+        {
+          "name": "emailVerified",
+          "type": "boolean"
+        },
+        {
+          "name": "image",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:user",
+      "name": "user",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:11",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "name": "identifier",
+          "type": "text"
+        },
+        {
+          "name": "value",
+          "type": "text"
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:verification",
+      "name": "verification",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:54",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "diagramId",
+          "relationTo": "data:diagram",
+          "type": "text"
+        },
+        {
+          "name": "label",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "content",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "createdBy",
+          "optional": true,
+          "relationTo": "data:user",
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:version",
+      "name": "version",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:91",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "organizationId",
+          "relationTo": "data:organization",
+          "type": "text"
+        },
+        {
+          "name": "name",
+          "type": "text"
+        },
+        {
+          "name": "slug",
+          "type": "text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:workspace",
+      "name": "workspace",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:13",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "workspaceId",
+          "relationTo": "data:workspace",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "name": "userId",
+          "relationTo": "data:user",
+          "type": "text"
+        },
+        {
+          "name": "role",
+          "type": "workspaceRole"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:workspace_member",
+      "name": "workspace_member",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:27",
+          "source": "code"
+        }
+      ]
+    }
+  ],
   "endpoints": [],
   "features": [
+    {
+      "components": [
+        "comp:apps/web/app/api/auth/[...all]/route.ts"
+      ],
+      "confidence": 0.55,
+      "description": "The Auth all endpoint.",
+      "id": "feature:auth-all",
+      "name": "Auth all",
+      "provenance": [
+        {
+          "confidence": 0.55,
+          "ref": "apps/web/app/api/auth/[...all]/route.ts",
+          "source": "code"
+        }
+      ],
+      "status": "draft"
+    },
     {
       "components": [
         "comp:apps/web/app/page.tsx"
@@ -671,6 +1435,51 @@
     }
   ],
   "flows": [
+    {
+      "confidence": 0.6,
+      "description": "Behavior of \"Auth all\": the page, the components it renders, and the services it calls.",
+      "featureId": "feature:auth-all",
+      "id": "flow:auth-all",
+      "name": "Auth all flow",
+      "participants": [
+        "comp:apps/web/app/api/auth/[...all]/route.ts",
+        "sys:ext:better-auth",
+        "sys:ext:@/lib"
+      ],
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+          "source": "code"
+        }
+      ],
+      "steps": [
+        {
+          "action": "calls",
+          "participant": "comp:apps/web/app/api/auth/[...all]/route.ts",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+              "source": "code"
+            }
+          ],
+          "to": "sys:ext:better-auth"
+        },
+        {
+          "action": "calls",
+          "participant": "comp:apps/web/app/api/auth/[...all]/route.ts",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/api/auth/[...all]/route.ts:2",
+              "source": "code"
+            }
+          ],
+          "to": "sys:ext:@/lib"
+        }
+      ]
+    },
     {
       "confidence": 0.6,
       "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
@@ -704,13 +1513,14 @@
       ]
     }
   ],
-  "generatedAt": "2026-06-20T10:53:04.120Z",
+  "generatedAt": "2026-06-20T11:02:25.404Z",
   "groups": [
     {
       "confidence": 0.85,
       "id": "group:domain:apps-web",
       "kind": "domain",
       "members": [
+        "comp:apps/web/app/api/auth/[...all]/route.ts",
         "comp:apps/web/app/layout.tsx",
         "comp:apps/web/app/page.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
@@ -718,6 +1528,8 @@
         "comp:apps/web/components/inspector-panel.tsx",
         "comp:apps/web/components/top-bar.tsx",
         "comp:apps/web/components/workbench.tsx",
+        "comp:apps/web/lib/auth-client.ts",
+        "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
         "comp:apps/web/lib/default-diagram.ts",
         "comp:apps/web/lib/utils.ts",
@@ -728,7 +1540,7 @@
       "provenance": [
         {
           "confidence": 0.85,
-          "ref": "apps/web/app/layout.tsx",
+          "ref": "apps/web/app/api/auth/[...all]/route.ts",
           "source": "code"
         }
       ]
@@ -745,6 +1557,27 @@
         {
           "confidence": 0.85,
           "ref": "packages/shared/src/index.ts",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.85,
+      "id": "group:domain:packages-db",
+      "kind": "domain",
+      "members": [
+        "comp:packages/db/drizzle.config.ts",
+        "comp:packages/db/src/client.ts",
+        "comp:packages/db/src/index.ts",
+        "comp:packages/db/src/schema/app.ts",
+        "comp:packages/db/src/schema/auth.ts",
+        "comp:packages/db/src/schema/index.ts"
+      ],
+      "name": "Db",
+      "provenance": [
+        {
+          "confidence": 0.85,
+          "ref": "packages/db/drizzle.config.ts",
           "source": "code"
         }
       ]
@@ -774,11 +1607,29 @@
     },
     {
       "confidence": 0.8,
+      "id": "group:layer:api",
+      "kind": "layer",
+      "members": [
+        "comp:apps/web/app/api/auth/[...all]/route.ts"
+      ],
+      "name": "API",
+      "order": 1,
+      "provenance": [
+        {
+          "confidence": 0.8,
+          "ref": "derived:layer:api",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.8,
       "id": "group:layer:config",
       "kind": "layer",
       "members": [
         "comp:apps/web/next.config.ts",
-        "comp:apps/web/postcss.config.mjs"
+        "comp:apps/web/postcss.config.mjs",
+        "comp:packages/db/drizzle.config.ts"
       ],
       "name": "Config",
       "order": 5,
@@ -795,9 +1646,16 @@
       "id": "group:layer:domain",
       "kind": "layer",
       "members": [
+        "comp:apps/web/lib/auth-client.ts",
+        "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
         "comp:apps/web/lib/default-diagram.ts",
         "comp:apps/web/lib/utils.ts",
+        "comp:packages/db/src/client.ts",
+        "comp:packages/db/src/index.ts",
+        "comp:packages/db/src/schema/app.ts",
+        "comp:packages/db/src/schema/auth.ts",
+        "comp:packages/db/src/schema/index.ts",
         "comp:packages/logic-inspector/src/graph.ts",
         "comp:packages/logic-inspector/src/index.ts",
         "comp:packages/logic-inspector/src/inspect.ts",
@@ -945,35 +1803,46 @@
   "processes": [
     {
       "confidence": 0.6,
-      "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
-      "id": "proc:home",
-      "name": "Home process",
+      "description": "Behavior of \"Auth all\": the page, the components it renders, and the services it calls.",
+      "id": "proc:auth-all",
+      "name": "Auth all process",
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/app/page.tsx:1",
+          "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
           "source": "code"
         }
       ],
       "tasks": [
         {
-          "id": "task:comp:apps/web/app/page.tsx",
-          "name": "Page",
+          "id": "task:comp:apps/web/app/api/auth/[...all]/route.ts",
+          "name": "Route",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/page.tsx:1",
+              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
               "source": "code"
             }
           ]
         },
         {
-          "id": "task:sys:ext:@/components",
-          "name": "@/components",
+          "id": "task:sys:ext:better-auth",
+          "name": "better-auth",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/page.tsx:1",
+              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+              "source": "code"
+            }
+          ]
+        },
+        {
+          "id": "task:sys:ext:@/lib",
+          "name": "@/lib",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
               "source": "code"
             }
           ]
@@ -983,6 +1852,36 @@
   ],
   "project": "claril",
   "relations": [
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/api/auth/[...all]/route.ts",
+      "id": "rel:comp:apps/web/app/api/auth/[...all]/route.ts=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/api/auth/[...all]/route.ts → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/api/auth/[...all]/route.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/api/auth/[...all]/route.ts",
+      "id": "rel:comp:apps/web/app/api/auth/[...all]/route.ts=>sys:ext:better-auth",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/api/auth/[...all]/route.ts → sys:ext:better-auth",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:better-auth"
+    },
     {
       "confidence": 0.95,
       "from": "comp:apps/web/app/layout.tsx",
@@ -1250,6 +2149,66 @@
     },
     {
       "confidence": 0.95,
+      "from": "comp:apps/web/lib/auth-client.ts",
+      "id": "rel:comp:apps/web/lib/auth-client.ts=>sys:ext:better-auth",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/auth-client.ts → sys:ext:better-auth",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth-client.ts:1",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth-client.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:better-auth"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/auth.ts",
+      "id": "rel:comp:apps/web/lib/auth.ts=>sys:ext:@claril/db",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/auth.ts → sys:ext:@claril/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/db"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/auth.ts",
+      "id": "rel:comp:apps/web/lib/auth.ts=>sys:ext:better-auth",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/auth.ts → sys:ext:better-auth",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth.ts:1",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth.ts:2",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/auth.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:better-auth"
+    },
+    {
+      "confidence": 0.95,
       "from": "comp:apps/web/lib/bpmn-to-graph.ts",
       "id": "rel:comp:apps/web/lib/bpmn-to-graph.ts=>sys:ext:@claril/logic-inspector",
       "kind": "depends_on",
@@ -1307,6 +2266,191 @@
         }
       ],
       "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/drizzle.config.ts",
+      "id": "rel:comp:packages/db/drizzle.config.ts=>sys:ext:dotenv",
+      "kind": "depends_on",
+      "name": "comp:packages/db/drizzle.config.ts → sys:ext:dotenv",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/drizzle.config.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:dotenv"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/drizzle.config.ts",
+      "id": "rel:comp:packages/db/drizzle.config.ts=>sys:ext:drizzle-kit",
+      "kind": "depends_on",
+      "name": "comp:packages/db/drizzle.config.ts → sys:ext:drizzle-kit",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/drizzle.config.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-kit"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/client.ts",
+      "id": "rel:comp:packages/db/src/client.ts=>comp:packages/db/src/schema/index.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/client.ts → comp:packages/db/src/schema/index.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/client.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/db/src/schema/index.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/client.ts",
+      "id": "rel:comp:packages/db/src/client.ts=>sys:ext:drizzle-orm",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/client.ts → sys:ext:drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/client.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-orm"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/client.ts",
+      "id": "rel:comp:packages/db/src/client.ts=>sys:ext:postgres",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/client.ts → sys:ext:postgres",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/client.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:postgres"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/index.ts",
+      "id": "rel:comp:packages/db/src/index.ts=>comp:packages/db/src/client.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/index.ts → comp:packages/db/src/client.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/db/src/client.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/index.ts",
+      "id": "rel:comp:packages/db/src/index.ts=>comp:packages/db/src/schema/index.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/index.ts → comp:packages/db/src/schema/index.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/index.ts:2",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/index.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/db/src/schema/index.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/schema/app.ts",
+      "id": "rel:comp:packages/db/src/schema/app.ts=>comp:packages/db/src/schema/auth.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/schema/app.ts → comp:packages/db/src/schema/auth.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:7",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/db/src/schema/auth.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/schema/app.ts",
+      "id": "rel:comp:packages/db/src/schema/app.ts=>sys:ext:drizzle-orm",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/schema/app.ts → sys:ext:drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-orm"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/schema/auth.ts",
+      "id": "rel:comp:packages/db/src/schema/auth.ts=>sys:ext:drizzle-orm",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/schema/auth.ts → sys:ext:drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/auth.ts:9",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-orm"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/schema/index.ts",
+      "id": "rel:comp:packages/db/src/schema/index.ts=>comp:packages/db/src/schema/app.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/schema/index.ts → comp:packages/db/src/schema/app.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/index.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/db/src/schema/app.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/db/src/schema/index.ts",
+      "id": "rel:comp:packages/db/src/schema/index.ts=>comp:packages/db/src/schema/auth.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/db/src/schema/index.ts → comp:packages/db/src/schema/auth.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/db/src/schema/auth.ts"
     },
     {
       "confidence": 0.95,
@@ -1674,6 +2818,21 @@
       "confidence": 0.95,
       "description": "External library",
       "externalKind": "library",
+      "id": "sys:ext:@claril/db",
+      "kind": "external",
+      "name": "@claril/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@claril/db",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
       "id": "sys:ext:@claril/logic-inspector",
       "kind": "external",
       "name": "@claril/logic-inspector",
@@ -1696,6 +2855,21 @@
         {
           "confidence": 0.95,
           "ref": "@claril/shared",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:better-auth",
+      "kind": "external",
+      "name": "better-auth",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "better-auth",
           "source": "code"
         }
       ]
@@ -1734,6 +2908,51 @@
       "confidence": 0.95,
       "description": "External library",
       "externalKind": "library",
+      "id": "sys:ext:dotenv",
+      "kind": "external",
+      "name": "dotenv",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "dotenv",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:drizzle-kit",
+      "kind": "external",
+      "name": "drizzle-kit",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "drizzle-kit",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:drizzle-orm",
+      "kind": "external",
+      "name": "drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "drizzle-orm",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
       "id": "sys:ext:lucide-react",
       "kind": "external",
       "name": "lucide-react",
@@ -1756,6 +2975,21 @@
         {
           "confidence": 0.95,
           "ref": "next",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:postgres",
+      "kind": "external",
+      "name": "postgres",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "postgres",
           "source": "code"
         }
       ]
@@ -1795,6 +3029,21 @@
     {
       "category": "library",
       "confidence": 0.95,
+      "description": "library (@claril/db)",
+      "id": "tech:@claril/db",
+      "name": "@claril/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "workspace:*"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
       "description": "library (@claril/logic-inspector)",
       "id": "tech:@claril/logic-inspector",
       "name": "@claril/logic-inspector",
@@ -1821,6 +3070,21 @@
         }
       ],
       "version": "workspace:*"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (better-auth)",
+      "id": "tech:better-auth",
+      "name": "better-auth",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^1.6.20"
     },
     {
       "category": "ui",
@@ -1853,6 +3117,21 @@
       "version": "^2.1.1"
     },
     {
+      "category": "orm",
+      "confidence": 0.95,
+      "description": "orm (drizzle-orm)",
+      "id": "tech:drizzle-orm",
+      "name": "Drizzle",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^0.45.2"
+    },
+    {
       "category": "ui",
       "confidence": 0.95,
       "description": "ui (lucide-react)",
@@ -1881,6 +3160,21 @@
         }
       ],
       "version": "^16.2.9"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (postgres)",
+      "id": "tech:postgres",
+      "name": "postgres",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^3.4.9"
     },
     {
       "category": "ui",
@@ -1990,6 +3284,7 @@
   ],
   "workspaces": [
     "apps/web",
+    "packages/db",
     "packages/logic-inspector",
     "packages/shared"
   ]
