@@ -1,4 +1,4 @@
-import { generateObject, type LanguageModelUsage } from "ai";
+import { generateText, type LanguageModelUsage } from "ai";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { BPMN_BEST_PRACTICES } from "@claril/logic-inspector";
@@ -6,7 +6,7 @@ import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
 import type { AssetContext } from "./grounding";
 import { describeGrounding } from "./advisor";
-import { EditPlanSchema, type EditPlan } from "./edit-plan";
+import { EditPlanSchema, NODE_TYPES, type EditPlan } from "./edit-plan";
 
 export interface PlanEditsInput {
   graph: ProcessGraph;
@@ -26,6 +26,17 @@ Rules:
 - When your change would create an implicit split (a node with multiple outgoing flows) or an implicit merge (a node with multiple incoming flows), insert an explicit gateway instead — never wire multiple flows straight into/out of a task.
 - "summary" is a one-line human description of the change.
 
+OUTPUT FORMAT — respond with ONLY a single JSON object (no markdown, no code fences, no prose before or after):
+{"summary": string, "ops": Op[]}
+Each Op is exactly one of these shapes (omit optional fields you don't need):
+- {"kind":"addPool","tempId":string,"name":string}
+- {"kind":"addLane","tempId":string,"poolRef":string,"name":string}
+- {"kind":"addNode","tempId":string,"type":${NODE_TYPES.map((t) => `"${t}"`).join("|")},"name"?:string,"containerRef"?:string}
+- {"kind":"connect","fromRef":string,"toRef":string,"flow":"sequence"|"message","label"?:string}
+- {"kind":"updateElement","elementId":string,"name"?:string}
+- {"kind":"deleteElement","elementId":string}
+"tempId" is a short placeholder (e.g. "t1") you assign to elements you create in THIS plan, so later ops can reference them; "fromRef"/"toRef"/"containerRef"/"poolRef" take either a tempId from this plan or an existing element id. To add a node into the flow, emit an addNode then connect ops wiring it to existing ids. If no change is warranted, return {"summary": "...", "ops": []}.
+
 ${BPMN_BEST_PRACTICES}`;
 
 /** Pure: assemble the user-facing prompt (grounding + instruction). Testable. */
@@ -35,20 +46,45 @@ export function buildPlannerPrompt(input: PlanEditsInput): string {
     findings: input.findings,
     assetContext: input.assetContext,
   });
-  return `CURRENT MODEL:\n${grounding}\n\nINSTRUCTION:\n${input.instruction}`;
+  return `CURRENT MODEL:\n${grounding}\n\nINSTRUCTION:\n${input.instruction}\n\nReturn the JSON edit plan now.`;
+}
+
+/**
+ * Parse and validate the planner model's text response into an EditPlan.
+ *
+ * The planner uses `generateText` rather than `generateObject` so it stays
+ * provider-neutral: provider-native structured output sends the Zod schema as a
+ * response schema, but our op schema is a discriminated union (JSON-Schema
+ * `anyOf`), which Google Gemini's response schema rejects. Instead we instruct
+ * JSON-only output and validate it here with Zod. Tolerates code fences and
+ * surrounding prose by extracting the outermost `{...}` object.
+ */
+export function parseEditPlanResponse(text: string): EditPlan {
+  const fenced = text.replace(/```(?:json)?/gi, "");
+  const start = fenced.indexOf("{");
+  const end = fenced.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error("Planner did not return a JSON edit plan.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(fenced.slice(start, end + 1));
+  } catch {
+    throw new Error("Planner returned malformed JSON.");
+  }
+  return EditPlanSchema.parse(parsed);
 }
 
 export async function planEditsWithUsage(
   input: PlanEditsInput,
   config: LLMProviderConfig,
 ): Promise<{ plan: EditPlan; usage: LanguageModelUsage }> {
-  const { object, usage } = await generateObject({
+  const { text, usage } = await generateText({
     model: createModel(config),
-    schema: EditPlanSchema,
     system: PLANNER_SYSTEM_PROMPT,
     prompt: buildPlannerPrompt(input),
   });
-  return { plan: object, usage };
+  return { plan: parseEditPlanResponse(text), usage };
 }
 
 /** Produce a validated EditPlan from a natural-language instruction (BYOK). */
