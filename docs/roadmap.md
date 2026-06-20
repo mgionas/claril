@@ -74,7 +74,7 @@ Mapped to the agent team so they can run in parallel where independent.
 | **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | 🔄 in progress |
 | **W8** | Provider connect: guided AI-setup wizard (steps/animation/instructions) + Vercel AI Gateway + BYOK + optional Google OAuth→Vertex | `ai-advisor-engineer` + `ui-engineer` | queued |
 | **W9** | AI drawer redesign: tabbed Chat + Problems, sent/received bubbles, specialized proposal cards, progressive phases, markdown doc viewer + DB persistence + Regenerate, token usage (Settings + chat) | `ui-engineer` + `ai-advisor-engineer` | ✅ merged to `main` (deployed) |
-| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | 🔄 **F1 deployed to `main`**; **F2 + F3 built** (branch `feat/ai-review-chat-memory`, reviewed green; migrations 0006–0008 applied) — pending merge + live smoke test |
+| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | ✅ **F1+F2+F3 merged to `main`** (deployed; migrations 0006–0008 applied) — live smoke tests (F1.7/F2.4/F3.4) still pending |
 
 Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
 inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
