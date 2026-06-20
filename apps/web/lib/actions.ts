@@ -5,7 +5,12 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
-import { advise, type AiProvider } from "@claril/ai-advisor";
+import {
+  advise,
+  generateProcessDoc,
+  answerQuestion,
+  type AiProvider,
+} from "@claril/ai-advisor";
 import { auth } from "@/lib/auth";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { assertDiagramAccess } from "@/lib/tenancy";
@@ -143,4 +148,48 @@ export async function runAdvisor(
     orgId && diagramId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
 
   return advise({ graph, findings, question, assetContext }, config);
+}
+
+/**
+ * Resolve the org-level BYOK config + (optional) diagram asset grounding for an
+ * AI call. Shared by every T3 advisor capability so config + grounding stay
+ * identical. Throws "No AI provider configured." when AI is off — callers route
+ * that to the one-click setup dialog.
+ */
+async function resolveAiContext(diagramId?: string) {
+  const userId = await requireUserId();
+  const orgId = await getUserOrgId(userId);
+  const config = orgId ? await getOrgAiConfig(orgId) : null;
+  if (!config) throw new Error("No AI provider configured.");
+  const assetContext =
+    orgId && diagramId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
+  return { config, assetContext };
+}
+
+/**
+ * Generate human-readable Markdown documentation for a process, grounded on the
+ * deterministic findings and (when `diagramId` is given) the Asset Catalog.
+ * Returns the Markdown string. BYOK / provider-agnostic.
+ */
+export async function runDocGen(
+  graph: ProcessGraph,
+  findings: Finding[],
+  diagramId?: string,
+): Promise<string> {
+  const { config, assetContext } = await resolveAiContext(diagramId);
+  return generateProcessDoc({ graph, findings, assetContext }, config);
+}
+
+/**
+ * Answer a user's natural-language question about the diagram in prose, grounded
+ * the same way as the advisor. Returns the answer string. BYOK / provider-agnostic.
+ */
+export async function runAdvisorQuestion(
+  graph: ProcessGraph,
+  findings: Finding[],
+  question: string,
+  diagramId?: string,
+): Promise<string> {
+  const { config, assetContext } = await resolveAiContext(diagramId);
+  return answerQuestion({ graph, findings, question, assetContext }, config);
 }

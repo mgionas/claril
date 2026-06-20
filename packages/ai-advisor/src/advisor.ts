@@ -47,7 +47,7 @@ export interface AdviseInput {
   assetContext?: AssetContext;
 }
 
-function describeGraph(graph: ProcessGraph): string {
+export function describeGraph(graph: ProcessGraph): string {
   const nodes = graph.nodes
     .map((n) => `- ${n.id} [${n.type}]${n.name ? ` "${n.name}"` : ""}`)
     .join("\n");
@@ -57,25 +57,42 @@ function describeGraph(graph: ProcessGraph): string {
   return `NODES:\n${nodes || "(none)"}\n\nFLOWS:\n${flows || "(none)"}`;
 }
 
-function describeFindings(findings: Finding[]): string {
+export function describeFindings(findings: Finding[]): string {
   if (findings.length === 0) return "(none)";
   return findings
     .map((f) => `- [${f.severity}] ${f.ruleId}${f.elementId ? ` @${f.elementId}` : ""}: ${f.message}`)
     .join("\n");
 }
 
-function buildPrompt(input: AdviseInput): string {
+/**
+ * Compact, grounded prompt block shared by every advisor capability: the
+ * process graph, the deterministic findings, and (when present) the Asset
+ * Catalog facts. Each capability appends its own task instruction.
+ */
+export function describeGrounding(input: {
+  graph: ProcessGraph;
+  findings: Finding[];
+  assetContext?: AssetContext;
+}): string {
   return [
     "PROCESS GRAPH:",
     describeGraph(input.graph),
     "",
-    "DETERMINISTIC FINDINGS (already reported — do not repeat):",
+    "DETERMINISTIC FINDINGS (facts from the logic inspector):",
     describeFindings(input.findings),
     "",
     "BOUND ASSETS (Asset Catalog — real service semantics; use these facts):",
     describeAssetContext(input.assetContext),
+  ].join("\n");
+}
+
+function buildPrompt(input: AdviseInput): string {
+  return [
+    describeGrounding(input),
     "",
-    input.question ? `USER QUESTION: ${input.question}` : "Review the model and report your advisory findings.",
+    input.question
+      ? `Focus your review on this concern: ${input.question}`
+      : "Review the model and report your advisory findings.",
   ].join("\n");
 }
 

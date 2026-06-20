@@ -5,11 +5,17 @@ import dynamic from "next/dynamic";
 import { ChevronLeft } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
-import { runAdvisor, saveDiagramContent } from "@/lib/actions";
+import {
+  runAdvisor,
+  runAdvisorQuestion,
+  runDocGen,
+  saveDiagramContent,
+} from "@/lib/actions";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import { TopBar, type SaveState } from "@/components/top-bar";
 import { InspectorPanel } from "@/components/inspector-panel";
 import { CommandBar } from "@/components/command-bar";
+import { DocPanel } from "@/components/doc-panel";
 import { AiSettingsDialog } from "@/components/ai-settings-dialog";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +47,14 @@ export function Workbench({
   const [aiError, setAiError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  // Q&A (prose answer, distinct from critique findings).
+  const [qaQuestion, setQaQuestion] = useState<string | null>(null);
+  const [qaAnswer, setQaAnswer] = useState<string | null>(null);
+  // Doc-gen (Markdown), shown in its own panel.
+  const [docOpen, setDocOpen] = useState(false);
+  const [docMarkdown, setDocMarkdown] = useState<string | null>(null);
+  const [docBusy, setDocBusy] = useState(false);
+  const [docError, setDocError] = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const graphRef = useRef<ProcessGraph | null>(null);
@@ -112,6 +126,66 @@ export function Workbench({
     }
   }, [aiConnected, diagramId]);
 
+  // Q&A: prose answer to a natural-language question, rendered in the drawer.
+  const handleAskQuestion = useCallback(
+    async (question: string) => {
+      if (!aiConnected) {
+        setSettingsOpen(true);
+        return;
+      }
+      const q = question.trim();
+      if (!q || !graphRef.current) return;
+      setInspectorOpen(true);
+      setQaQuestion(q);
+      setQaAnswer(null);
+      setAiBusy(true);
+      setAiError(null);
+      try {
+        const answer = await runAdvisorQuestion(
+          graphRef.current,
+          findingsRef.current,
+          q,
+          diagramId,
+        );
+        setQaAnswer(answer);
+      } catch (err) {
+        setAiError(err instanceof Error ? err.message : "AI request failed.");
+        setQaQuestion(null);
+      } finally {
+        setAiBusy(false);
+      }
+    },
+    [aiConnected, diagramId],
+  );
+
+  const handleClearQa = useCallback(() => {
+    setQaQuestion(null);
+    setQaAnswer(null);
+  }, []);
+
+  // Doc-gen: generate Markdown documentation, shown in the doc panel.
+  const handleGenerateDocs = useCallback(async () => {
+    if (!aiConnected) {
+      setSettingsOpen(true);
+      return;
+    }
+    if (!graphRef.current) return;
+    setDocOpen(true);
+    setDocMarkdown(null);
+    setDocError(null);
+    setDocBusy(true);
+    setAiBusy(true);
+    try {
+      const md = await runDocGen(graphRef.current, findingsRef.current, diagramId);
+      setDocMarkdown(md);
+    } catch (err) {
+      setDocError(err instanceof Error ? err.message : "AI request failed.");
+    } finally {
+      setDocBusy(false);
+      setAiBusy(false);
+    }
+  }, [aiConnected, diagramId]);
+
   const allFindings = advisorFindings.length > 0 ? [...findings, ...advisorFindings] : findings;
   const errorCount = allFindings.filter((f) => f.severity === "error").length;
   const warningCount = allFindings.filter((f) => f.severity === "warning").length;
@@ -139,7 +213,22 @@ export function Workbench({
           aiProvider={aiProvider}
           onOpenAiSettings={() => setSettingsOpen(true)}
         />
-        <CommandBar onAskAi={handleAskAi} aiBusy={aiBusy} aiConnected={aiConnected} />
+        <CommandBar
+          onAskAi={handleAskAi}
+          onAskQuestion={handleAskQuestion}
+          onGenerateDocs={handleGenerateDocs}
+          aiBusy={aiBusy}
+          aiConnected={aiConnected}
+        />
+
+        <DocPanel
+          open={docOpen}
+          onClose={() => setDocOpen(false)}
+          markdown={docMarkdown}
+          busy={docBusy}
+          error={docError}
+          diagramName={diagramName}
+        />
 
         {/* Inspector toggle — rides the right edge of the (shrinking) canvas. */}
         <button
@@ -179,6 +268,9 @@ export function Workbench({
         onApplyFix={handleApplyFix}
         aiBusy={aiBusy}
         aiError={aiError}
+        qaQuestion={qaQuestion}
+        qaAnswer={qaAnswer}
+        onClearQa={handleClearQa}
       />
 
       <AiSettingsDialog
