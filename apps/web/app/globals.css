@@ -125,6 +125,50 @@ body {
   background-color: var(--color-elevated) !important;
 }
 
+/* Custom context-pad icons: replace bpmn-font glyphs with our own SVG masks
+   (currentColor, so they follow the entry's themed color). Only the mapped
+   classes are overridden — unmapped entries keep their default glyph. */
+.djs-context-pad .entry.bpmn-icon-trash::before,
+.djs-context-pad .entry.bpmn-icon-connection-multi::before,
+.djs-context-pad .entry.bpmn-icon-gateway-none::before,
+.djs-context-pad .entry.bpmn-icon-task::before,
+.djs-context-pad .entry.bpmn-icon-end-event-none::before,
+.djs-context-pad .entry.bpmn-icon-intermediate-event-none::before,
+.djs-context-pad .entry.bpmn-icon-text-annotation::before,
+.djs-context-pad .entry.bpmn-icon-screw-wrench::before {
+  content: "" !important;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: var(--cp-icon) center / 18px 18px no-repeat;
+  mask: var(--cp-icon) center / 18px 18px no-repeat;
+}
+.djs-context-pad .entry.bpmn-icon-trash {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6h18'/><path d='M8 6V4h8v2'/><path d='M6 6l1 14h10l1-14'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-connection-multi {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h12'/><path d='M13 7l5 5-5 5'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-gateway-none {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l9 9-9 9-9-9z'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-task {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='6' width='16' height='12' rx='2'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-end-event-none {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='8'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-intermediate-event-none {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='6'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-text-annotation {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 5h10'/><path d='M7 10h10'/><path d='M7 15h7'/></svg>");
+}
+.djs-context-pad .entry.bpmn-icon-screw-wrench {
+  --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 8h12l-3-3'/><path d='M20 16H8l3 3'/></svg>");
+}
+
 /* ---- logic-inspector finding overlays + markers ---- */
 .claril-finding {
   width: 10px;

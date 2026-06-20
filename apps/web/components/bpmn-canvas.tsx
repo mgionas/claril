@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import { CanvasPalette } from "@/components/canvas-palette";
+import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
 import type { Finding, Severity } from "@claril/shared";
 import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
@@ -35,7 +36,9 @@ export default function BpmnCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
   const markedRef = useRef<string[]>([]);
+  const findingsRef = useRef<Finding[]>([]);
   const [ready, setReady] = useState(false);
+  const [menu, setMenu] = useState<MenuState | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -97,6 +100,7 @@ export default function BpmnCanvas({
         const registry = modeler.get("elementRegistry") as unknown as ElementRegistryLike;
         const graph = bpmnRegistryToGraph(registry);
         const findings = inspect(graph);
+        findingsRef.current = findings;
         onGraphChange?.(graph);
         onFindingsChange?.(findings);
         renderFindings(findings);
@@ -168,10 +172,29 @@ export default function BpmnCanvas({
   }, [focusElementId, focusNonce]);
 
   return (
-    <div className="absolute inset-0">
+    <div
+      className="absolute inset-0"
+      onContextMenu={(e) => {
+        const node = (e.target as Element).closest?.(".djs-element") as Element | null;
+        e.preventDefault();
+        setMenu({
+          x: e.clientX,
+          y: e.clientY,
+          elementId: node?.getAttribute("data-element-id") ?? null,
+        });
+      }}
+    >
       {/* Dedicated, React-untouched node for bpmn-js to render into. */}
       <div ref={containerRef} className="absolute inset-0" />
       {ready && modelerRef.current && <CanvasPalette modeler={modelerRef.current} />}
+      {menu && modelerRef.current && (
+        <CanvasContextMenu
+          menu={menu}
+          modeler={modelerRef.current}
+          findings={findingsRef.current}
+          onClose={() => setMenu(null)}
+        />
+      )}
     </div>
   );
 }
