@@ -42,6 +42,10 @@ export interface CanvasApi {
   clearDiff: () => void;
   /** Apply an AI EditPlan as one undoable command; returns changed ids. */
   applyEditPlan: (plan: EditPlan) => string[];
+  /** Mark elements an AI proposal just changed (violet, pending review). */
+  markAiEdit: (ids: string[]) => void;
+  /** Remove all AI-edit marking. */
+  clearAiEdit: () => void;
 }
 
 const DIFF_MARKERS = [
@@ -92,6 +96,7 @@ export default function BpmnCanvas({
   const markedRef = useRef<string[]>([]);
   const findingOverlaysRef = useRef<string[]>([]);
   const diffMarkedRef = useRef<string[]>([]);
+  const aiEditMarkedRef = useRef<string[]>([]);
   const assetOverlaysRef = useRef<string[]>([]);
   const connectHandleRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -261,8 +266,44 @@ export default function BpmnCanvas({
       diffMarkedRef.current = [...marked];
     };
 
+    const clearAiEditMarks = () => {
+      const canvas = modeler.get("canvas") as unknown as {
+        removeMarker: (id: string, cls: string) => void;
+      };
+      for (const id of aiEditMarkedRef.current) {
+        try {
+          canvas.removeMarker(id, "claril-ai-edit");
+        } catch {
+          /* element may be gone */
+        }
+      }
+      aiEditMarkedRef.current = [];
+    };
+
+    const markAiEdit = (ids: string[]) => {
+      clearAiEditMarks();
+      const canvas = modeler.get("canvas") as unknown as {
+        addMarker: (id: string, cls: string) => void;
+      };
+      const registry = modeler.get("elementRegistry") as unknown as {
+        get: (id: string) => unknown;
+      };
+      const marked = new Set<string>();
+      for (const id of ids) {
+        if (!registry.get(id)) continue;
+        try {
+          canvas.addMarker(id, "claril-ai-edit");
+          marked.add(id);
+        } catch {
+          /* ignore */
+        }
+      }
+      aiEditMarkedRef.current = [...marked];
+    };
+
     const reloadXml = async (xml: string) => {
       clearDiffMarks();
+      clearAiEditMarks();
       await modeler.importXML(xml);
       if (disposed) return;
       const canvas = modeler.get("canvas") as unknown as {
@@ -377,6 +418,8 @@ export default function BpmnCanvas({
           clearDiff: clearDiffMarks,
           applyEditPlan: (plan) =>
             modelerRef.current ? applyEditPlan(modelerRef.current, plan).changedIds : [],
+          markAiEdit,
+          clearAiEdit: clearAiEditMarks,
         });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);

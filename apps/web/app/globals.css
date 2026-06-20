@@ -21,6 +21,7 @@
   --color-warning: #fbbf24;
   --color-info: #60a5fa;
   --color-success: #34d399;
+  --color-ai-edit: #a78bfa;
 }
 
 /* ------------------------------------------------------------------
@@ -336,6 +337,18 @@ body {
 }
 .djs-connection.claril-diff-changed .djs-visual > path {
   stroke: var(--color-warning) !important;
+}
+
+/* ---- AI-edit overlay (elements an AI proposal just changed; pending review).
+   Distinct violet + soft glow so it never reads as a version diff. */
+.djs-element.claril-ai-edit .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-ai-edit) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-ai-edit) 60%, transparent));
+}
+.djs-connection.claril-ai-edit .djs-visual > path {
+  stroke: var(--color-ai-edit) !important;
+  stroke-width: 2px !important;
 }
 
 /* ---- minimap (pinned bottom-right, clear of the Inspector) ---- */
