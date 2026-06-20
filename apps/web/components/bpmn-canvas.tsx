@@ -17,6 +17,8 @@ import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
 import { applyQuickFix } from "@/lib/apply-fix";
+import { applyEditPlan } from "@/lib/apply-edit-plan";
+import type { EditPlan } from "@claril/ai-advisor";
 import { defaultDiagram } from "@/lib/default-diagram";
 
 /** Per-element diff classification, used to color the canvas diff overlay. */
@@ -38,6 +40,8 @@ export interface CanvasApi {
   showDiff: (marks: DiffMarks) => void;
   /** Remove all diff coloring. */
   clearDiff: () => void;
+  /** Apply an AI EditPlan as one undoable command; returns changed ids. */
+  applyEditPlan: (plan: EditPlan) => string[];
 }
 
 const DIFF_MARKERS = [
@@ -371,6 +375,8 @@ export default function BpmnCanvas({
           reloadXml,
           showDiff: applyDiff,
           clearDiff: clearDiffMarks,
+          applyEditPlan: (plan) =>
+            modelerRef.current ? applyEditPlan(modelerRef.current, plan).changedIds : [],
         });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);

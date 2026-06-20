@@ -51,7 +51,7 @@ export function describeGraph(graph: ProcessGraph): string {
   const nodes = graph.nodes
     .map((n) => `- ${n.id} [${n.type}]${n.name ? ` "${n.name}"` : ""}`)
     .join("\n");
-  const flows = graph.flows
+  const flows = (graph.flows ?? [])
     .map((f) => `- ${f.sourceRef} -> ${f.targetRef}${f.name ? ` (${f.name})` : ""}`)
     .join("\n");
   return `NODES:\n${nodes || "(none)"}\n\nFLOWS:\n${flows || "(none)"}`;

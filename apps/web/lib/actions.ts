@@ -10,8 +10,10 @@ import {
   generateProcessDoc,
   generateBpmnXml,
   answerQuestion,
+  planEdits,
   DEFAULT_MODELS,
   type AiProvider,
+  type EditPlan,
 } from "@claril/ai-advisor";
 import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
 import { layoutProcess } from "bpmn-auto-layout";
@@ -255,6 +257,17 @@ export async function runDocGen(
 ): Promise<string> {
   const { config, assetContext } = await resolveAiContext(diagramId);
   return generateProcessDoc({ graph, findings, assetContext }, config);
+}
+
+/** Plan model edits from a natural-language instruction. Grounded + BYOK. */
+export async function runDiagramEdit(
+  graph: ProcessGraph,
+  findings: Finding[],
+  instruction: string,
+  diagramId?: string,
+): Promise<EditPlan> {
+  const { config, assetContext } = await resolveAiContext(diagramId);
+  return planEdits({ graph, findings, instruction, assetContext }, config);
 }
 
 /**
