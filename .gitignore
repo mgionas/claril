@@ -10,6 +10,7 @@ out-tsc/
 .turbo/
 coverage/
 *.tsbuildinfo
+next-env.d.ts
 /tmp
 
 # Logs

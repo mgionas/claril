@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@source "../app";
+@source "../components";
+@source "../lib";
+
+/* ---- Design tokens (Linear-minimal, dark-first) ---- */
+@theme {
+  --color-canvas: #0b0b0d;
+  --color-panel: #18181b;
+  --color-elevated: #1f1f23;
+  --color-hairline: rgba(255, 255, 255, 0.08);
+
+  --color-fg: #fafafa;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-subtle: #71717a;
+
+  --color-accent: #4d8dff;
+
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
+  --color-success: #34d399;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ============================================================
+   bpmn-js dark theming — the canvas is raw SVG, so Tailwind /
+   shadcn do NOT style it; we override here from shared tokens.
+   ============================================================ */
+.djs-container {
+  background-color: var(--color-canvas) !important;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.bjs-powered-by {
+  display: none !important;
+}
+
+/* shapes */
+.djs-element .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: #3f3f46 !important;
+  fill: #18181b !important;
+}
+/* connections */
+.djs-connection .djs-visual > path {
+  stroke: #71717a !important;
+  fill: none !important;
+}
+.djs-connection .djs-visual > path[marker-end] {
+  fill: #71717a !important;
+}
+
+/* labels */
+.djs-label,
+.djs-visual text {
+  fill: #fafafa !important;
+  font-family: ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* selection + hover */
+.djs-element.selected .djs-outline {
+  stroke: var(--color-accent) !important;
+  stroke-width: 2px !important;
+  rx: 6px;
+}
+.djs-element.hover .djs-outline {
+  stroke: color-mix(in srgb, var(--color-accent) 50%, transparent) !important;
+}
+
+/* palette + context pad: dark frosted */
+.djs-palette,
+.djs-context-pad .group,
+.djs-popup {
+  background-color: rgba(24, 24, 27, 0.9) !important;
+  border: 1px solid var(--color-hairline) !important;
+  color: var(--color-fg) !important;
+  backdrop-filter: blur(8px);
+}
+.djs-palette .entry,
+.djs-context-pad .entry {
+  color: var(--color-fg-muted) !important;
+}
+.djs-palette .entry:hover,
+.djs-context-pad .entry:hover {
+  color: var(--color-accent) !important;
+}
