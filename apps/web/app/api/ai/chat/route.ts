@@ -12,6 +12,7 @@ import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { createModel, planEdits, describeGroundingPrompt } from "@claril/ai-advisor";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
 import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
+import { stripLoneSurrogates } from "@/lib/sanitize";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 
@@ -23,6 +24,16 @@ const BodySchema = z.object({
   findings: z.array(z.any()).default([]),
   diagramId: z.string().optional(),
 });
+
+/** Strip lone surrogates from every text part so the provider body stays valid JSON. */
+function sanitizeMessages(messages: UIMessage[]): UIMessage[] {
+  return messages.map((m) => ({
+    ...m,
+    parts: m.parts.map((p) =>
+      p.type === "text" ? { ...p, text: stripLoneSurrogates(p.text) } : p,
+    ),
+  }));
+}
 
 const CHAT_SYSTEM = `You are Claril's AI assistant working inside a BPMN process editor.
 You are given the exact process graph and the deterministic inspector's findings as FACTS — the only source of truth. Answer questions in concise Markdown, grounding every claim in the provided model; refer to elements by name, not id.
@@ -49,12 +60,14 @@ export async function POST(req: Request) {
     ? await buildDiagramAssetContext(orgId, diagramId)
     : undefined;
   const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
-  const grounding = describeGroundingPrompt({ graph, findings, assetContext });
+  const grounding = stripLoneSurrogates(
+    describeGroundingPrompt({ graph, findings, assetContext }),
+  );
 
   const result = streamText({
     model: createModel(config),
     system: `${CHAT_SYSTEM}\n\nCURRENT MODEL:\n${grounding}`,
-    messages: await convertToModelMessages(messages),
+    messages: await convertToModelMessages(sanitizeMessages(messages)),
     stopWhen: stepCountIs(3),
     tools: {
       proposeEdit: tool({
