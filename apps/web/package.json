@@ -20,6 +20,7 @@
     "diagram-js-minimap": "^5.3.0",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.21.0",
+    "mermaid": "11.15.0",
     "next": "^16.2.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

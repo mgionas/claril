@@ -9,6 +9,7 @@ The knowledge base for **Claril** — an open-source, self-hostable architecture
 | [vision.md](./vision.md) | Positioning, the wedge, who it's for, what makes it different |
 | [architecture.md](./architecture.md) | Stack, monorepo layout, deployment, AI integration model |
 | [data-model.md](./data-model.md) | Tenancy (Org→Workspace→Project→Diagram→Version), roles, entities |
+| [diagram-kinds.md](./diagram-kinds.md) | Supported diagram kinds (BPMN / Sequence / C4) and their editors |
 | [asset-catalog.md](./asset-catalog.md) | The org-level CMDB: object types, custom fields, bindings, AI grounding |
 | [ai-and-inspector.md](./ai-and-inspector.md) | Logic inspector (deterministic) + AI advisor + the 3-tier AI model |
 | [design-system.md](./design-system.md) | Linear-minimal dark aesthetic, tokens, canvas-maximal layout, canvas theming |
