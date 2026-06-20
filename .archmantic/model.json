@@ -28,7 +28,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/app/page.tsx:7",
+          "ref": "apps/web/app/page.tsx:8",
           "source": "code"
         }
       ]
@@ -67,6 +67,22 @@
     },
     {
       "componentIds": [
+        "comp:apps/web/components/ai-settings-dialog.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `AiSettingsDialog` in apps/web/components/ai-settings-dialog.tsx",
+      "id": "cap:apps/web/components/ai-settings-dialog.tsx#AiSettingsDialog",
+      "name": "Ai Settings Dialog",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/ai-settings-dialog.tsx:25",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
         "comp:apps/web/components/auth-form.tsx"
       ],
       "confidence": 0.6,
@@ -92,7 +108,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/bpmn-canvas.tsx:25",
+          "ref": "apps/web/components/bpmn-canvas.tsx:26",
           "source": "code"
         }
       ]
@@ -108,7 +124,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/command-bar.tsx:3",
+          "ref": "apps/web/components/command-bar.tsx:11",
           "source": "code"
         }
       ]
@@ -124,7 +140,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/inspector-panel.tsx:15",
+          "ref": "apps/web/components/inspector-panel.tsx:17",
           "source": "code"
         }
       ]
@@ -140,7 +156,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/top-bar.tsx:21",
+          "ref": "apps/web/components/top-bar.tsx:25",
           "source": "code"
         }
       ]
@@ -156,7 +172,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/workbench.tsx:21",
+          "ref": "apps/web/components/workbench.tsx:25",
           "source": "code"
         }
       ]
@@ -172,7 +188,55 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/lib/actions.ts:26",
+          "ref": "apps/web/lib/actions.ts:31",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/actions.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `getAiStatus` in apps/web/lib/actions.ts",
+      "id": "cap:apps/web/lib/actions.ts#getAiStatus",
+      "name": "Get Ai Status",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/actions.ts:56",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/actions.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `runAdvisor` in apps/web/lib/actions.ts",
+      "id": "cap:apps/web/lib/actions.ts#runAdvisor",
+      "name": "Run Advisor",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/actions.ts:122",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/actions.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `saveAiConfig` in apps/web/lib/actions.ts",
+      "id": "cap:apps/web/lib/actions.ts#saveAiConfig",
+      "name": "Save Ai Config",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/actions.ts:72",
           "source": "code"
         }
       ]
@@ -188,7 +252,39 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/lib/actions.ts:17",
+          "ref": "apps/web/lib/actions.ts:22",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/ai.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `getOrgAiConfig` in apps/web/lib/ai.ts",
+      "id": "cap:apps/web/lib/ai.ts#getOrgAiConfig",
+      "name": "Get Org Ai Config",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/ai.ts:17",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/ai.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `getUserOrgId` in apps/web/lib/ai.ts",
+      "id": "cap:apps/web/lib/ai.ts#getUserOrgId",
+      "name": "Get User Org Id",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/ai.ts:7",
           "source": "code"
         }
       ]
@@ -205,6 +301,38 @@
         {
           "confidence": 0.6,
           "ref": "apps/web/lib/bpmn-to-graph.ts:31",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/crypto.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `decryptSecret` in apps/web/lib/crypto.ts",
+      "id": "cap:apps/web/lib/crypto.ts#decryptSecret",
+      "name": "Decrypt Secret",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/crypto.ts:27",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/crypto.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `encryptSecret` in apps/web/lib/crypto.ts",
+      "id": "cap:apps/web/lib/crypto.ts#encryptSecret",
+      "name": "Encrypt Secret",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/crypto.ts:19",
           "source": "code"
         }
       ]
@@ -237,6 +365,38 @@
         {
           "confidence": 0.6,
           "ref": "apps/web/lib/utils.ts:4",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/ai-advisor/src/advisor.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `advise` in packages/ai-advisor/src/advisor.ts",
+      "id": "cap:packages/ai-advisor/src/advisor.ts#advise",
+      "name": "Advise",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/ai-advisor/src/advisor.ts:76",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/ai-advisor/src/provider.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `createModel` in packages/ai-advisor/src/provider.ts",
+      "id": "cap:packages/ai-advisor/src/provider.ts#createModel",
+      "name": "Create Model",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/ai-advisor/src/provider.ts:14",
           "source": "code"
         }
       ]
@@ -491,6 +651,23 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/ai-settings-dialog.tsx",
+      "kind": "module",
+      "name": "apps/web/components/ai-settings-dialog.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/ai-settings-dialog.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "modal",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/components/auth-form.tsx",
       "kind": "module",
       "name": "apps/web/components/auth-form.tsx",
@@ -610,6 +787,23 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/ai.ts",
+      "kind": "module",
+      "name": "apps/web/lib/ai.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/ai.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/lib/auth-client.ts",
       "kind": "module",
       "name": "apps/web/lib/auth-client.ts",
@@ -652,6 +846,23 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/lib/bpmn-to-graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/crypto.ts",
+      "kind": "module",
+      "name": "apps/web/lib/crypto.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/crypto.ts:1",
           "source": "code"
         }
       ],
@@ -741,6 +952,74 @@
         }
       ],
       "role": "config",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-ai-advisor",
+      "id": "comp:packages/ai-advisor/src/advisor.ts",
+      "kind": "module",
+      "name": "packages/ai-advisor/src/advisor.ts",
+      "package": "packages/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-ai-advisor",
+      "id": "comp:packages/ai-advisor/src/index.ts",
+      "kind": "module",
+      "name": "packages/ai-advisor/src/index.ts",
+      "package": "packages/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-ai-advisor",
+      "id": "comp:packages/ai-advisor/src/provider.ts",
+      "kind": "module",
+      "name": "packages/ai-advisor/src/provider.ts",
+      "package": "packages/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-ai-advisor",
+      "id": "comp:packages/ai-advisor/src/types.ts",
+      "kind": "module",
+      "name": "packages/ai-advisor/src/types.ts",
+      "package": "packages/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/types.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
       "systemId": "sys:claril"
     },
     {
@@ -1073,6 +1352,52 @@
         {
           "confidence": 0.95,
           "ref": "packages/db/src/schema/auth.ts:36",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "fields": [
+        {
+          "isId": true,
+          "name": "id",
+          "type": "text"
+        },
+        {
+          "isForeignKey": true,
+          "isUnique": true,
+          "name": "organizationId",
+          "relationTo": "data:organization",
+          "type": "text"
+        },
+        {
+          "name": "model",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "baseUrl",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "encryptedKey",
+          "optional": true,
+          "type": "text"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp"
+        }
+      ],
+      "id": "data:ai_provider_config",
+      "name": "ai_provider_config",
+      "package": "packages/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/db/src/schema/app.ts:111",
           "source": "code"
         }
       ]
@@ -1716,7 +2041,7 @@
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/page.tsx:5",
+              "ref": "apps/web/app/page.tsx:6",
               "source": "code"
             }
           ],
@@ -1834,7 +2159,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-06-20T11:33:53.845Z",
+  "generatedAt": "2026-06-20T11:48:05.563Z",
   "groups": [
     {
       "confidence": 0.85,
@@ -1846,6 +2171,7 @@
         "comp:apps/web/app/page.tsx",
         "comp:apps/web/app/sign-in/page.tsx",
         "comp:apps/web/app/sign-up/page.tsx",
+        "comp:apps/web/components/ai-settings-dialog.tsx",
         "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
         "comp:apps/web/components/command-bar.tsx",
@@ -1853,9 +2179,11 @@
         "comp:apps/web/components/top-bar.tsx",
         "comp:apps/web/components/workbench.tsx",
         "comp:apps/web/lib/actions.ts",
+        "comp:apps/web/lib/ai.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
+        "comp:apps/web/lib/crypto.ts",
         "comp:apps/web/lib/data.ts",
         "comp:apps/web/lib/default-diagram.ts",
         "comp:apps/web/lib/utils.ts",
@@ -1883,6 +2211,25 @@
         {
           "confidence": 0.85,
           "ref": "packages/shared/src/index.ts",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.85,
+      "id": "group:domain:packages-ai-advisor",
+      "kind": "domain",
+      "members": [
+        "comp:packages/ai-advisor/src/advisor.ts",
+        "comp:packages/ai-advisor/src/index.ts",
+        "comp:packages/ai-advisor/src/provider.ts",
+        "comp:packages/ai-advisor/src/types.ts"
+      ],
+      "name": "Ai advisor",
+      "provenance": [
+        {
+          "confidence": 0.85,
+          "ref": "packages/ai-advisor/src/advisor.ts",
           "source": "code"
         }
       ]
@@ -1973,12 +2320,18 @@
       "kind": "layer",
       "members": [
         "comp:apps/web/lib/actions.ts",
+        "comp:apps/web/lib/ai.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
+        "comp:apps/web/lib/crypto.ts",
         "comp:apps/web/lib/data.ts",
         "comp:apps/web/lib/default-diagram.ts",
         "comp:apps/web/lib/utils.ts",
+        "comp:packages/ai-advisor/src/advisor.ts",
+        "comp:packages/ai-advisor/src/index.ts",
+        "comp:packages/ai-advisor/src/provider.ts",
+        "comp:packages/ai-advisor/src/types.ts",
         "comp:packages/db/src/client.ts",
         "comp:packages/db/src/index.ts",
         "comp:packages/db/src/schema/app.ts",
@@ -2013,6 +2366,7 @@
         "comp:apps/web/app/page.tsx",
         "comp:apps/web/app/sign-in/page.tsx",
         "comp:apps/web/app/sign-up/page.tsx",
+        "comp:apps/web/components/ai-settings-dialog.tsx",
         "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
         "comp:apps/web/components/command-bar.tsx",
@@ -2263,7 +2617,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/app/page.tsx:5",
+          "ref": "apps/web/app/page.tsx:6",
           "source": "code"
         }
       ],
@@ -2284,6 +2638,11 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/app/page.tsx:4",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:5",
           "source": "code"
         }
       ],
@@ -2338,6 +2697,66 @@
         }
       ],
       "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/ai-settings-dialog.tsx",
+      "id": "rel:comp:apps/web/components/ai-settings-dialog.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/ai-settings-dialog.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/ai-settings-dialog.tsx:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/ai-settings-dialog.tsx",
+      "id": "rel:comp:apps/web/components/ai-settings-dialog.tsx=>sys:ext:@claril/ai-advisor",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/ai-settings-dialog.tsx → sys:ext:@claril/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/ai-settings-dialog.tsx:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/ai-advisor"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/ai-settings-dialog.tsx",
+      "id": "rel:comp:apps/web/components/ai-settings-dialog.tsx=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/ai-settings-dialog.tsx → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/ai-settings-dialog.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/ai-settings-dialog.tsx",
+      "id": "rel:comp:apps/web/components/ai-settings-dialog.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/ai-settings-dialog.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/ai-settings-dialog.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
     },
     {
       "confidence": 0.95,
@@ -2488,7 +2907,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/command-bar.tsx:1",
+          "ref": "apps/web/components/command-bar.tsx:3",
           "source": "code"
         }
       ],
@@ -2535,6 +2954,11 @@
           "confidence": 0.95,
           "ref": "apps/web/components/top-bar.tsx:5",
           "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/top-bar.tsx:6",
+          "source": "code"
         }
       ],
       "to": "sys:ext:@/lib"
@@ -2578,17 +3002,22 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/workbench.tsx:7",
-          "source": "code"
-        },
-        {
-          "confidence": 0.95,
           "ref": "apps/web/components/workbench.tsx:8",
           "source": "code"
         },
         {
           "confidence": 0.95,
           "ref": "apps/web/components/workbench.tsx:9",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:10",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:11",
           "source": "code"
         }
       ],
@@ -2603,11 +3032,26 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/workbench.tsx:6",
+          "ref": "apps/web/components/workbench.tsx:7",
           "source": "code"
         }
       ],
       "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/workbench.tsx",
+      "id": "rel:comp:apps/web/components/workbench.tsx=>sys:ext:@claril/logic-inspector",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/workbench.tsx → sys:ext:@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/logic-inspector"
     },
     {
       "confidence": 0.95,
@@ -2663,11 +3107,36 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/lib/actions.ts:6",
+          "ref": "apps/web/lib/actions.ts:9",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:10",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:11",
           "source": "code"
         }
       ],
       "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:@claril/ai-advisor",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:@claril/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:8",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/ai-advisor"
     },
     {
       "confidence": 0.95,
@@ -2683,6 +3152,36 @@
         }
       ],
       "to": "sys:ext:@claril/db"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:@claril/logic-inspector",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:7",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/logic-inspector"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
     },
     {
       "confidence": 0.95,
@@ -2713,6 +3212,66 @@
         }
       ],
       "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/ai.ts",
+      "id": "rel:comp:apps/web/lib/ai.ts=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/ai.ts → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/ai.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/ai.ts",
+      "id": "rel:comp:apps/web/lib/ai.ts=>sys:ext:@claril/ai-advisor",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/ai.ts → sys:ext:@claril/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/ai.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/ai-advisor"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/ai.ts",
+      "id": "rel:comp:apps/web/lib/ai.ts=>sys:ext:@claril/db",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/ai.ts → sys:ext:@claril/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/ai.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/db"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/ai.ts",
+      "id": "rel:comp:apps/web/lib/ai.ts=>sys:ext:drizzle-orm",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/ai.ts → sys:ext:drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/ai.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-orm"
     },
     {
       "confidence": 0.95,
@@ -2788,6 +3347,21 @@
         }
       ],
       "to": "sys:ext:@claril/logic-inspector"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/crypto.ts",
+      "id": "rel:comp:apps/web/lib/crypto.ts=>sys:ext:node:crypto",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/crypto.ts → sys:ext:node:crypto",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/crypto.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:node:crypto"
     },
     {
       "confidence": 0.95,
@@ -2893,6 +3467,246 @@
         }
       ],
       "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/advisor.ts",
+      "id": "rel:comp:packages/ai-advisor/src/advisor.ts=>comp:packages/ai-advisor/src/provider.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/advisor.ts → comp:packages/ai-advisor/src/provider.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:5",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/ai-advisor/src/provider.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/advisor.ts",
+      "id": "rel:comp:packages/ai-advisor/src/advisor.ts=>comp:packages/ai-advisor/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/advisor.ts → comp:packages/ai-advisor/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:6",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/ai-advisor/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/advisor.ts",
+      "id": "rel:comp:packages/ai-advisor/src/advisor.ts=>sys:ext:@claril/logic-inspector",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/advisor.ts → sys:ext:@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/logic-inspector"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/advisor.ts",
+      "id": "rel:comp:packages/ai-advisor/src/advisor.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/advisor.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/advisor.ts",
+      "id": "rel:comp:packages/ai-advisor/src/advisor.ts=>sys:ext:ai",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/advisor.ts → sys:ext:ai",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:ai"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/advisor.ts",
+      "id": "rel:comp:packages/ai-advisor/src/advisor.ts=>sys:ext:zod",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/advisor.ts → sys:ext:zod",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/advisor.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:zod"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/index.ts",
+      "id": "rel:comp:packages/ai-advisor/src/index.ts=>comp:packages/ai-advisor/src/advisor.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/index.ts → comp:packages/ai-advisor/src/advisor.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/index.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/ai-advisor/src/advisor.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/index.ts",
+      "id": "rel:comp:packages/ai-advisor/src/index.ts=>comp:packages/ai-advisor/src/provider.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/index.ts → comp:packages/ai-advisor/src/provider.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/index.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/ai-advisor/src/provider.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/index.ts",
+      "id": "rel:comp:packages/ai-advisor/src/index.ts=>comp:packages/ai-advisor/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/index.ts → comp:packages/ai-advisor/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/ai-advisor/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>comp:packages/ai-advisor/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → comp:packages/ai-advisor/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:7",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/ai-advisor/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>sys:ext:@ai-sdk/anthropic",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → sys:ext:@ai-sdk/anthropic",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@ai-sdk/anthropic"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>sys:ext:@ai-sdk/google",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → sys:ext:@ai-sdk/google",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@ai-sdk/google"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>sys:ext:@ai-sdk/mistral",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → sys:ext:@ai-sdk/mistral",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@ai-sdk/mistral"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>sys:ext:@ai-sdk/openai",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → sys:ext:@ai-sdk/openai",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@ai-sdk/openai"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>sys:ext:@ai-sdk/openai-compatible",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → sys:ext:@ai-sdk/openai-compatible",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@ai-sdk/openai-compatible"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/ai-advisor/src/provider.ts",
+      "id": "rel:comp:packages/ai-advisor/src/provider.ts=>sys:ext:ai",
+      "kind": "depends_on",
+      "name": "comp:packages/ai-advisor/src/provider.ts → sys:ext:ai",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/ai-advisor/src/provider.ts:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:ai"
     },
     {
       "confidence": 0.95,
@@ -3445,6 +4259,96 @@
       "confidence": 0.95,
       "description": "External library",
       "externalKind": "library",
+      "id": "sys:ext:@ai-sdk/anthropic",
+      "kind": "external",
+      "name": "@ai-sdk/anthropic",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@ai-sdk/anthropic",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@ai-sdk/google",
+      "kind": "external",
+      "name": "@ai-sdk/google",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@ai-sdk/google",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@ai-sdk/mistral",
+      "kind": "external",
+      "name": "@ai-sdk/mistral",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@ai-sdk/mistral",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@ai-sdk/openai",
+      "kind": "external",
+      "name": "@ai-sdk/openai",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@ai-sdk/openai",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@ai-sdk/openai-compatible",
+      "kind": "external",
+      "name": "@ai-sdk/openai-compatible",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@ai-sdk/openai-compatible",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@claril/ai-advisor",
+      "kind": "external",
+      "name": "@claril/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@claril/ai-advisor",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
       "id": "sys:ext:@claril/db",
       "kind": "external",
       "name": "@claril/db",
@@ -3482,6 +4386,21 @@
         {
           "confidence": 0.95,
           "ref": "@claril/shared",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:ai",
+      "kind": "external",
+      "name": "ai",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "ai",
           "source": "code"
         }
       ]
@@ -3665,9 +4584,114 @@
           "source": "code"
         }
       ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:zod",
+      "kind": "external",
+      "name": "zod",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "zod",
+          "source": "code"
+        }
+      ]
     }
   ],
   "technologies": [
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@ai-sdk/anthropic)",
+      "id": "tech:@ai-sdk/anthropic",
+      "name": "@ai-sdk/anthropic",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^3.0.85"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@ai-sdk/google)",
+      "id": "tech:@ai-sdk/google",
+      "name": "@ai-sdk/google",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^3.0.83"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@ai-sdk/mistral)",
+      "id": "tech:@ai-sdk/mistral",
+      "name": "@ai-sdk/mistral",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^3.0.40"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@ai-sdk/openai)",
+      "id": "tech:@ai-sdk/openai",
+      "name": "@ai-sdk/openai",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^3.0.73"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@ai-sdk/openai-compatible)",
+      "id": "tech:@ai-sdk/openai-compatible",
+      "name": "@ai-sdk/openai-compatible",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^2.0.51"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@claril/ai-advisor)",
+      "id": "tech:@claril/ai-advisor",
+      "name": "@claril/ai-advisor",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "workspace:*"
+    },
     {
       "category": "library",
       "confidence": 0.95,
@@ -3712,6 +4736,21 @@
         }
       ],
       "version": "workspace:*"
+    },
+    {
+      "category": "ai",
+      "confidence": 0.95,
+      "description": "ai (ai)",
+      "id": "tech:ai",
+      "name": "Vercel AI SDK",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^6.0.208"
     },
     {
       "category": "library",
@@ -3922,10 +4961,26 @@
         }
       ],
       "version": "^4.1.9"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (zod)",
+      "id": "tech:zod",
+      "name": "zod",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^4.4.3"
     }
   ],
   "workspaces": [
     "apps/web",
+    "packages/ai-advisor",
     "packages/db",
     "packages/logic-inspector",
     "packages/shared"

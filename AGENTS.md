@@ -17,20 +17,21 @@ status: active · author: Giorgi Naskhidashvili
 
 **Links:** [Repository](https://github.com/mgionas/claril) · [Brand domain](https://claril.dev)
 
-35 components · 25 capabilities · 0 endpoints · 13 data entities.
+42 components · 35 capabilities · 0 endpoints · 14 data entities.
 
-**Monorepo** — 4 workspace packages: apps/web, packages/db, packages/logic-inspector, packages/shared
+**Monorepo** — 5 workspace packages: apps/web, packages/ai-advisor, packages/db, packages/logic-inspector, packages/shared
 
-**Component roles:** 14 module · 7 service · 6 ui · 3 config · 3 page · 1 layout · 1 route
+**Component roles:** 18 module · 9 service · 6 ui · 3 config · 3 page · 1 layout · 1 modal · 1 route
 
-**Domains:** Web (20) · Logic inspector (8) · Db (6) · Misc (1)
+**Domains:** Web (23) · Logic inspector (8) · Db (6) · Ai advisor (4) · Misc (1)
 
 ### What it does (capabilities)
 - **apps/web/app/** — Home, Root Layout
 - **apps/web/app/sign-in/** — Sign In Page
 - **apps/web/app/sign-up/** — Sign Up Page
-- **apps/web/components/** — Auth Form, Bpmn Canvas, Command Bar, Inspector Panel, Top Bar, Workbench
-- **apps/web/lib/** — Bpmn Registry To Graph, Cn, Create Diagram Version, Get Or Create User Diagram, Save Diagram Content
+- **apps/web/components/** — Ai Settings Dialog, Auth Form, Bpmn Canvas, Command Bar, Inspector Panel, Top Bar, Workbench
+- **apps/web/lib/** — Bpmn Registry To Graph, Cn, Create Diagram Version, Decrypt Secret, Encrypt Secret, Get Ai Status, Get Or Create User Diagram, Get Org Ai Config, Get User Org Id, Run Advisor, Save Ai Config, Save Diagram Content
+- **packages/ai-advisor/src/** — Advise, Create Model
 - **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From, Strongly Connected Components
 
 ### Data model
@@ -40,6 +41,7 @@ status: active · author: Giorgi Naskhidashvili
 - **project_member** <sub>packages/db/src/schema/app.ts:58</sub>: id, projectId, userId, role, createdAt  →text →text
 - **diagram** <sub>packages/db/src/schema/app.ts:74</sub>: id, projectId, type, name, createdAt, updatedAt  →text
 - **version** <sub>packages/db/src/schema/app.ts:91</sub>: id, diagramId, label, content, createdBy, createdAt  →text →text
+- **ai_provider_config** <sub>packages/db/src/schema/app.ts:111</sub>: id, organizationId, model, baseUrl, encryptedKey, updatedAt  →text
 - **user** <sub>packages/db/src/schema/auth.ts:11</sub>: id, name, email, emailVerified, image, createdAt, updatedAt
 - **session** <sub>packages/db/src/schema/auth.ts:21</sub>: id, token, expiresAt, ipAddress, userAgent, userId, createdAt, updatedAt  →text
 - **account** <sub>packages/db/src/schema/auth.ts:36</sub>: id, accountId, providerId, userId, accessToken, refreshToken, idToken, accessTokenExpiresAt, refreshTokenExpiresAt, scope, password, createdAt, updatedAt  →text
@@ -51,8 +53,8 @@ status: active · author: Giorgi Naskhidashvili
 ### Primary process: Home process
 Page → next → @/lib → @/components
 
-**Stack:** build: Turborepo · framework: Next.js · language: TypeScript · orm: Drizzle · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
-_+ 7 other libraries (see the web Overview)._
+**Stack:** ai: Vercel AI SDK · build: Turborepo · framework: Next.js · language: TypeScript · orm: Drizzle · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
+_+ 14 other libraries (see the web Overview)._
 
 _Full detail: `archmantic view` (diagrams + trust) or the Archmantic MCP server (`get_context`, `get_component`, `get_api_surface`, …)._
 <!-- archmantic:end -->
