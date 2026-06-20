@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { listProjects, listArchivedDiagrams } from "@/lib/diagram-actions";
+import { listProjects } from "@/lib/diagram-actions";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { Dashboard } from "@/components/dashboard";
 
@@ -11,7 +11,7 @@ export default async function Home() {
     redirect("/sign-in");
   }
 
-  const [projects, archived] = await Promise.all([listProjects(), listArchivedDiagrams()]);
+  const projects = await listProjects();
 
   // Gate the "Generate with AI" creation mode on a configured provider, the
   // same resolution the workbench uses (org -> decrypted BYOK config).
@@ -19,11 +19,6 @@ export default async function Home() {
   const aiConnected = orgId ? Boolean(await getOrgAiConfig(orgId)) : false;
 
   return (
-    <Dashboard
-      userName={session.user.name}
-      projects={projects}
-      archived={archived}
-      aiConnected={aiConnected}
-    />
+    <Dashboard userName={session.user.name} projects={projects} aiConnected={aiConnected} />
   );
 }
