@@ -84,6 +84,14 @@ export function describeGraph(graph: ProcessGraph): string {
     sections.push(`MESSAGE FLOWS (between pools):\n${mf}`);
   }
 
+  const artifacts = graph.artifacts ?? [];
+  if (artifacts.length > 0) {
+    sections.push(
+      "ARTIFACTS:\n" +
+        artifacts.map((a) => `- ${a.id} [${a.kind}]${a.name ? ` "${a.name}"` : ""}`).join("\n"),
+    );
+  }
+
   return sections.join("\n\n");
 }
 

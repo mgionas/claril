@@ -1,4 +1,5 @@
 import type {
+  ArtifactInfo,
   BpmnNode,
   LaneInfo,
   PoolInfo,
@@ -10,7 +11,7 @@ import type {
 interface DiElement {
   id: string;
   type?: string;
-  businessObject?: { name?: string; flowNodeRef?: Array<{ id?: string }> };
+  businessObject?: { name?: string; text?: string; flowNodeRef?: Array<{ id?: string }> };
   source?: { id: string } | null;
   target?: { id: string } | null;
   parent?: { type?: string; businessObject?: { name?: string } } | null;
@@ -26,6 +27,17 @@ interface DiElement {
 export interface ElementRegistryLike {
   getAll(): DiElement[];
 }
+
+const ARTIFACT_KIND: Record<string, "dataObject" | "dataStore" | "textAnnotation"> = {
+  "bpmn:DataObjectReference": "dataObject",
+  "bpmn:DataStoreReference": "dataStore",
+  "bpmn:TextAnnotation": "textAnnotation",
+};
+const NON_NODE_CONNECTIONS = new Set([
+  "bpmn:Association",
+  "bpmn:DataInputAssociation",
+  "bpmn:DataOutputAssociation",
+]);
 
 const CONTAINER_TYPES = new Set([
   "bpmn:Process",
@@ -71,6 +83,7 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
   const flows: SequenceFlow[] = [];
   const messageFlows: SequenceFlow[] = [];
   const pools: PoolInfo[] = [];
+  const artifacts: ArtifactInfo[] = [];
 
   const all = registry.getAll();
 
@@ -156,6 +169,16 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
 
     if (CONTAINER_TYPES.has(type) || type === "bpmn:MessageFlow") continue;
 
+    if (ARTIFACT_KIND[type]) {
+      artifacts.push({
+        id: el.id,
+        kind: ARTIFACT_KIND[type],
+        name: type === "bpmn:TextAnnotation" ? el.businessObject?.text : el.businessObject?.name,
+      });
+      continue;
+    }
+    if (NON_NODE_CONNECTIONS.has(type)) continue;
+
     // Resolve the node's lane: semantic flowNodeRef first, else geometry.
     const lane = laneById.get(laneIdByNode.get(el.id) ?? "") ?? laneByGeometry(el);
     if (lane) {
@@ -187,5 +210,6 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
   if (lanes.length > 0) graph.lanes = lanes;
   if (pools.length > 0) graph.pools = pools;
   if (messageFlows.length > 0) graph.messageFlows = messageFlows;
+  if (artifacts.length > 0) graph.artifacts = artifacts;
   return graph;
 }

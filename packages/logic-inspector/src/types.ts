@@ -53,6 +53,13 @@ export interface PoolInfo {
   name?: string;
 }
 
+/** A non-flow element: data object/store or text annotation. */
+export interface ArtifactInfo {
+  id: string;
+  kind: "dataObject" | "dataStore" | "textAnnotation";
+  name?: string;
+}
+
 export interface ProcessGraph {
   id?: string;
   nodes: BpmnNode[];
@@ -63,4 +70,6 @@ export interface ProcessGraph {
   pools?: PoolInfo[];
   /** Message flows between pools (distinct from sequence flows). */
   messageFlows?: SequenceFlow[];
+  /** Non-flow elements: data objects/stores and text annotations. */
+  artifacts?: ArtifactInfo[];
 }

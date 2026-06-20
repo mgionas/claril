@@ -15,7 +15,9 @@ export function graphHash(graph: ProcessGraph): string {
     "#" +
     (graph.flows ?? []).map(flowKey).join(";") +
     "#" +
-    (graph.messageFlows ?? []).map(flowKey).join(";");
+    (graph.messageFlows ?? []).map(flowKey).join(";") +
+    "#" +
+    (graph.artifacts ?? []).map((a) => `${a.id}|${a.kind}|${a.name ?? ""}`).join(";");
   let h = 0x811c9dc5;
   for (let i = 0; i < canon.length; i++) {
     h ^= canon.charCodeAt(i);
@@ -37,6 +39,7 @@ export function describeSynopsis(graph: ProcessGraph): string {
   const lanes = graph.lanes ?? [];
   const pools = graph.pools ?? [];
   const messageFlows = graph.messageFlows ?? [];
+  const artifacts = graph.artifacts ?? [];
 
   const counts = new Map<string, number>();
   for (const n of nodes) counts.set(n.type, (counts.get(n.type) ?? 0) + 1);
@@ -101,6 +104,14 @@ export function describeSynopsis(graph: ProcessGraph): string {
 
   if (messageFlows.length > 0) {
     blocks.push("", "MESSAGE FLOWS (between pools):", messages);
+  }
+
+  if (artifacts.length > 0) {
+    blocks.push(
+      "",
+      "DATA & ARTIFACTS:",
+      artifacts.map((a) => `- ${a.id} [${a.kind}]${a.name ? ` "${a.name}"` : ""}`).join("\n"),
+    );
   }
 
   blocks.push("", "ELEMENT ID ↔ NAME (use these ids for proposeEdit):", idTable || "(none)");

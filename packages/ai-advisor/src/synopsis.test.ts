@@ -74,6 +74,28 @@ describe("describeSynopsis with pools/lanes/message flows", () => {
   });
 });
 
+const artifactGraph = {
+  nodes: [{ id: "Task_1", type: "task", name: "Check user" }],
+  flows: [],
+  artifacts: [{ id: "Data_1", kind: "dataStore", name: "Customer DB" }],
+};
+
+describe("describeSynopsis with artifacts", () => {
+  it("renders a DATA & ARTIFACTS section with the artifact name", () => {
+    const s = describeSynopsis(artifactGraph as never);
+    expect(s).toContain("DATA & ARTIFACTS");
+    expect(s).toContain("Customer DB");
+    expect(s).toContain("dataStore");
+  });
+});
+
+describe("graphHash with artifacts", () => {
+  it("changes when an artifact is added", () => {
+    const without = { nodes: artifactGraph.nodes, flows: artifactGraph.flows };
+    expect(graphHash(artifactGraph as never)).not.toBe(graphHash(without as never));
+  });
+});
+
 describe("graphHash with lanes/message flows", () => {
   it("changes when a node's lane changes", () => {
     const moved = {
