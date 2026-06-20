@@ -6,7 +6,7 @@ import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
 import type { AssetContext } from "./grounding";
 import { describeGrounding } from "./advisor";
-import { EditPlanSchema, NODE_TYPES, validateEditPlan, type EditPlan } from "./edit-plan";
+import { EditPlanSchema, NODE_TYPES, validateEditPlan, checkPlanScope, type EditPlan } from "./edit-plan";
 
 export interface PlanEditsInput {
   graph: ProcessGraph;
@@ -116,11 +116,14 @@ export async function planEditsWithUsage(
   let plan = parseEditPlanResponse(first.text);
   let usage = first.usage;
 
-  // Deterministic validation + one self-repair pass: hand the model its own
-  // plan and the concrete problems (orphan nodes, unknown refs) so it corrects
-  // them before the user ever sees the card.
-  const errors = validateEditPlan(plan, input.graph);
-  if (errors.length > 0) {
+  // Deterministic validation + scope guard + one self-repair pass: hand the
+  // model its own plan and the concrete problems (orphan nodes, unknown refs,
+  // over-scoped ops) so it corrects them before the user ever sees the card.
+  const problems = [
+    ...validateEditPlan(plan, input.graph),
+    ...checkPlanScope(plan, input.instruction, input.graph),
+  ];
+  if (problems.length > 0) {
     const repairPrompt = [
       base,
       "",
@@ -128,16 +131,19 @@ export async function planEditsWithUsage(
       JSON.stringify(plan),
       "",
       "Problems to fix:",
-      ...errors.map((e) => `- ${e}`),
+      ...problems.map((e) => `- ${e}`),
       "",
-      "Return a corrected JSON plan. Connect every node you add; only reference ids/names shown in CURRENT MODEL or tempIds you define in this plan; do not delete existing elements unless the user asked to.",
+      "Return a corrected JSON plan. Stay within the literal request: do NOT create pools/lanes/message flows or delete existing elements the user didn't ask for; connect every node you add; only reference real ids or tempIds you define.",
     ].join("\n");
     try {
       const second = await generateText({ model, system: PLANNER_SYSTEM_PROMPT, prompt: repairPrompt });
       const repaired = parseEditPlanResponse(second.text);
       usage = sumUsage(usage, second.usage);
-      // Accept the repair only if it's no worse than the original.
-      if (validateEditPlan(repaired, input.graph).length <= errors.length) plan = repaired;
+      // Accept the repair only if it's no worse than the original (combined).
+      const repairedProblems =
+        validateEditPlan(repaired, input.graph).length +
+        checkPlanScope(repaired, input.instruction, input.graph).length;
+      if (repairedProblems <= problems.length) plan = repaired;
     } catch {
       /* keep the first plan if the repair attempt fails to parse */
     }

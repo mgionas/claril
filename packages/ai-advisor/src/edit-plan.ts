@@ -269,3 +269,34 @@ export function validateEditPlan(plan: EditPlan, graph: ProcessGraph): string[] 
 
   return errors;
 }
+
+/**
+ * Flag plans that exceed the literal request — the over-engineering class the
+ * planner drifts into (inventing pools / message flows / deleting elements for
+ * a simple add/move). Keyword-driven against the instruction; feeds the
+ * self-repair retry. Returns human-readable violations (empty = in scope).
+ */
+export function checkPlanScope(plan: EditPlan, instruction: string, graph: ProcessGraph): string[] {
+  const txt = instruction.toLowerCase();
+  const has = (...words: string[]) => words.some((w) => txt.includes(w));
+  const out: string[] = [];
+
+  if (plan.ops.some((o) => o.kind === "addPool") && !has("pool", "participant", "separate process", "external")) {
+    out.push("Creates a new POOL/participant the request didn't ask for — keep everything in the existing process; do not split into pools.");
+  }
+  if (plan.ops.some((o) => o.kind === "addLane") && !has("lane", "swimlane", "pool", "role", "actor", "department")) {
+    out.push("Creates a new LANE the request didn't ask for.");
+  }
+  if (plan.ops.some((o) => o.kind === "connect" && o.flow === "message") && !has("message", "pool", "participant")) {
+    out.push("Adds a MESSAGE FLOW the request didn't ask for — use a normal task/sequence flow inside the process.");
+  }
+  const flowIds = new Set((graph.flows ?? []).map((f) => f.id));
+  const nodeIds = new Set(graph.nodes.map((n) => n.id));
+  const deletesNode = plan.ops.some(
+    (o) => o.kind === "deleteElement" && nodeIds.has(o.elementId) && !flowIds.has(o.elementId),
+  );
+  if (deletesNode && !has("delete", "remove", "replace", "drop", "get rid", "clean up")) {
+    out.push("Deletes existing element(s) the request didn't ask to remove — only the single sequence flow you split when inserting may be deleted.");
+  }
+  return out;
+}

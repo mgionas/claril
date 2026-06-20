@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { EditPlanSchema, orderOps, collectPlanRefs, validateEditPlan } from "./edit-plan";
+import { EditPlanSchema, orderOps, collectPlanRefs, validateEditPlan, checkPlanScope } from "./edit-plan";
 
 const graph = {
   nodes: [
@@ -79,6 +79,53 @@ describe("validateEditPlan", () => {
       graph,
     );
     expect(errors).toEqual([]);
+  });
+});
+
+describe("checkPlanScope", () => {
+  const addPoolPlan = {
+    summary: "x",
+    ops: [{ kind: "addPool", tempId: "p1", name: "Back office" }],
+  } as never;
+
+  it("flags an unrequested new pool", () => {
+    const out = checkPlanScope(addPoolPlan, "add a step to notify the back office", graph);
+    expect(out.length).toBeGreaterThan(0);
+    expect(out.some((e) => /POOL/.test(e))).toBe(true);
+  });
+
+  it("allows a pool when the instruction asks for one", () => {
+    expect(checkPlanScope(addPoolPlan, "split this into a separate pool", graph)).toEqual([]);
+  });
+
+  it("flags deleting a NODE the request didn't ask to remove", () => {
+    const out = checkPlanScope(
+      { summary: "x", ops: [{ kind: "deleteElement", elementId: "Task_1" }] } as never,
+      "add a notification",
+      graph,
+    );
+    expect(out.some((e) => /[Dd]elete/.test(e))).toBe(true);
+  });
+
+  it("does NOT flag deleting a FLOW (insert-rewire is allowed)", () => {
+    const out = checkPlanScope(
+      { summary: "x", ops: [{ kind: "deleteElement", elementId: "Flow_2" }] } as never,
+      "add a notification",
+      graph,
+    );
+    expect(out).toEqual([]);
+  });
+
+  it("flags an unrequested message flow", () => {
+    const out = checkPlanScope(
+      {
+        summary: "x",
+        ops: [{ kind: "connect", fromRef: "Task_1", toRef: "End_1", flow: "message" }],
+      } as never,
+      "notify the office",
+      graph,
+    );
+    expect(out.some((e) => /MESSAGE FLOW/.test(e))).toBe(true);
   });
 });
 
