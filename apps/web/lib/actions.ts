@@ -41,8 +41,14 @@ export async function saveDiagramContent(diagramId: string, content: string): Pr
     .where(eq(schema.diagram.id, diagramId));
 }
 
+export type VersionSource = "manual" | "auto" | "ai" | "import" | "restore";
+
 /** Snapshot the current content as a named version. */
-export async function createDiagramVersion(diagramId: string, label?: string): Promise<void> {
+export async function createDiagramVersion(
+  diagramId: string,
+  label?: string,
+  source: VersionSource = "manual",
+): Promise<void> {
   const userId = await requireUserId();
   await assertDiagramAccess(userId, diagramId);
   const rows = await db
@@ -56,6 +62,7 @@ export async function createDiagramVersion(diagramId: string, label?: string): P
     diagramId,
     content: rows[0].content,
     label: label ?? null,
+    source,
     createdBy: userId,
   });
 }

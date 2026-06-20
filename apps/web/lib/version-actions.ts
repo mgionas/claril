@@ -6,6 +6,7 @@ import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { assertDiagramAccess } from "@/lib/tenancy";
+import type { VersionSource } from "@/lib/actions";
 
 /**
  * Diagram versioning server actions (W4). Every action authorizes the caller
@@ -27,10 +28,44 @@ async function requireUserId(): Promise<string> {
 export interface VersionSummary {
   id: string;
   label: string | null;
+  source: VersionSource;
   /** ISO timestamp; the client renders a relative time. */
   createdAt: string;
   /** Display name of the author, or null if the user was removed. */
   author: string | null;
+}
+
+/**
+ * Insert a version from client-supplied XML, skipping when the content is
+ * byte-identical to the latest existing version (avoids duplicate rows from
+ * focus/blur churn). Used by the workbench auto-versioning coalescer and by
+ * forced snapshots (AI apply / import / restore). Authorized.
+ */
+export async function autosnapshotVersion(
+  diagramId: string,
+  xml: string,
+  source: VersionSource,
+  label?: string,
+): Promise<void> {
+  const userId = await requireUserId();
+  await assertDiagramAccess(userId, diagramId);
+
+  const latest = await db
+    .select({ content: schema.version.content })
+    .from(schema.version)
+    .where(eq(schema.version.diagramId, diagramId))
+    .orderBy(desc(schema.version.createdAt))
+    .limit(1);
+  if (latest[0]?.content === xml) return; // no-op: identical to last snapshot
+
+  await db.insert(schema.version).values({
+    id: randomUUID(),
+    diagramId,
+    content: xml,
+    label: label ?? null,
+    source,
+    createdBy: userId,
+  });
 }
 
 /** List a diagram's versions, newest first. Authorized. */
@@ -42,6 +77,7 @@ export async function listVersions(diagramId: string): Promise<VersionSummary[]>
     .select({
       id: schema.version.id,
       label: schema.version.label,
+      source: schema.version.source,
       createdAt: schema.version.createdAt,
       author: schema.user.name,
     })
@@ -53,6 +89,7 @@ export async function listVersions(diagramId: string): Promise<VersionSummary[]>
   return rows.map((r) => ({
     id: r.id,
     label: r.label,
+    source: (r.source ?? "manual") as VersionSource,
     createdAt: r.createdAt.toISOString(),
     author: r.author ?? null,
   }));
@@ -108,6 +145,7 @@ export async function restoreVersion(diagramId: string, versionId: string): Prom
       diagramId,
       content: current.content,
       label: "Before restore",
+      source: "restore",
       createdBy: userId,
     });
     await tx
