@@ -281,6 +281,44 @@ export default function BpmnCanvas({
         runInspection();
         modeler.on("commandStack.changed", onChanged);
 
+        // Keyboard shortcuts (undo/redo, etc.). bpmn-js ships KeyboardModule +
+        // EditorActions in the Modeler bundle: the keyboard binds implicitly to
+        // the canvas SVG on `canvas.init`, and `editorActions` already maps
+        // Cmd/Ctrl+Z → commandStack.undo() and Cmd/Ctrl+Shift+Z / Ctrl+Y →
+        // commandStack.redo(), which flow through the existing
+        // `commandStack.changed` listener (re-inspection + autosave).
+        //
+        // Because the binding lives on the SVG node — a sibling of bpmn-js's
+        // rename `contenteditable` and unrelated to the React-rendered AI/rename
+        // inputs — typing in those fields never reaches it. We still install an
+        // explicit input guard so the shortcuts are ignored whenever focus (or
+        // the event target) is in an editable control, regardless of DOM layout.
+        try {
+          const keyboard = modeler.get("keyboard") as unknown as {
+            _isEventIgnored?: (event: KeyboardEvent) => boolean;
+            getBinding?: () => EventTarget | null;
+            bind?: () => void;
+          };
+          const isEditable = (el: EventTarget | null): boolean => {
+            const node = el as HTMLElement | null;
+            if (!node || typeof node.closest !== "function") return false;
+            return Boolean(
+              node.closest(
+                "input, textarea, select, [contenteditable]:not([contenteditable='false'])",
+              ),
+            );
+          };
+          keyboard._isEventIgnored = (event: KeyboardEvent) =>
+            isEditable(event.target) || isEditable(document.activeElement);
+          // Ensure the keyboard is bound (it binds on canvas.init by default;
+          // this is a no-op safety net if that ever changes).
+          if (keyboard.getBinding && !keyboard.getBinding() && keyboard.bind) {
+            keyboard.bind();
+          }
+        } catch {
+          // Keyboard module unavailable — non-fatal.
+        }
+
         // Connection handle: a drag node on the selected shape that starts a
         // directional connection (source = the selected element).
         const overlays = modeler.get("overlays") as unknown as {
