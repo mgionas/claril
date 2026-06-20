@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, History } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import {
@@ -14,6 +14,7 @@ import {
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import { TopBar, type SaveState } from "@/components/top-bar";
 import { InspectorPanel } from "@/components/inspector-panel";
+import { VersionsPanel } from "@/components/versions-panel";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
 import { AiSettingsDialog } from "@/components/ai-settings-dialog";
@@ -52,6 +53,7 @@ export function BpmnWorkbench({
   const [aiError, setAiError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   // Q&A (prose answer, distinct from critique findings).
   const [qaQuestion, setQaQuestion] = useState<string | null>(null);
   const [qaAnswer, setQaAnswer] = useState<string | null>(null);
@@ -65,6 +67,8 @@ export function BpmnWorkbench({
   const graphRef = useRef<ProcessGraph | null>(null);
   const findingsRef = useRef<Finding[]>([]);
   const canvasApiRef = useRef<CanvasApi | null>(null);
+  // Latest serialized XML from the canvas — read by the History diff.
+  const currentXmlRef = useRef<string>(initialXml);
 
   // Surface AI work in the drawer automatically.
   useEffect(() => {
@@ -102,6 +106,7 @@ export function BpmnWorkbench({
 
   const handleXmlChange = useCallback(
     (xml: string) => {
+      currentXmlRef.current = xml;
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -167,6 +172,25 @@ export function BpmnWorkbench({
     setQaQuestion(null);
     setQaAnswer(null);
   }, []);
+
+  // History: read the freshest XML for diffing.
+  const getCurrentXml = useCallback(() => currentXmlRef.current ?? null, []);
+
+  // After a restore, re-import into the canvas (re-runs inspection + autosave)
+  // and update the local XML mirror.
+  const handleRestored = useCallback((xml: string) => {
+    currentXmlRef.current = xml;
+    void canvasApiRef.current?.reloadXml(xml);
+  }, []);
+
+  // Drive the canvas diff coloring from the History panel.
+  const handleShowDiff = useCallback(
+    (marks: { added: string[]; removed: string[]; changed: string[]; layout: string[] } | null) => {
+      if (marks) canvasApiRef.current?.showDiff(marks);
+      else canvasApiRef.current?.clearDiff();
+    },
+    [],
+  );
 
   // Doc-gen: generate Markdown documentation, shown in the doc panel.
   const handleGenerateDocs = useCallback(async () => {
@@ -235,10 +259,35 @@ export function BpmnWorkbench({
           diagramName={diagramName}
         />
 
+        {/* History toggle — sits just above the Inspector toggle on the right edge. */}
+        <button
+          type="button"
+          onClick={() =>
+            setHistoryOpen((o) => {
+              const next = !o;
+              if (next) setInspectorOpen(false);
+              return next;
+            })
+          }
+          title={historyOpen ? "Close History" : "Version history"}
+          className={cn(
+            "absolute right-0 top-[calc(50%-72px)] z-30 flex -translate-y-1/2 items-center rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated",
+            historyOpen && "text-accent",
+          )}
+        >
+          <History className={cn("size-4", historyOpen ? "text-accent" : "text-fg-muted")} />
+        </button>
+
         {/* Inspector toggle — rides the right edge of the (shrinking) canvas. */}
         <button
           type="button"
-          onClick={() => setInspectorOpen((o) => !o)}
+          onClick={() =>
+            setInspectorOpen((o) => {
+              const next = !o;
+              if (next) setHistoryOpen(false);
+              return next;
+            })
+          }
           title={inspectorOpen ? "Collapse Inspector" : "Open Inspector"}
           className="absolute right-0 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated"
         >
@@ -276,6 +325,14 @@ export function BpmnWorkbench({
         qaQuestion={qaQuestion}
         qaAnswer={qaAnswer}
         onClearQa={handleClearQa}
+      />
+
+      <VersionsPanel
+        open={historyOpen}
+        diagramId={diagramId}
+        getCurrentXml={getCurrentXml}
+        onRestored={handleRestored}
+        onShowDiff={handleShowDiff}
       />
 
       <AiSettingsDialog

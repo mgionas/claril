@@ -35,7 +35,13 @@ body {
 
 body {
   color: var(--color-fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
 }
 
 /* ============================================================
@@ -235,6 +241,28 @@ body {
   stroke: var(--color-error) !important;
 }
 .djs-element.claril-flagged-warning .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-warning) !important;
+}
+
+/* ---- version visual diff overlay (added / changed / layout) ----
+   "removed" elements aren't in the current model, so they're listed in the
+   Versions panel rather than drawn here. */
+.djs-element.claril-diff-added .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-success) !important;
+  stroke-width: 2px !important;
+}
+.djs-element.claril-diff-changed .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-warning) !important;
+  stroke-width: 2px !important;
+}
+.djs-element.claril-diff-layout .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-info) !important;
+  stroke-dasharray: 4 3 !important;
+}
+.djs-connection.claril-diff-added .djs-visual > path {
+  stroke: var(--color-success) !important;
+}
+.djs-connection.claril-diff-changed .djs-visual > path {
   stroke: var(--color-warning) !important;
 }
 

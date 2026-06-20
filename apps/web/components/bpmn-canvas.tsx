@@ -19,9 +19,33 @@ import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-gra
 import { applyQuickFix } from "@/lib/apply-fix";
 import { defaultDiagram } from "@/lib/default-diagram";
 
+/** Per-element diff classification, used to color the canvas diff overlay. */
+export interface DiffMarks {
+  added: string[];
+  removed: string[];
+  changed: string[];
+  layout: string[];
+}
+
 export interface CanvasApi {
   applyFix: (fix: QuickFix) => void;
+  /**
+   * Reload the canvas with new XML (e.g. after a version restore) and re-run
+   * inspection/persistence. Resolves once imported.
+   */
+  reloadXml: (xml: string) => Promise<void>;
+  /** Color elements present in the current model by diff classification. */
+  showDiff: (marks: DiffMarks) => void;
+  /** Remove all diff coloring. */
+  clearDiff: () => void;
 }
+
+const DIFF_MARKERS = [
+  "claril-diff-added",
+  "claril-diff-removed",
+  "claril-diff-changed",
+  "claril-diff-layout",
+] as const;
 
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
@@ -63,6 +87,7 @@ export default function BpmnCanvas({
   const modelerRef = useRef<BpmnModeler | null>(null);
   const markedRef = useRef<string[]>([]);
   const findingOverlaysRef = useRef<string[]>([]);
+  const diffMarkedRef = useRef<string[]>([]);
   const assetOverlaysRef = useRef<string[]>([]);
   const connectHandleRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -188,6 +213,62 @@ export default function BpmnCanvas({
       void persist();
     };
 
+    const clearDiffMarks = () => {
+      const canvas = modeler.get("canvas") as unknown as {
+        removeMarker: (id: string, cls: string) => void;
+      };
+      for (const id of diffMarkedRef.current) {
+        for (const cls of DIFF_MARKERS) {
+          try {
+            canvas.removeMarker(id, cls);
+          } catch {
+            /* element may be gone */
+          }
+        }
+      }
+      diffMarkedRef.current = [];
+    };
+
+    const applyDiff = (marks: DiffMarks) => {
+      clearDiffMarks();
+      const canvas = modeler.get("canvas") as unknown as {
+        addMarker: (id: string, cls: string) => void;
+      };
+      const registry = modeler.get("elementRegistry") as unknown as {
+        get: (id: string) => unknown;
+      };
+      const marked = new Set<string>();
+      const mark = (ids: string[], cls: string) => {
+        for (const id of ids) {
+          // Removed elements aren't in the current model — skip (listed in panel).
+          if (!registry.get(id)) continue;
+          try {
+            canvas.addMarker(id, cls);
+            marked.add(id);
+          } catch {
+            /* ignore */
+          }
+        }
+      };
+      mark(marks.added, "claril-diff-added");
+      mark(marks.changed, "claril-diff-changed");
+      mark(marks.layout, "claril-diff-layout");
+      // Removed ids are intentionally not marked (absent from current model).
+      diffMarkedRef.current = [...marked];
+    };
+
+    const reloadXml = async (xml: string) => {
+      clearDiffMarks();
+      await modeler.importXML(xml);
+      if (disposed) return;
+      const canvas = modeler.get("canvas") as unknown as {
+        zoom: (mode: string, center?: string) => void;
+      };
+      canvas.zoom("fit-viewport", "auto");
+      runInspection();
+      await persist();
+    };
+
     void (async () => {
       try {
         const xml = initialXml && initialXml.trim().length > 0 ? initialXml : defaultDiagram;
@@ -249,6 +330,9 @@ export default function BpmnCanvas({
           applyFix: (fix) => {
             if (modelerRef.current) applyQuickFix(modelerRef.current, fix);
           },
+          reloadXml,
+          showDiff: applyDiff,
+          clearDiff: clearDiffMarks,
         });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);
@@ -272,6 +356,7 @@ export default function BpmnCanvas({
       modeler.destroy();
       modelerRef.current = null;
       markedRef.current = [];
+      diffMarkedRef.current = [];
     };
   }, [initialXml, onFindingsChange, onGraphChange, onXmlChange, onReady]);
 
@@ -406,9 +491,7 @@ export default function BpmnCanvas({
         <AssetBindPicker
           x={bindTarget.x}
           y={bindTarget.y}
-          currentAssetId={
-            boundAssets.find((b) => b.elementId === bindTarget.elementId)?.asset.id
-          }
+          currentAssetId={boundAssets.find((b) => b.elementId === bindTarget.elementId)?.asset.id}
           onPick={handleBindPick}
           onClose={() => setBindTarget(null)}
         />
