@@ -80,6 +80,30 @@ Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
 inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
 Vertex OAuth instead.
 
+### W10 — History & review batch (F-tasks)
+
+Spec: `docs/superpowers/specs/2026-06-20-history-ai-review-chat-memory-design.md`. Built in order F1 → F2 → F3, each its own plan.
+
+**F1 — History** (auto-versioning + top-bar dropdown, replaces Archive). Plan: `docs/superpowers/plans/2026-06-20-f1-history.md`. Status: **built, reviewed green; pending live smoke test.**
+- [x] F1.1 — Revert diagram-archive (top-bar button, dashboard section, actions, `listProjects` filter); `archivedAt` column kept dormant
+- [x] F1.2 — `version.source` column (`manual|auto|ai|import|restore`) + migration 0006 (**applied to Neon**)
+- [x] F1.3 — `source` server actions + `autosnapshotVersion` (no-op-guarded insert from client XML)
+- [x] F1.4 — Smart-throttled auto-versioning coalescer (10s idle / 2min cap) + workbench wiring + force-snapshot on AI apply (unit-tested)
+- [x] F1.5 — `history-menu.tsx` dropdown (Popover + ScrollArea timeline, source badges, Diff + Restore)
+- [x] F1.6 — Wire History into top-bar (before Settings); remove `VersionsPanel` + right-edge toggle; share `DiffMarks` type
+- [ ] F1.7 — Manual smoke test (auto/AI/import/restore badges; diff colors + clears; restore reload; dashboard has no Archived)
+
+**F2 — AI-edit review** (mark on board + Approve / Roll back / Keep refining). No DB change. Status: **planned (spec only).**
+- [ ] F2.1 — Distinct on-board marking for AI-applied elements (`claril-ai-edit`, accent/violet); extend `DiffMarks` with `aiEdit` bucket
+- [ ] F2.2 — ProposalCard actions → **Approve** (clear marks, snapshot `ai`), **Roll back** (revert `preEditXml`, clear marks), **Keep refining** (focus composer)
+- [ ] F2.3 — Pending-state UX; marks persist while pending; wire `onApplyPlan`/`onDiscardPlan`/`onKeepRefining`
+
+**F3 — Chat memory + token cut** (persist chat + DB knowledge cache + surrogate sanitize). DB: `chat_message`, `diagram_knowledge`. Status: **planned (spec only).**
+- [ ] F3.1 — `chat_message` table + `appendChatMessages`/`getChatMessages`/`clearChat`; hydrate `useChat({messages})` on reload; Clear-chat control
+- [ ] F3.2 — `diagram_knowledge` table: cached compact summary + `graphHash`; regenerate when stale; chat route sends synopsis + id↔name table instead of full graph dump
+- [ ] F3.3 — Lone-surrogate sanitizer (`/[\uD800-\uDFFF]/`) before `streamText` + before persisting (fixes the `400 invalid high surrogate` + oversized body)
+
 ### Remaining W3 tails (follow-ups)
 - [ ] Asset-link management UI + impact/usage panel (actions exist: `createAssetLink`, `getAssetUsage`)
 - [ ] Reference-field picker (engine supports `reference`; editor treats it as text)
+- [ ] F1 cleanup: `createDiagramVersion` is now callerless (kept as manual-snapshot API) — remove or wire to a "Save named version" control
