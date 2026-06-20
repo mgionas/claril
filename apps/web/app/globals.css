@@ -23,6 +23,66 @@
   --color-success: #34d399;
 }
 
+/* ------------------------------------------------------------------
+   shadcn/ui variable bridge
+   shadcn primitives reference --background/--foreground/--primary/
+   --border/--ring/--muted/etc. Those are NOT part of Claril's token
+   set, so we DEFINE them here from the existing --color-* tokens (no
+   recoloring — purely a mapping) and expose them to Tailwind utilities
+   (bg-primary, border-input, text-muted-foreground, ring-ring, …) via
+   an @theme inline block. The app's own tokens are untouched.
+   ------------------------------------------------------------------ */
+:root {
+  --radius: 0.625rem;
+
+  --background: var(--color-canvas);
+  --foreground: var(--color-fg);
+
+  --card: var(--color-panel);
+  --card-foreground: var(--color-fg);
+  --popover: var(--color-panel);
+  --popover-foreground: var(--color-fg);
+
+  --primary: var(--color-accent);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--color-elevated);
+  --secondary-foreground: var(--color-fg);
+
+  --muted: var(--color-elevated);
+  --muted-foreground: var(--color-fg-muted);
+
+  --destructive: var(--color-error);
+
+  --border: var(--color-hairline);
+  --input: var(--color-hairline);
+  --ring: var(--color-accent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
 :root {
   color-scheme: dark;
 }
