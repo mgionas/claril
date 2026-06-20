@@ -240,6 +240,7 @@ export function BpmnWorkbench({
           onShowProblems={handleShowProblems}
         />
         <TopBar
+          diagramId={diagramId}
           diagramName={diagramName}
           userName={userName}
           saveState={saveState}

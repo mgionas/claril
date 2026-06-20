@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, isNotNull } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default-diagram";
@@ -57,6 +57,7 @@ export async function listProjects(): Promise<ProjectWithDiagrams[]> {
       updatedAt: schema.diagram.updatedAt,
     })
     .from(schema.diagram)
+    .where(isNull(schema.diagram.archivedAt))
     .orderBy(asc(schema.diagram.name));
 
   const byProject = new Map<string, DiagramSummary[]>();
@@ -163,6 +164,51 @@ export async function deleteDiagram(diagramId: string): Promise<void> {
   await assertDiagramAccess(userId, diagramId);
   await db.delete(schema.diagram).where(eq(schema.diagram.id, diagramId));
   revalidatePath("/");
+}
+
+/** Soft-delete: hide the diagram from the active dashboard list (restorable). */
+export async function archiveDiagram(diagramId: string): Promise<void> {
+  const userId = await requireUserId();
+  await assertDiagramAccess(userId, diagramId);
+  await db
+    .update(schema.diagram)
+    .set({ archivedAt: new Date() })
+    .where(eq(schema.diagram.id, diagramId));
+  revalidatePath("/");
+}
+
+/** Restore a previously archived diagram back to the active list. */
+export async function restoreDiagram(diagramId: string): Promise<void> {
+  const userId = await requireUserId();
+  await assertDiagramAccess(userId, diagramId);
+  await db
+    .update(schema.diagram)
+    .set({ archivedAt: null })
+    .where(eq(schema.diagram.id, diagramId));
+  revalidatePath("/");
+}
+
+/** List the active workspace's archived diagrams (most-recently archived first). */
+export async function listArchivedDiagrams(): Promise<DiagramSummary[]> {
+  const userId = await requireUserId();
+  const { workspaceId } = await ensureUserWorkspace(userId);
+  const rows = await db
+    .select({
+      id: schema.diagram.id,
+      name: schema.diagram.name,
+      type: schema.diagram.type,
+      archivedAt: schema.diagram.archivedAt,
+    })
+    .from(schema.diagram)
+    .innerJoin(schema.project, eq(schema.project.id, schema.diagram.projectId))
+    .where(and(eq(schema.project.workspaceId, workspaceId), isNotNull(schema.diagram.archivedAt)))
+    .orderBy(desc(schema.diagram.archivedAt));
+  return rows.map((d) => ({
+    id: d.id,
+    name: d.name,
+    type: d.type,
+    updatedAt: (d.archivedAt ?? new Date()).toISOString(),
+  }));
 }
 
 export interface LoadedDiagram {

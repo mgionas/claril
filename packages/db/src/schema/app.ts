@@ -82,6 +82,9 @@ export const diagram = pgTable(
     name: text("name").notNull(),
     // BPMN XML (source of truth) / Mermaid / C4 DSL depending on type.
     content: text("content").notNull().default(""),
+    // Soft-delete: when set, the diagram is hidden from the active dashboard
+    // list but kept and restorable. Null = active.
+    archivedAt: timestamp("archived_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },

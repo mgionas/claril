@@ -1,9 +1,11 @@
 "use client";
 
-import { LogOut, Settings, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Archive, Loader2, LogOut, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
+import { archiveDiagram } from "@/lib/diagram-actions";
 import { cn } from "@/lib/utils";
 
 export type SaveState = "saved" | "saving" | "error";
@@ -15,6 +17,7 @@ const saveLabel: Record<SaveState, string> = {
 };
 
 interface TopBarProps {
+  diagramId: string;
   diagramName: string;
   userName: string;
   saveState: SaveState;
@@ -24,6 +27,7 @@ interface TopBarProps {
 }
 
 export function TopBar({
+  diagramId,
   diagramName,
   userName,
   saveState,
@@ -32,6 +36,18 @@ export function TopBar({
   onOpenAiSettings,
 }: TopBarProps) {
   const router = useRouter();
+  const [archiving, setArchiving] = useState(false);
+
+  async function handleArchive() {
+    setArchiving(true);
+    try {
+      await archiveDiagram(diagramId);
+      router.push("/");
+      router.refresh();
+    } catch {
+      setArchiving(false);
+    }
+  }
 
   async function handleSignOut() {
     await signOut();
@@ -71,6 +87,19 @@ export function TopBar({
           <span className="text-xs text-fg-muted">
             {aiConnected ? `AI: ${aiProvider ?? "on"}` : "AI: off"}
           </span>
+        </button>
+        <button
+          type="button"
+          onClick={handleArchive}
+          disabled={archiving}
+          title="Archive this diagram (restorable from the dashboard)"
+          className="flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-2 py-1.5 text-fg-muted backdrop-blur transition-colors hover:text-fg disabled:opacity-50"
+        >
+          {archiving ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Archive className="size-3.5" />
+          )}
         </button>
         {aiConnected && (
           <Link

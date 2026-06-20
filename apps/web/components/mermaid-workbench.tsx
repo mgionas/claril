@@ -62,6 +62,7 @@ export function MermaidWorkbench({
     <main className="flex h-screen w-screen flex-col overflow-hidden bg-canvas text-fg">
       <div className="relative shrink-0">
         <TopBar
+          diagramId={diagramId}
           diagramName={diagramName}
           userName={userName}
           saveState={saveState}

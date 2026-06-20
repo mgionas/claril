@@ -1,0 +1,1 @@
+ALTER TABLE "diagram" ADD COLUMN "archived_at" timestamp;

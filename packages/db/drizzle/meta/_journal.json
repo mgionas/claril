@@ -36,6 +36,13 @@
       "when": 1781975796433,
       "tag": "0004_normal_the_hunter",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781977859491,
+      "tag": "0005_cultured_moonstone",
+      "breakpoints": true
     }
   ]
 }

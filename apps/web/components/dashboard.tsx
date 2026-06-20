@@ -4,6 +4,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  Archive,
   Boxes,
   ChevronDown,
   FileText,
@@ -13,6 +14,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  RotateCcw,
   Trash2,
   Workflow,
 } from "lucide-react";
@@ -23,6 +25,8 @@ import {
   deleteProject,
   renameDiagram,
   renameProject,
+  restoreDiagram,
+  type DiagramSummary,
   type ProjectWithDiagrams,
 } from "@/lib/diagram-actions";
 import { signOut } from "@/lib/auth-client";
@@ -32,6 +36,8 @@ import { NewDiagramDialog } from "@/components/new-diagram-dialog";
 interface DashboardProps {
   userName: string;
   projects: ProjectWithDiagrams[];
+  /** Archived diagrams across the workspace, restorable from the dashboard. */
+  archived: DiagramSummary[];
   /** Whether an AI provider is configured — gates the "Generate with AI" mode. */
   aiConnected: boolean;
 }
@@ -58,7 +64,7 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function Dashboard({ userName, projects, aiConnected }: DashboardProps) {
+export function Dashboard({ userName, projects, archived, aiConnected }: DashboardProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [creatingProject, setCreatingProject] = useState(false);
@@ -168,8 +174,66 @@ export function Dashboard({ userName, projects, aiConnected }: DashboardProps) {
             ))}
           </div>
         )}
+
+        <ArchivedSection archived={archived} />
       </div>
     </main>
+  );
+}
+
+function ArchivedSection({ archived }: { archived: DiagramSummary[] }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  if (archived.length === 0) return null;
+
+  function handleRestore(id: string) {
+    startTransition(async () => {
+      await restoreDiagram(id);
+      router.refresh();
+    });
+  }
+
+  return (
+    <section className="mt-8">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 text-sm text-fg-muted transition-colors hover:text-fg"
+      >
+        <ChevronDown className={cn("size-4 transition-transform", open ? "" : "-rotate-90")} />
+        <Archive className="size-3.5" />
+        Archived
+        <span className="text-fg-subtle">({archived.length})</span>
+      </button>
+
+      {open && (
+        <ul className="mt-3 overflow-hidden rounded-[10px] border border-hairline">
+          {archived.map((d) => {
+            const KindIcon = KIND_ICON[d.type];
+            return (
+              <li
+                key={d.id}
+                className="flex items-center gap-3 border-b border-hairline px-4 py-2.5 last:border-b-0"
+              >
+                <KindIcon className="size-4 shrink-0 text-fg-subtle" />
+                <span className="flex-1 truncate text-sm text-fg-muted">{d.name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRestore(d.id)}
+                  disabled={pending}
+                  className="flex items-center gap-1.5 rounded-[6px] border border-hairline px-2 py-1 text-[11px] text-fg-muted transition-colors hover:text-accent disabled:opacity-50"
+                >
+                  <RotateCcw className="size-3" />
+                  Restore
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 
