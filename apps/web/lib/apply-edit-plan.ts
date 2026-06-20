@@ -61,6 +61,21 @@ export function applyEditPlan(
   const consumed = new Set<Op>();
   const resolve = (ref: string) => temp.get(ref) ?? elementRegistry.get(ref);
 
+  // Resolve a lane/pool container reference. The planner sometimes passes a
+  // lane/pool NAME (e.g. "Back") rather than its element id, so fall back to a
+  // case-insensitive name match against the diagram's lanes/participants.
+  const resolveContainer = (ref: string): any => {
+    const direct = resolve(ref);
+    if (direct) return direct;
+    const all = (elementRegistry.getAll?.() ?? []) as any[];
+    const want = ref.trim().toLowerCase();
+    return all.find(
+      (e) =>
+        (e.type === "bpmn:Lane" || e.type === "bpmn:Participant") &&
+        (e.businessObject?.name ?? "").trim().toLowerCase() === want,
+    );
+  };
+
   const root = canvas.getRootElement();
 
   // A flow node can't be a direct child of a bpmn:Collaboration (the root when
@@ -212,7 +227,7 @@ export function applyEditPlan(
         return;
       }
       case "addLane": {
-        const pool = resolve(op.poolRef);
+        const pool = resolveContainer(op.poolRef);
         if (!pool) return;
         const lane = modeling.addLane(pool, "bottom");
         if (op.name) modeling.updateProperties(lane, { name: op.name });
@@ -226,7 +241,7 @@ export function applyEditPlan(
           op.type === "subProcess"
             ? elementFactory.createShape({ type, isExpanded: true, width: 350, height: 200 })
             : elementFactory.createShape({ type });
-        const explicit = op.containerRef ? resolve(op.containerRef) : null;
+        const explicit = op.containerRef ? resolveContainer(op.containerRef) : null;
         const pred = explicit ? null : findNeighbor(op.tempId, "in");
         const succ = explicit ? null : findNeighbor(op.tempId, "out");
         let placed: any;
@@ -325,7 +340,7 @@ export function applyEditPlan(
       }
       case "moveToContainer": {
         const el = resolve(op.elementId);
-        const container = asFlowNodeContainer(resolve(op.containerRef));
+        const container = asFlowNodeContainer(resolveContainer(op.containerRef));
         if (!el || !container || typeof el.y !== "number" || typeof container.y !== "number") return;
         // Center the element vertically in the target lane/pool band; bpmn-js
         // LaneBehavior reassigns lane membership from the new position.
