@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  Boxes,
   BoxSelect,
   CircleDot,
   CircleStop,
@@ -23,6 +24,7 @@ import {
   Square,
   Trash2,
   Type,
+  Unlink,
 } from "lucide-react";
 import type { Finding, Severity } from "@claril/shared";
 import { cn } from "@/lib/utils";
@@ -62,6 +64,12 @@ interface CanvasContextMenuProps {
   modeler: ModelerServices;
   findings: Finding[];
   onShowProblems: (elementId: string) => void;
+  /** Name of the asset bound to the selected element, if any. */
+  boundAssetName?: string;
+  /** Open the asset picker to bind the selected element. */
+  onBindAsset: (elementId: string) => void;
+  /** Remove the binding from the selected element. */
+  onUnbindAsset: (elementId: string) => void;
   onClose: () => void;
   onCreateMore: (x: number, y: number) => void;
 }
@@ -77,6 +85,9 @@ export function CanvasContextMenu({
   modeler,
   findings,
   onShowProblems,
+  boundAssetName,
+  onBindAsset,
+  onUnbindAsset,
   onClose,
   onCreateMore,
 }: CanvasContextMenuProps) {
@@ -208,6 +219,20 @@ export function CanvasContextMenu({
                     : `View problems (${elementFindings.length})`
                 }
                 onClick={() => onShowProblems(menu.elementId as string)}
+              />
+            )}
+            {menu.elementId && (
+              <MenuItem
+                icon={Boxes}
+                label={boundAssetName ? `Asset: ${boundAssetName}` : "Bind to asset…"}
+                onClick={() => onBindAsset(menu.elementId as string)}
+              />
+            )}
+            {boundAssetName && menu.elementId && (
+              <MenuItem
+                icon={Unlink}
+                label="Unbind asset"
+                onClick={() => onUnbindAsset(menu.elementId as string)}
               />
             )}
             <Separator />

@@ -16,8 +16,8 @@ export interface ActiveTenancy {
 
 /**
  * Ensure the user has a personal Org → Workspace, creating them on first use.
- * Idempotent. Mirrors the bootstrap in `getOrCreateUserDiagram` but stops at
- * the workspace level so the dashboard can list/create projects itself.
+ * Idempotent. Bootstraps the tenancy chain down to the workspace level so the
+ * dashboard can list/create projects itself.
  */
 export async function ensureUserWorkspace(userId: string): Promise<ActiveTenancy> {
   const memberships = await db

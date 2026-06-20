@@ -103,14 +103,14 @@ export function Workbench({
     setAiBusy(true);
     setAiError(null);
     try {
-      const result = await runAdvisor(graphRef.current, findingsRef.current);
+      const result = await runAdvisor(graphRef.current, findingsRef.current, undefined, diagramId);
       setAdvisorFindings(result);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "AI request failed.");
     } finally {
       setAiBusy(false);
     }
-  }, [aiConnected]);
+  }, [aiConnected, diagramId]);
 
   const allFindings = advisorFindings.length > 0 ? [...findings, ...advisorFindings] : findings;
   const errorCount = allFindings.filter((f) => f.severity === "error").length;
@@ -120,6 +120,7 @@ export function Workbench({
     <main className="flex h-screen w-screen overflow-hidden bg-canvas text-fg">
       <div className="relative min-w-0 flex-1">
         <BpmnCanvas
+          diagramId={diagramId}
           initialXml={initialXml}
           focusElementId={focus.id}
           focusNonce={focus.nonce}

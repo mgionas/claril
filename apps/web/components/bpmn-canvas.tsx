@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
 import { ElementPicker } from "@/components/element-picker";
+import { AssetBindPicker } from "@/components/asset-bind-picker";
+import {
+  bindElementToAsset,
+  getDiagramBoundAssets,
+  unbindElement,
+  type BoundAsset,
+} from "@/lib/catalog-actions";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
@@ -21,6 +28,8 @@ import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
 import "diagram-js-minimap/assets/diagram-js-minimap.css";
 
 interface BpmnCanvasProps {
+  /** Diagram id — enables Asset Catalog element binding. */
+  diagramId?: string;
   initialXml?: string;
   /** Element to scroll to + select (e.g. when a finding is clicked). */
   focusElementId?: string;
@@ -39,6 +48,7 @@ interface BpmnCanvasProps {
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
 
 export default function BpmnCanvas({
+  diagramId,
   initialXml,
   focusElementId,
   focusNonce,
@@ -52,10 +62,28 @@ export default function BpmnCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
   const markedRef = useRef<string[]>([]);
+  const findingOverlaysRef = useRef<string[]>([]);
+  const assetOverlaysRef = useRef<string[]>([]);
   const connectHandleRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
+  const [boundAssets, setBoundAssets] = useState<BoundAsset[]>([]);
+  const [bindTarget, setBindTarget] = useState<{ elementId: string; x: number; y: number } | null>(
+    null,
+  );
+
+  // Load the diagram's element→asset bindings (and a manual refresh after edits).
+  const refreshBoundAssets = useCallback(() => {
+    if (!diagramId) return;
+    getDiagramBoundAssets(diagramId)
+      .then(setBoundAssets)
+      .catch(() => setBoundAssets([]));
+  }, [diagramId]);
+
+  useEffect(() => {
+    if (ready) refreshBoundAssets();
+  }, [ready, refreshBoundAssets]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -80,15 +108,22 @@ export default function BpmnCanvas({
 
     const renderFindings = (findings: Finding[]) => {
       const overlays = modeler.get("overlays") as unknown as {
-        clear: () => void;
-        add: (id: string, type: string, opts: unknown) => void;
+        add: (id: string, type: string, opts: unknown) => string;
+        remove: (id: string) => void;
       };
       const canvas = modeler.get("canvas") as unknown as {
         addMarker: (id: string, cls: string) => void;
         removeMarker: (id: string, cls: string) => void;
       };
 
-      overlays.clear();
+      // Remove only our own finding overlays (not asset badges / connect handle).
+      for (const id of findingOverlaysRef.current) {
+        try {
+          overlays.remove(id);
+        } catch {
+          /* ignore */
+        }
+      }
       for (const id of markedRef.current) {
         canvas.removeMarker(id, "claril-flagged-error");
         canvas.removeMarker(id, "claril-flagged-warning");
@@ -105,21 +140,25 @@ export default function BpmnCanvas({
       }
 
       const marked: string[] = [];
+      const overlayIds: string[] = [];
       for (const [elementId, severity] of worst) {
         try {
           if (severity === "error" || severity === "warning") {
             canvas.addMarker(elementId, `claril-flagged-${severity}`);
           }
-          overlays.add(elementId, "claril-finding", {
-            position: { top: -10, right: 10 },
-            html: `<div class="claril-finding claril-finding--${severity}"></div>`,
-          });
+          overlayIds.push(
+            overlays.add(elementId, "claril-finding", {
+              position: { top: -10, right: 10 },
+              html: `<div class="claril-finding claril-finding--${severity}"></div>`,
+            }),
+          );
           marked.push(elementId);
         } catch {
           // Element may not be present (e.g. mid-edit); ignore.
         }
       }
       markedRef.current = marked;
+      findingOverlaysRef.current = overlayIds;
     };
 
     const runInspection = () => {
@@ -259,6 +298,63 @@ export default function BpmnCanvas({
     }
   }, [focusElementId, focusNonce]);
 
+  // Render asset-binding badges as overlays, independent of finding overlays.
+  useEffect(() => {
+    const modeler = modelerRef.current;
+    if (!modeler || !ready) return;
+    const overlays = modeler.get("overlays") as unknown as {
+      add: (id: string, type: string, opts: unknown) => string;
+      remove: (id: string) => void;
+    };
+    for (const id of assetOverlaysRef.current) {
+      try {
+        overlays.remove(id);
+      } catch {
+        /* ignore */
+      }
+    }
+    const ids: string[] = [];
+    for (const b of boundAssets) {
+      const node = document.createElement("div");
+      node.className = "claril-asset-badge";
+      node.title = `${b.assetType.name}: ${b.asset.name}`;
+      node.textContent = b.asset.name; // textContent → no HTML injection from names
+      try {
+        ids.push(
+          overlays.add(b.elementId, "claril-asset", {
+            position: { bottom: -6, left: 0 },
+            html: node,
+          }),
+        );
+      } catch {
+        // Element may not be present (e.g. mid-edit); ignore.
+      }
+    }
+    assetOverlaysRef.current = ids;
+  }, [ready, boundAssets]);
+
+  const handleBindPick = useCallback(
+    (assetId: string) => {
+      if (!bindTarget || !diagramId) return;
+      const { elementId } = bindTarget;
+      setBindTarget(null);
+      bindElementToAsset(diagramId, elementId, assetId)
+        .then(refreshBoundAssets)
+        .catch((err) => console.warn("Bind failed", err));
+    },
+    [bindTarget, diagramId, refreshBoundAssets],
+  );
+
+  const handleUnbind = useCallback(
+    (elementId: string) => {
+      if (!diagramId) return;
+      unbindElement(diagramId, elementId)
+        .then(refreshBoundAssets)
+        .catch((err) => console.warn("Unbind failed", err));
+    },
+    [diagramId, refreshBoundAssets],
+  );
+
   return (
     <div
       className="absolute inset-0"
@@ -286,11 +382,35 @@ export default function BpmnCanvas({
             setMenu(null);
             onShowProblems?.(id);
           }}
+          boundAssetName={
+            menu.elementId
+              ? boundAssets.find((b) => b.elementId === menu.elementId)?.asset.name
+              : undefined
+          }
+          onBindAsset={(id) => {
+            setBindTarget({ elementId: id, x: menu.x, y: menu.y });
+            setMenu(null);
+          }}
+          onUnbindAsset={(id) => {
+            setMenu(null);
+            handleUnbind(id);
+          }}
           onClose={() => setMenu(null)}
           onCreateMore={(x, y) => {
             setMenu(null);
             setPicker({ x, y });
           }}
+        />
+      )}
+      {bindTarget && (
+        <AssetBindPicker
+          x={bindTarget.x}
+          y={bindTarget.y}
+          currentAssetId={
+            boundAssets.find((b) => b.elementId === bindTarget.elementId)?.asset.id
+          }
+          onPick={handleBindPick}
+          onClose={() => setBindTarget(null)}
         />
       )}
       {picker && modelerRef.current && (

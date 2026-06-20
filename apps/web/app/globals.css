@@ -214,6 +214,23 @@ body {
   transform: scale(1.15);
 }
 
+/* asset-binding badge — element bound to an Asset Catalog asset */
+.claril-asset-badge {
+  max-width: 140px;
+  overflow: hidden;
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-panel));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px var(--color-canvas);
+  pointer-events: none;
+}
+
 .djs-element.claril-flagged-error .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   stroke: var(--color-error) !important;
 }
