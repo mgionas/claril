@@ -6,11 +6,11 @@ import { db, schema } from "@claril/db";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import {
-  advise,
-  generateProcessDoc,
-  generateBpmnXml,
+  adviseWithUsage,
+  generateProcessDocWithUsage,
+  generateBpmnXmlWithUsage,
   answerQuestion,
-  planEdits,
+  planEditsWithUsage,
   DEFAULT_MODELS,
   type AiProvider,
   type EditPlan,
@@ -22,6 +22,7 @@ import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { assertDiagramAccess } from "@/lib/tenancy";
 import { encryptSecret } from "@/lib/crypto";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
+import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -221,12 +222,27 @@ export async function runAdvisor(
   const userId = await requireUserId();
   const orgId = await getUserOrgId(userId);
   const config = orgId ? await getOrgAiConfig(orgId) : null;
-  if (!config) throw new Error("No AI provider configured.");
+  if (!config || !orgId) throw new Error("No AI provider configured.");
 
-  const assetContext =
-    orgId && diagramId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
+  const assetContext = diagramId
+    ? await buildDiagramAssetContext(orgId, diagramId)
+    : undefined;
+  const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
 
-  return advise({ graph, findings, question, assetContext }, config);
+  const { value, usage } = await adviseWithUsage(
+    { graph, findings, question, assetContext },
+    config,
+  );
+  await recordAiUsage({
+    organizationId: orgId,
+    projectId,
+    diagramId,
+    kind: "advisor",
+    provider: config.provider,
+    model: config.model ?? "unknown",
+    usage,
+  });
+  return value;
 }
 
 /**
@@ -239,10 +255,12 @@ async function resolveAiContext(diagramId?: string) {
   const userId = await requireUserId();
   const orgId = await getUserOrgId(userId);
   const config = orgId ? await getOrgAiConfig(orgId) : null;
-  if (!config) throw new Error("No AI provider configured.");
-  const assetContext =
-    orgId && diagramId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
-  return { config, assetContext };
+  if (!config || !orgId) throw new Error("No AI provider configured.");
+  const assetContext = diagramId
+    ? await buildDiagramAssetContext(orgId, diagramId)
+    : undefined;
+  const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
+  return { config, assetContext, orgId, projectId };
 }
 
 /**
@@ -255,8 +273,48 @@ export async function runDocGen(
   findings: Finding[],
   diagramId?: string,
 ): Promise<string> {
-  const { config, assetContext } = await resolveAiContext(diagramId);
-  return generateProcessDoc({ graph, findings, assetContext }, config);
+  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId);
+  const { value, usage } = await generateProcessDocWithUsage(
+    { graph, findings, assetContext },
+    config,
+  );
+  await recordAiUsage({
+    organizationId: orgId,
+    projectId,
+    diagramId,
+    kind: "docgen",
+    provider: config.provider,
+    model: config.model ?? "unknown",
+    usage,
+  });
+  if (diagramId) await upsertDiagramDoc(diagramId, value, config.model ?? null);
+  return value;
+}
+
+/** Read the persisted AI documentation for a diagram, if any. */
+export async function getDiagramDoc(diagramId: string): Promise<string | null> {
+  const userId = await requireUserId();
+  await assertDiagramAccess(userId, diagramId);
+  const rows = await db
+    .select({ markdown: schema.diagramDoc.markdown })
+    .from(schema.diagramDoc)
+    .where(eq(schema.diagramDoc.diagramId, diagramId))
+    .limit(1);
+  return rows[0]?.markdown ?? null;
+}
+
+async function upsertDiagramDoc(
+  diagramId: string,
+  markdown: string,
+  model: string | null,
+): Promise<void> {
+  await db
+    .insert(schema.diagramDoc)
+    .values({ diagramId, markdown, model, generatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: schema.diagramDoc.diagramId,
+      set: { markdown, model, generatedAt: new Date() },
+    });
 }
 
 /** Plan model edits from a natural-language instruction. Grounded + BYOK. */
@@ -266,8 +324,21 @@ export async function runDiagramEdit(
   instruction: string,
   diagramId?: string,
 ): Promise<EditPlan> {
-  const { config, assetContext } = await resolveAiContext(diagramId);
-  return planEdits({ graph, findings, instruction, assetContext }, config);
+  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId);
+  const { plan, usage } = await planEditsWithUsage(
+    { graph, findings, instruction, assetContext },
+    config,
+  );
+  await recordAiUsage({
+    organizationId: orgId,
+    projectId,
+    diagramId,
+    kind: "plan",
+    provider: config.provider,
+    model: config.model ?? "unknown",
+    usage,
+  });
+  return plan;
 }
 
 /**
@@ -326,9 +397,18 @@ export async function generateDiagramFromPrompt(description: string): Promise<st
 
   // Same BYOK resolution as every other T3 capability. Throws
   // "No AI provider configured." when AI is off.
-  const { config } = await resolveAiContext();
+  const { config, orgId } = await resolveAiContext();
 
-  const raw = await generateBpmnXml(prompt, config);
+  const { value: raw, usage } = await generateBpmnXmlWithUsage(prompt, config);
+  await recordAiUsage({
+    organizationId: orgId,
+    projectId: null,
+    diagramId: null,
+    kind: "generate",
+    provider: config.provider,
+    model: config.model ?? "unknown",
+    usage,
+  });
   const semantic = stripCodeFences(raw);
   if (!semantic) {
     throw new Error("The AI returned an empty diagram. Try a more detailed description.");

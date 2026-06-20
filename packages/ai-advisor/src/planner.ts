@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateObject, type LanguageModelUsage } from "ai";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { BPMN_BEST_PRACTICES } from "@claril/logic-inspector";
@@ -38,16 +38,23 @@ export function buildPlannerPrompt(input: PlanEditsInput): string {
   return `CURRENT MODEL:\n${grounding}\n\nINSTRUCTION:\n${input.instruction}`;
 }
 
-/** Produce a validated EditPlan from a natural-language instruction (BYOK). */
-export async function planEdits(
+export async function planEditsWithUsage(
   input: PlanEditsInput,
   config: LLMProviderConfig,
-): Promise<EditPlan> {
-  const { object } = await generateObject({
+): Promise<{ plan: EditPlan; usage: LanguageModelUsage }> {
+  const { object, usage } = await generateObject({
     model: createModel(config),
     schema: EditPlanSchema,
     system: PLANNER_SYSTEM_PROMPT,
     prompt: buildPlannerPrompt(input),
   });
-  return object;
+  return { plan: object, usage };
+}
+
+/** Produce a validated EditPlan from a natural-language instruction (BYOK). */
+export async function planEdits(
+  input: PlanEditsInput,
+  config: LLMProviderConfig,
+): Promise<EditPlan> {
+  return (await planEditsWithUsage(input, config)).plan;
 }

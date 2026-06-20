@@ -7,10 +7,12 @@ export {
   type ModelCapability,
 } from "./models";
 export { createModel } from "./provider";
+export type { LanguageModelUsage } from "ai";
 export { testConnection, type ConnectionTestResult } from "./test-connection";
-export { advise, type AdviseInput } from "./advisor";
-export { generateProcessDoc, type DocGenInput } from "./docgen";
-export { generateBpmnXml } from "./generate-bpmn";
+export { advise, adviseWithUsage, type AdviseInput } from "./advisor";
+export { describeGrounding as describeGroundingPrompt } from "./advisor";
+export { generateProcessDoc, generateProcessDocWithUsage, type DocGenInput } from "./docgen";
+export { generateBpmnXml, generateBpmnXmlWithUsage } from "./generate-bpmn";
 export { answerQuestion, type QuestionInput } from "./qa";
 export {
   describeAssetContext,
@@ -27,4 +29,4 @@ export {
   type EditPlan,
   type Op,
 } from "./edit-plan";
-export { planEdits, buildPlannerPrompt, type PlanEditsInput } from "./planner";
+export { planEdits, planEditsWithUsage, buildPlannerPrompt, type PlanEditsInput } from "./planner";

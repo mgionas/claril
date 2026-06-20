@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { generateText, type LanguageModelUsage } from "ai";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { createModel } from "./provider";
@@ -40,11 +40,11 @@ Rules:
  * deterministic graph + findings and (optionally) the Asset Catalog. Returns
  * the Markdown string. Provider-agnostic: the model is built from BYOK config.
  */
-export async function generateProcessDoc(
+export async function generateProcessDocWithUsage(
   input: DocGenInput,
   config: LLMProviderConfig,
-): Promise<string> {
-  const { text } = await generateText({
+): Promise<{ value: string; usage: LanguageModelUsage }> {
+  const { text, usage } = await generateText({
     model: createModel(config),
     system: DOC_SYSTEM_PROMPT,
     prompt: [
@@ -53,5 +53,12 @@ export async function generateProcessDoc(
       "Write the process documentation now, following the section structure exactly.",
     ].join("\n"),
   });
-  return text.trim();
+  return { value: text.trim(), usage };
+}
+
+export async function generateProcessDoc(
+  input: DocGenInput,
+  config: LLMProviderConfig,
+): Promise<string> {
+  return (await generateProcessDocWithUsage(input, config)).value;
 }

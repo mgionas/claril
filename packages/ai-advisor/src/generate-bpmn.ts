@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { generateText, type LanguageModelUsage } from "ai";
 import { BPMN_BEST_PRACTICES } from "@claril/logic-inspector";
 import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
@@ -22,11 +22,11 @@ ${BPMN_BEST_PRACTICES}`;
  * is semantic-only (no diagram interchange) — the caller is responsible for
  * laying it out and validating it before use.
  */
-export async function generateBpmnXml(
+export async function generateBpmnXmlWithUsage(
   prompt: string,
   config: LLMProviderConfig,
-): Promise<string> {
-  const { text } = await generateText({
+): Promise<{ value: string; usage: LanguageModelUsage }> {
+  const { text, usage } = await generateText({
     model: createModel(config),
     system: GENERATE_BPMN_SYSTEM_PROMPT,
     prompt: [
@@ -37,5 +37,12 @@ export async function generateBpmnXml(
       "Output only the BPMN XML now.",
     ].join("\n"),
   });
-  return text.trim();
+  return { value: text.trim(), usage };
+}
+
+export async function generateBpmnXml(
+  prompt: string,
+  config: LLMProviderConfig,
+): Promise<string> {
+  return (await generateBpmnXmlWithUsage(prompt, config)).value;
 }

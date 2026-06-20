@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateObject, type LanguageModelUsage } from "ai";
 import { z } from "zod";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
@@ -100,15 +100,18 @@ function buildPrompt(input: AdviseInput): string {
  * Run the AI advisor over a process graph, grounded on the deterministic
  * findings. Returns typed Findings tagged with `source: "advisor"`.
  */
-export async function advise(input: AdviseInput, config: LLMProviderConfig): Promise<Finding[]> {
-  const { object } = await generateObject({
+export async function adviseWithUsage(
+  input: AdviseInput,
+  config: LLMProviderConfig,
+): Promise<{ value: Finding[]; usage: LanguageModelUsage }> {
+  const { object, usage } = await generateObject({
     model: createModel(config),
     schema: advisorSchema,
     system: SYSTEM_PROMPT,
     prompt: buildPrompt(input),
   });
 
-  return object.findings.map((f) => ({
+  const value: Finding[] = object.findings.map((f) => ({
     ruleId: "advisor",
     severity: f.severity,
     message: f.message,
@@ -116,4 +119,9 @@ export async function advise(input: AdviseInput, config: LLMProviderConfig): Pro
     quickFix: f.quickFix,
     source: "advisor" as const,
   }));
+  return { value, usage };
+}
+
+export async function advise(input: AdviseInput, config: LLMProviderConfig): Promise<Finding[]> {
+  return (await adviseWithUsage(input, config)).value;
 }
