@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.210",
     "@claril/ai-advisor": "workspace:*",
     "@claril/bpmn-parse": "workspace:*",
     "@claril/db": "workspace:*",
@@ -32,6 +33,7 @@
     "radix-ui": "^1.6.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "streamdown": "^2.5.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
