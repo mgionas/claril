@@ -4,6 +4,7 @@ import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
+import { describeAssetContext, type AssetContext } from "./grounding";
 
 const advisorSchema = z.object({
   findings: z.array(
@@ -38,6 +39,12 @@ export interface AdviseInput {
   findings: Finding[];
   /** Optional user question to focus the review. */
   question?: string;
+  /**
+   * Optional Asset Catalog grounding — real service semantics for the bound
+   * elements. Lets the advisor reason over capabilities, classification, SLAs
+   * and dependencies instead of guessing from shape names.
+   */
+  assetContext?: AssetContext;
 }
 
 function describeGraph(graph: ProcessGraph): string {
@@ -64,6 +71,9 @@ function buildPrompt(input: AdviseInput): string {
     "",
     "DETERMINISTIC FINDINGS (already reported — do not repeat):",
     describeFindings(input.findings),
+    "",
+    "BOUND ASSETS (Asset Catalog — real service semantics; use these facts):",
+    describeAssetContext(input.assetContext),
     "",
     input.question ? `USER QUESTION: ${input.question}` : "Review the model and report your advisory findings.",
   ].join("\n");

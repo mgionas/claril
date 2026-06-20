@@ -9,6 +9,7 @@ import { advise, type AiProvider } from "@claril/ai-advisor";
 import { auth } from "@/lib/auth";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { encryptSecret } from "@/lib/crypto";
+import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -118,15 +119,25 @@ export async function saveAiConfig(input: SaveAiConfigInput): Promise<void> {
   }
 }
 
-/** Run the AI advisor, grounded on the deterministic findings. */
+/**
+ * Run the AI advisor, grounded on the deterministic findings — and, when a
+ * `diagramId` is supplied, on the Asset Catalog assets bound to that diagram
+ * (real service semantics). The grounding is best-effort and additive: if the
+ * catalog is empty the advisor behaves exactly as before.
+ */
 export async function runAdvisor(
   graph: ProcessGraph,
   findings: Finding[],
   question?: string,
+  diagramId?: string,
 ): Promise<Finding[]> {
   const userId = await requireUserId();
   const orgId = await getUserOrgId(userId);
   const config = orgId ? await getOrgAiConfig(orgId) : null;
   if (!config) throw new Error("No AI provider configured.");
-  return advise({ graph, findings, question }, config);
+
+  const assetContext =
+    orgId && diagramId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
+
+  return advise({ graph, findings, question, assetContext }, config);
 }
