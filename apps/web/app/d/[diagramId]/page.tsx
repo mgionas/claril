@@ -28,7 +28,8 @@ export default async function DiagramPage({
     <Workbench
       diagramId={diagram.id}
       diagramName={diagram.name}
-      initialXml={diagram.content}
+      kind={diagram.kind}
+      initialContent={diagram.content}
       userName={session.user.name}
       aiConnected={Boolean(aiConfig)}
       aiProvider={aiConfig?.provider}

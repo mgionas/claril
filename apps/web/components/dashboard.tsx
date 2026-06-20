@@ -4,15 +4,19 @@ import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  Boxes,
   ChevronDown,
   FileText,
   FolderPlus,
+  GitBranch,
   LogOut,
   MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
+  Workflow,
 } from "lucide-react";
+import type { DiagramKind } from "@/lib/default-diagram";
 import {
   createDiagram,
   createProject,
@@ -32,6 +36,23 @@ interface DashboardProps {
 
 const inputClass =
   "rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors focus:border-accent";
+
+const DIAGRAM_KINDS: {
+  kind: DiagramKind;
+  label: string;
+  description: string;
+  icon: typeof Workflow;
+}[] = [
+  { kind: "bpmn", label: "BPMN process", description: "bpmn-js canvas", icon: Workflow },
+  { kind: "sequence", label: "Sequence", description: "Mermaid", icon: GitBranch },
+  { kind: "c4", label: "C4 model", description: "Mermaid", icon: Boxes },
+];
+
+const KIND_ICON: Record<DiagramKind, typeof Workflow> = {
+  bpmn: Workflow,
+  sequence: GitBranch,
+  c4: Boxes,
+};
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -188,6 +209,7 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(project.name);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [kindMenuOpen, setKindMenuOpen] = useState(false);
 
   function commitRename(e: FormEvent) {
     e.preventDefault();
@@ -217,9 +239,10 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
     });
   }
 
-  function handleNewDiagram() {
+  function handleNewDiagram(kind: DiagramKind) {
+    setKindMenuOpen(false);
     startTransition(async () => {
-      const { id } = await createDiagram(project.id);
+      const { id } = await createDiagram(project.id, kind);
       router.push(`/d/${id}`);
     });
   }
@@ -265,15 +288,43 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={handleNewDiagram}
-          disabled={pending}
-          className="flex items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 py-1.5 text-xs text-fg-muted transition-colors hover:text-fg disabled:opacity-50"
-        >
-          <Plus className="size-3.5" />
-          New diagram
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setKindMenuOpen((m) => !m)}
+            onBlur={() => setTimeout(() => setKindMenuOpen(false), 120)}
+            disabled={pending}
+            aria-haspopup="menu"
+            aria-expanded={kindMenuOpen}
+            className="flex items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 py-1.5 text-xs text-fg-muted transition-colors hover:text-fg disabled:opacity-50"
+          >
+            <Plus className="size-3.5" />
+            New diagram
+            <ChevronDown className="size-3" />
+          </button>
+          {kindMenuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full z-20 mt-1 w-52 overflow-hidden rounded-[8px] border border-hairline bg-elevated py-1 backdrop-blur"
+            >
+              {DIAGRAM_KINDS.map(({ kind, label, description, icon: Icon }) => (
+                <button
+                  key={kind}
+                  type="button"
+                  role="menuitem"
+                  onMouseDown={() => handleNewDiagram(kind)}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-panel"
+                >
+                  <Icon className="size-4 shrink-0 text-fg-subtle" />
+                  <span className="flex flex-col">
+                    <span className="text-sm text-fg">{label}</span>
+                    <span className="text-[11px] text-fg-subtle">{description}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="relative">
           <button
@@ -320,7 +371,13 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
           ) : (
             <ul>
               {project.diagrams.map((d) => (
-                <DiagramRow key={d.id} id={d.id} name={d.name} updatedAt={d.updatedAt} />
+                <DiagramRow
+                  key={d.id}
+                  id={d.id}
+                  name={d.name}
+                  kind={d.type}
+                  updatedAt={d.updatedAt}
+                />
               ))}
             </ul>
           )}
@@ -333,12 +390,15 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
 function DiagramRow({
   id,
   name,
+  kind,
   updatedAt,
 }: {
   id: string;
   name: string;
+  kind: DiagramKind;
   updatedAt: string;
 }) {
+  const KindIcon = KIND_ICON[kind] ?? FileText;
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [renaming, setRenaming] = useState(false);
@@ -370,7 +430,7 @@ function DiagramRow({
 
   return (
     <li className="group flex items-center gap-3 border-b border-hairline px-4 py-2.5 last:border-b-0">
-      <FileText className="size-4 shrink-0 text-fg-subtle" />
+      <KindIcon className="size-4 shrink-0 text-fg-subtle" />
       {renaming ? (
         <form onSubmit={commit} className="flex-1">
           <input

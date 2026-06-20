@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
-import { defaultDiagram } from "@/lib/default-diagram";
+import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default-diagram";
 import {
   assertDiagramAccess,
   assertProjectAccess,
@@ -117,6 +117,7 @@ export async function deleteProject(projectId: string): Promise<void> {
 
 export async function createDiagram(
   projectId: string,
+  kind: DiagramKind = "bpmn",
   name?: string,
 ): Promise<{ id: string }> {
   const userId = await requireUserId();
@@ -126,9 +127,9 @@ export async function createDiagram(
     await tx.insert(schema.diagram).values({
       id,
       projectId,
-      type: "bpmn",
-      name: name?.trim() || "Untitled process",
-      content: defaultDiagram,
+      type: kind,
+      name: name?.trim() || defaultNameForKind(kind),
+      content: seedForKind(kind),
     });
     await tx
       .update(schema.project)
@@ -161,6 +162,7 @@ export async function deleteDiagram(diagramId: string): Promise<void> {
 export interface LoadedDiagram {
   id: string;
   name: string;
+  kind: DiagramKind;
   content: string;
 }
 
@@ -171,6 +173,7 @@ export async function getDiagram(diagramId: string): Promise<LoadedDiagram | nul
     .select({
       id: schema.diagram.id,
       name: schema.diagram.name,
+      kind: schema.diagram.type,
       content: schema.diagram.content,
     })
     .from(schema.diagram)

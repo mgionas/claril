@@ -43,3 +43,64 @@ export const defaultDiagram = `<?xml version="1.0" encoding="UTF-8"?>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`;
+
+/**
+ * Mermaid `sequenceDiagram` seed for new Sequence diagrams. The diagram content
+ * is the raw Mermaid source (text-as-code); the editor renders a live preview.
+ */
+export const defaultSequenceDiagram = `sequenceDiagram
+    actor User
+    participant API as API Service
+    participant DB as Database
+
+    User->>API: Submit request
+    activate API
+    API->>DB: Query records
+    activate DB
+    DB-->>API: Result set
+    deactivate DB
+    API-->>User: Response
+    deactivate API`;
+
+/**
+ * Mermaid `C4Context` seed for new C4 diagrams. C4 in Mermaid is experimental
+ * but round-trippable as text; the editor renders a live preview.
+ */
+export const defaultC4Diagram = `C4Context
+    title System Context diagram
+
+    Person(user, "User", "A user of the system")
+    System(system, "Software System", "Delivers the core value")
+    System_Ext(email, "Email System", "Sends notifications")
+
+    Rel(user, system, "Uses")
+    Rel(system, email, "Sends email via")`;
+
+/** Diagram kinds Claril can create. Mirrors the DB `diagram_type` enum. */
+export type DiagramKind = "bpmn" | "sequence" | "c4";
+
+/** Starter content for a freshly created diagram of the given kind. */
+export function seedForKind(kind: DiagramKind): string {
+  switch (kind) {
+    case "sequence":
+      return defaultSequenceDiagram;
+    case "c4":
+      return defaultC4Diagram;
+    case "bpmn":
+    default:
+      return defaultDiagram;
+  }
+}
+
+/** Default human-readable name for a freshly created diagram of the given kind. */
+export function defaultNameForKind(kind: DiagramKind): string {
+  switch (kind) {
+    case "sequence":
+      return "Untitled sequence";
+    case "c4":
+      return "Untitled C4 model";
+    case "bpmn":
+    default:
+      return "Untitled process";
+  }
+}
