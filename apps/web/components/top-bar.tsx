@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { HistoryMenu } from "@/components/history-menu";
+import type { DiffMarks } from "@/lib/bpmn-diff";
 import { cn } from "@/lib/utils";
 
 export type SaveState = "saved" | "saving" | "error";
@@ -28,7 +29,7 @@ interface TopBarProps {
     getCurrentXml: () => string | null;
     onRestored: (xml: string) => void;
     onShowDiff: (
-      marks: { added: string[]; removed: string[]; changed: string[]; layout: string[] } | null,
+      marks: DiffMarks | null,
     ) => void;
   };
 }

@@ -40,6 +40,9 @@ export interface BpmnDiffResult {
   layout: string[];
 }
 
+/** The four element-id buckets the canvas colors for a diff. */
+export type DiffMarks = Pick<BpmnDiffResult, "added" | "removed" | "changed" | "layout">;
+
 function shortType(t: string | undefined): string {
   if (!t) return "Element";
   const i = t.indexOf(":");

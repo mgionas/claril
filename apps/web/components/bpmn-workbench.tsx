@@ -9,6 +9,7 @@ import { runAdvisor, runDocGen, saveDiagramContent } from "@/lib/actions";
 import { autosnapshotVersion } from "@/lib/version-actions";
 import { createVersionCoalescer, type VersionCoalescer } from "@/lib/version-coalescer";
 import type { VersionSource } from "@/lib/actions";
+import type { DiffMarks } from "@/lib/bpmn-diff";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
@@ -180,7 +181,7 @@ export function BpmnWorkbench({
   }, []);
 
   const handleShowDiff = useCallback(
-    (marks: { added: string[]; removed: string[]; changed: string[]; layout: string[] } | null) => {
+    (marks: DiffMarks | null) => {
       if (marks) canvasApiRef.current?.showDiff(marks);
       else canvasApiRef.current?.clearDiff();
     },

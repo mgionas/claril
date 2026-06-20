@@ -20,7 +20,7 @@ import {
   type VersionSummary,
 } from "@/lib/version-actions";
 import type { VersionSource } from "@/lib/actions";
-import { computeBpmnDiff } from "@/lib/bpmn-diff";
+import { computeBpmnDiff, type DiffMarks } from "@/lib/bpmn-diff";
 import { cn } from "@/lib/utils";
 
 interface HistoryMenuProps {
@@ -31,7 +31,7 @@ interface HistoryMenuProps {
   onRestored: (xml: string) => void;
   /** Color the canvas with the active diff (null clears it). */
   onShowDiff: (
-    marks: { added: string[]; removed: string[]; changed: string[]; layout: string[] } | null,
+    marks: DiffMarks | null,
   ) => void;
 }
 
