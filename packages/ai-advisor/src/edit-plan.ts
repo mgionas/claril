@@ -47,6 +47,13 @@ const MoveToContainer = z.object({
   /** Target lane/pool — a tempId from this plan or an existing lane/pool id. */
   containerRef: z.string(),
 });
+const Reconnect = z.object({
+  kind: z.literal("reconnect"),
+  /** id of an existing sequence/message flow. */
+  flowId: z.string(),
+  newSourceRef: z.string().optional(),
+  newTargetRef: z.string().optional(),
+});
 const DeleteElement = z.object({ kind: z.literal("deleteElement"), elementId: z.string() });
 
 export const OpSchema = z.discriminatedUnion("kind", [
@@ -55,6 +62,7 @@ export const OpSchema = z.discriminatedUnion("kind", [
   AddNode,
   Connect,
   MoveToContainer,
+  Reconnect,
   UpdateElement,
   DeleteElement,
 ]);
@@ -72,8 +80,9 @@ const ORDER: Record<Op["kind"], number> = {
   addNode: 2,
   connect: 3,
   moveToContainer: 4,
-  updateElement: 5,
-  deleteElement: 6,
+  reconnect: 5,
+  updateElement: 6,
+  deleteElement: 7,
 };
 
 /** Stable sort into a dependency-safe execution order. */

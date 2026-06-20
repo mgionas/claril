@@ -58,6 +58,8 @@ export function applyEditPlan(
     y: el.y + (el.height ?? 80) / 2,
   });
 
+  const mid = (el: any) => ({ x: el.x + (el.width ?? 0) / 2, y: el.y + (el.height ?? 0) / 2 });
+
   // The element connecting INTO this node ("in") or that this node connects TO
   // ("out"), so we can place an inserted node on the line between them and in
   // their pool/lane. Only returns positioned (already-placed) elements.
@@ -256,6 +258,23 @@ export function applyEditPlan(
         const dy = container.y + (container.height ?? 0) / 2 - (el.y + (el.height ?? 0) / 2);
         modeling.moveElements([el], { x: 0, y: dy }, container);
         changed.add(el.id);
+        return;
+      }
+      case "reconnect": {
+        const conn = resolve(op.flowId);
+        if (!conn) {
+          if (DEBUG) console.log("[applyEditPlan] reconnect: flow not found:", op);
+          return;
+        }
+        if (op.newSourceRef) {
+          const ns = resolve(op.newSourceRef);
+          if (ns) modeling.reconnectStart(conn, ns, mid(ns));
+        }
+        if (op.newTargetRef) {
+          const nt = resolve(op.newTargetRef);
+          if (nt) modeling.reconnectEnd(conn, nt, mid(nt));
+        }
+        changed.add(conn.id);
         return;
       }
       case "updateElement": {

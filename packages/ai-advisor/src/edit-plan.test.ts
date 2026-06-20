@@ -20,6 +20,14 @@ describe("EditPlanSchema", () => {
     });
     expect(parsed.success).toBe(true);
   });
+
+  it("accepts a reconnect op", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Re-point a flow",
+      ops: [{ kind: "reconnect", flowId: "Flow_1", newTargetRef: "Task_2" }],
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("orderOps", () => {

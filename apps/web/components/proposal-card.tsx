@@ -7,12 +7,13 @@ export interface OpGroups {
   added: string[];
   connected: string[];
   moved: string[];
+  reconnected: string[];
   updated: string[];
   removed: string[];
 }
 
 export function groupOps(ops: Op[]): OpGroups {
-  const g: OpGroups = { added: [], connected: [], moved: [], updated: [], removed: [] };
+  const g: OpGroups = { added: [], connected: [], moved: [], reconnected: [], updated: [], removed: [] };
   for (const op of ops) {
     switch (op.kind) {
       case "addPool": g.added.push(`Pool "${op.name}"`); break;
@@ -20,6 +21,7 @@ export function groupOps(ops: Op[]): OpGroups {
       case "addNode": g.added.push(`${op.type}${op.name ? ` "${op.name}"` : ""}`); break;
       case "connect": g.connected.push(`${op.flow} flow${op.label ? ` "${op.label}"` : ""}`); break;
       case "moveToContainer": g.moved.push(`${op.elementId} → ${op.containerRef}`); break;
+      case "reconnect": g.reconnected.push(op.flowId); break;
       case "updateElement": g.updated.push(`${op.elementId}${op.name ? ` → "${op.name}"` : ""}`); break;
       case "deleteElement": g.removed.push(op.elementId); break;
     }
@@ -31,6 +33,7 @@ const SECTIONS = [
   { key: "added", icon: Plus, label: "Add", tone: "text-success" },
   { key: "connected", icon: ArrowRight, label: "Connect", tone: "text-info" },
   { key: "moved", icon: Move, label: "Move", tone: "text-info" },
+  { key: "reconnected", icon: ArrowRight, label: "Reconnect", tone: "text-info" },
   { key: "updated", icon: Pencil, label: "Update", tone: "text-warning" },
   { key: "removed", icon: Trash2, label: "Remove", tone: "text-error" },
 ] as const;
