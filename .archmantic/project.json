@@ -1,0 +1,25 @@
+{
+  "goal": "Claril is an open-source, self-hostable architecture & process intelligence workbench for Solution Architects and Architects. It unifies BPMN process models, UML sequence diagrams, and C4 architecture models in one tool, backed by a deterministic logic inspector that catches structural defects and an AI advisor (brand-agnostic, BYOK) that critiques design — grounded by an organization-level Asset Catalog so services are defined once and understood everywhere. The tool is fully useful with zero AI configured; AI is an amplifier, never a gate.",
+  "status": "active",
+  "author": {
+    "name": "Giorgi Naskhidashvili",
+    "github": "mgionas"
+  },
+  "team": [
+    { "name": "ui-engineer", "role": "Next.js app shell, Tailwind 4 + shadcn/ui, floating-panel canvas-maximal layout, command palette, design system" },
+    { "name": "canvas-engineer", "role": "bpmn-js + diagram editors (BPMN/Sequence/C4), custom renderers, SVG theming, finding overlays" },
+    { "name": "backend-engineer", "role": "Next route handlers + standalone MCP/REST, Better Auth, BYOK provider config, server validation" },
+    { "name": "db-architect", "role": "Drizzle + Postgres schema, Org→Workspace→Project→Diagram→Version tenancy, roles, migrations" },
+    { "name": "inspector-engineer", "role": "Deterministic logic-inspector engine (core IP): BPMN graph analysis, rules, soundness" },
+    { "name": "ai-advisor-engineer", "role": "Vercel AI SDK provider abstraction, BYOK, structured output, grounding on findings + catalog" },
+    { "name": "catalog-engineer", "role": "Asset Catalog / CMDB: custom-schema engine, asset references, diagram element binding, impact analysis" },
+    { "name": "docs-writer", "role": "docs/, ADRs, README, Archmantic curation, contributor guides" }
+  ],
+  "links": [
+    { "label": "Repository", "url": "https://github.com/mgionas/claril" },
+    { "label": "Brand domain", "url": "https://claril.dev" }
+  ],
+  "history": [
+    { "date": "2026-06-20", "note": "Project bootstrapped: name=Claril, AGPL-3.0, Next.js 16 / bpmn-js / Better Auth / Drizzle / Vercel AI SDK stack locked; monorepo scaffolding started." }
+  ]
+}
