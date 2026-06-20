@@ -74,7 +74,7 @@ Mapped to the agent team so they can run in parallel where independent.
 | **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | 🔄 in progress |
 | **W8** | Provider connect: guided AI-setup wizard (steps/animation/instructions) + Vercel AI Gateway + BYOK + optional Google OAuth→Vertex | `ai-advisor-engineer` + `ui-engineer` | queued |
 | **W9** | AI drawer redesign: tabbed Chat + Problems, sent/received bubbles, specialized proposal cards, progressive phases, markdown doc viewer + DB persistence + Regenerate, token usage (Settings + chat) | `ui-engineer` + `ai-advisor-engineer` | ✅ merged to `main` (deployed) |
-| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | 🔄 **F1 deployed to `main`**; **F2 built** (branch `feat/ai-review-chat-memory`, reviewed green); **F3 plan next** |
+| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | 🔄 **F1 deployed to `main`**; **F2 + F3 built** (branch `feat/ai-review-chat-memory`, reviewed green; migrations 0006–0008 applied) — pending merge + live smoke test |
 
 Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
 inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
@@ -99,10 +99,11 @@ Spec: `docs/superpowers/specs/2026-06-20-history-ai-review-chat-memory-design.md
 - [x] F2.3 — Pending-state UX ("Applied to canvas — review:"); review state keyed by `toolCallId` (only the active proposal actionable); `busy`-gated; `focusComposer` on the chat handle
 - [ ] F2.4 — Manual smoke test (violet marks; Approve→AI version; Roll back reverts; Keep refining focuses composer; coexists with History diff) — needs AI provider
 
-**F3 — Chat memory + token cut** (persist chat + DB knowledge cache + surrogate sanitize). DB: `chat_message`, `diagram_knowledge`. Status: **planned (spec only).**
-- [ ] F3.1 — `chat_message` table + `appendChatMessages`/`getChatMessages`/`clearChat`; hydrate `useChat({messages})` on reload; Clear-chat control
-- [ ] F3.2 — `diagram_knowledge` table: cached compact summary + `graphHash`; regenerate when stale; chat route sends synopsis + id↔name table instead of full graph dump
-- [ ] F3.3 — Lone-surrogate sanitizer (`/[\uD800-\uDFFF]/`) before `streamText` + before persisting (fixes the `400 invalid high surrogate` + oversized body)
+**F3 — Chat memory + token cut** (persist chat + DB knowledge cache + surrogate sanitize). DB: `chat_message` (0007), `diagram_knowledge` (0008) — both applied. Plan: `docs/superpowers/plans/2026-06-20-f3-chat-memory-knowledge.md`. Status: **built, reviewed green; pending live smoke test.**
+- [x] F3.1 — Surrogate sanitizer (`stripLoneSurrogates`) on grounding + message text before `streamText` — **fixes the live `400 invalid high surrogate`**
+- [x] F3.2 — `chat_message` table (0007) + `appendChatMessages`/`getChatMessages`/`clearChat`; hydrate `useChat({messages})` on reload; Clear chip; `seenProposals` seeded from history so hydrated proposals don't re-apply
+- [x] F3.3 — `diagram_knowledge` table (0008): cached compact synopsis (shape + decisions + sequence flows + id↔name) keyed by `graphHash`; chat route grounds on synopsis + findings + assets instead of the full dump (`proposeEdit` still gets the full graph)
+- [ ] F3.4 — Manual smoke test (reload restores chat; Clear; emoji no 400; compact grounding; proposeEdit precision; synopsis regen on graph change) — needs AI provider
 
 ### Remaining W3 tails (follow-ups)
 - [ ] Asset-link management UI + impact/usage panel (actions exist: `createAssetLink`, `getAssetUsage`)
