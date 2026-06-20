@@ -37,6 +37,9 @@ const AddNode = z.object({
   name: z.string().optional(),
   /** tempId or existing elementId of the containing pool/lane. */
   containerRef: z.string().optional(),
+  eventDefinition: z
+    .enum(["timer", "message", "error", "signal", "escalation", "conditional", "compensation", "terminate"])
+    .optional(),
 });
 const Connect = z.object({
   kind: z.literal("connect"),

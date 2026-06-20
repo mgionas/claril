@@ -27,6 +27,17 @@ const BPMN_TYPE: Record<string, string> = {
   subProcess: "bpmn:SubProcess",
 };
 
+const EVENT_DEF: Record<string, string> = {
+  timer: "bpmn:TimerEventDefinition",
+  message: "bpmn:MessageEventDefinition",
+  error: "bpmn:ErrorEventDefinition",
+  signal: "bpmn:SignalEventDefinition",
+  escalation: "bpmn:EscalationEventDefinition",
+  conditional: "bpmn:ConditionalEventDefinition",
+  compensation: "bpmn:CompensateEventDefinition",
+  terminate: "bpmn:TerminateEventDefinition",
+};
+
 /**
  * Apply an EditPlan to the live modeler as a SINGLE undoable command. Returns
  * the element ids that were created/changed (for diff highlighting). All edits
@@ -42,6 +53,7 @@ export function applyEditPlan(
   const autoPlace = modeler.get("autoPlace");
   const canvas = modeler.get("canvas");
   const bpmnFactory = modeler.get("bpmnFactory");
+  const bpmnReplace = modeler.get("bpmnReplace");
 
   const temp = new Map<string, any>(); // tempId -> created element
   const changed = new Set<string>();
@@ -253,6 +265,16 @@ export function applyEditPlan(
         }
 
         if (op.name) modeling.updateProperties(placed, { name: op.name });
+        if (op.eventDefinition && EVENT_DEF[op.eventDefinition] && /Event$/.test(BPMN_TYPE[op.type] ?? "")) {
+          try {
+            placed = bpmnReplace.replaceElement(placed, {
+              type: BPMN_TYPE[op.type],
+              eventDefinitionType: EVENT_DEF[op.eventDefinition],
+            });
+          } catch {
+            /* keep the plain event if replace fails */
+          }
+        }
         temp.set(op.tempId, placed);
         changed.add(placed.id);
         return;

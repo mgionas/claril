@@ -61,6 +61,14 @@ describe("EditPlanSchema", () => {
     });
     expect(parsed.success).toBe(true);
   });
+
+  it("accepts addNode with an event definition", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Add a timer boundary event",
+      ops: [{ kind: "addNode", tempId: "t1", type: "intermediateCatchEvent", name: "Wait 2d", eventDefinition: "timer" }],
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("orderOps", () => {

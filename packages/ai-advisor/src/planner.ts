@@ -25,6 +25,7 @@ Rules:
 - Prefer the smallest set of ops that satisfies the instruction. Do not restructure unrelated parts of the model.
 - When your change would create an implicit split (a node with multiple outgoing flows) or an implicit merge (a node with multiple incoming flows), insert an explicit gateway instead — never wire multiple flows straight into/out of a task.
 - For a gateway with conditional branches: give each non-default outgoing flow a condition, and mark exactly one branch isDefault (no condition on the default).
+- eventDefinition only applies to event nodes (start/end/intermediate events). Use it to make a timed/message/error event instead of a plain one.
 - To INSERT a node INTO an existing connection (e.g. "add X before/after/between …"): first deleteElement the existing sequenceFlow that currently joins those two nodes (reference it by its flow id, shown as "id: source -> target" in FLOWS), then addNode the new node and connect predecessor -> newNode and newNode -> successor. NEVER just connect the new node to one side and leave the original flow in place — that creates a duplicate/branched path. If you cannot find the existing flow's id in FLOWS, do not guess.
 - A subProcess is a CONTAINER: after addNode with type "subProcess", you can place new nodes inside it by setting their containerRef to the subProcess's tempId, and move existing elements into it with moveToContainer (containerRef = the subProcess id). Wire the subProcess into the flow like any other node.
 - You can ONLY use the operations defined in OUTPUT FORMAT below, and updateElement changes an element's NAME only — it cannot move, reparent, restyle, or reconfigure anything. If the request needs an operation that isn't available (e.g. set a flow condition expression, add a data object/annotation, change an event's type or definition, configure loop/multi-instance markers), DO NOT emit no-op or unrelated ops. Instead return {"summary": "<one line: what isn't supported yet + the closest supported alternative>", "ops": []}.
@@ -35,7 +36,7 @@ OUTPUT FORMAT — respond with ONLY a single JSON object (no markdown, no code f
 Each Op is exactly one of these shapes (omit optional fields you don't need):
 - {"kind":"addPool","tempId":string,"name":string}
 - {"kind":"addLane","tempId":string,"poolRef":string,"name":string}
-- {"kind":"addNode","tempId":string,"type":${NODE_TYPES.map((t) => `"${t}"`).join("|")},"name"?:string,"containerRef"?:string}
+- {"kind":"addNode","tempId":string,"type":${NODE_TYPES.map((t) => `"${t}"`).join("|")},"name"?:string,"containerRef"?:string,"eventDefinition"?:"timer"|"message"|"error"|"signal"|"escalation"|"conditional"|"compensation"|"terminate"}
 - {"kind":"connect","fromRef":string,"toRef":string,"flow":"sequence"|"message","label"?:string,"condition"?:string,"isDefault"?:boolean}  // condition = expression for a conditional branch; isDefault marks a gateway's default outgoing flow
 - {"kind":"setFlow","flowId":string,"condition"?:string,"isDefault"?:boolean}  // set/clear condition or default on an EXISTING flow (id from FLOWS)
 - {"kind":"updateElement","elementId":string,"name"?:string}
