@@ -192,3 +192,52 @@ body {
 .djs-element.claril-flagged-warning .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   stroke: var(--color-warning) !important;
 }
+
+/* ---- minimap (pinned bottom-right, clear of the Inspector) ---- */
+.djs-minimap {
+  top: auto !important;
+  bottom: 12px !important;
+  right: 12px !important;
+  left: auto !important;
+  border: 1px solid var(--color-hairline) !important;
+  border-radius: 10px !important;
+  background-color: rgba(24, 24, 27, 0.85) !important;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+.djs-minimap .map {
+  background-color: var(--color-canvas) !important;
+}
+.djs-minimap .viewport {
+  fill: color-mix(in srgb, var(--color-accent) 14%, transparent) !important;
+  stroke: var(--color-accent) !important;
+}
+/* Replace the "Open/Close minimap" text with a minimize/expand icon. */
+.djs-minimap .toggle {
+  font-size: 0 !important;
+  color: var(--color-fg-muted) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+.djs-minimap .toggle:hover {
+  color: var(--color-accent) !important;
+}
+.djs-minimap .toggle::before {
+  content: "";
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask: var(--mm-toggle) center / 16px 16px no-repeat;
+  mask: var(--mm-toggle) center / 16px 16px no-repeat;
+}
+.djs-minimap.open .toggle {
+  --mm-toggle: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+}
+.djs-minimap:not(.open) .toggle {
+  --mm-toggle: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 15l-6-6-6 6'/></svg>");
+}

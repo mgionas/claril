@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
+import minimapModule from "diagram-js-minimap";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
+import { ElementPicker } from "@/components/element-picker";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
@@ -16,6 +18,7 @@ export interface CanvasApi {
 
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
+import "diagram-js-minimap/assets/diagram-js-minimap.css";
 
 interface BpmnCanvasProps {
   initialXml?: string;
@@ -46,12 +49,23 @@ export default function BpmnCanvas({
   const findingsRef = useRef<Finding[]>([]);
   const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
+  const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const modeler = new BpmnModeler({ container });
+    const modeler = new BpmnModeler({
+      container,
+      additionalModules: [minimapModule],
+      minimap: { open: true },
+      // Custom renderer colors (themed at the source — also fixes drag/minimap).
+      bpmnRenderer: {
+        defaultFillColor: "#18181b",
+        defaultStrokeColor: "#3f3f46",
+        defaultLabelColor: "#fafafa",
+      },
+    } as ConstructorParameters<typeof BpmnModeler>[0]);
     modelerRef.current = modeler;
     // React StrictMode (dev) mounts effects twice: mount → cleanup → mount.
     // The first modeler is destroyed while its async importXML is still in
@@ -198,13 +212,30 @@ export default function BpmnCanvas({
     >
       {/* Dedicated, React-untouched node for bpmn-js to render into. */}
       <div ref={containerRef} className="absolute inset-0" />
-      {ready && modelerRef.current && <CanvasPalette modeler={modelerRef.current} />}
+      {ready && modelerRef.current && (
+        <CanvasPalette
+          modeler={modelerRef.current}
+          onMore={(x, y) => setPicker({ x, y })}
+        />
+      )}
       {menu && modelerRef.current && (
         <CanvasContextMenu
           menu={menu}
           modeler={modelerRef.current}
           findings={findingsRef.current}
           onClose={() => setMenu(null)}
+          onCreateMore={(x, y) => {
+            setMenu(null);
+            setPicker({ x, y });
+          }}
+        />
+      )}
+      {picker && modelerRef.current && (
+        <ElementPicker
+          modeler={modelerRef.current}
+          x={picker.x}
+          y={picker.y}
+          onClose={() => setPicker(null)}
         />
       )}
     </div>

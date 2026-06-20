@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type ComponentType } from "react";
-import { Circle, Maximize2, Pencil, Square } from "lucide-react";
+import { Circle, Maximize2, Pencil, Plus, Square } from "lucide-react";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { applyQuickFix } from "@/lib/apply-fix";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ interface CanvasContextMenuProps {
   modeler: ModelerServices;
   findings: Finding[];
   onClose: () => void;
+  onCreateMore: (x: number, y: number) => void;
 }
 
 /**
@@ -35,7 +36,13 @@ interface CanvasContextMenuProps {
  * value: rename, executable quick-fixes, the element's findings, and a couple
  * of canvas helpers on empty space.
  */
-export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasContextMenuProps) {
+export function CanvasContextMenu({
+  menu,
+  modeler,
+  findings,
+  onClose,
+  onCreateMore,
+}: CanvasContextMenuProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -118,6 +125,11 @@ export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasCo
               onClick={() => createAtPoint("bpmn:StartEvent")}
             />
             <MenuItem icon={Square} label="Add task" onClick={() => createAtPoint("bpmn:Task")} />
+            <MenuItem
+              icon={Plus}
+              label="More elements…"
+              onClick={() => onCreateMore(menu.x, menu.y)}
+            />
             <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
           </>
         )}

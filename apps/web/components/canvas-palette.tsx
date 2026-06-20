@@ -8,6 +8,7 @@ import {
   Diamond,
   Hand,
   Move,
+  Plus,
   Spline,
   Square,
 } from "lucide-react";
@@ -38,7 +39,13 @@ const TOOLS = [
  * four is reached via the context pad's append + replace (morph) menu, so this
  * stays slim without losing features.
  */
-export function CanvasPalette({ modeler }: { modeler: ModelerServices }) {
+export function CanvasPalette({
+  modeler,
+  onMore,
+}: {
+  modeler: ModelerServices;
+  onMore: (x: number, y: number) => void;
+}) {
   function startCreate(event: MouseEvent, type: string) {
     try {
       const shape = modeler.get("elementFactory").createShape({ type });
@@ -87,6 +94,20 @@ export function CanvasPalette({ modeler }: { modeler: ModelerServices }) {
           <Icon className="size-4" />
         </button>
       ))}
+
+      <div className="mx-auto my-0.5 h-px w-6 bg-hairline" />
+
+      <button
+        type="button"
+        title="More elements…"
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          onMore(rect.right + 8, rect.top);
+        }}
+        className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
+      >
+        <Plus className="size-4" />
+      </button>
     </div>
   );
 }
