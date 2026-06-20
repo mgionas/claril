@@ -75,6 +75,12 @@ export function Workbench({
     [],
   );
 
+  // From the canvas context menu: open the drawer and select the element's finding.
+  const handleShowProblems = useCallback((id: string) => {
+    setInspectorOpen(true);
+    setFocus((prev) => ({ id, nonce: prev.nonce + 1 }));
+  }, []);
+
   const handleXmlChange = useCallback(
     (xml: string) => {
       setSaveState("saving");
@@ -121,6 +127,8 @@ export function Workbench({
           onGraphChange={handleGraph}
           onXmlChange={handleXmlChange}
           onReady={handleReady}
+          findings={allFindings}
+          onShowProblems={handleShowProblems}
         />
         <TopBar
           diagramName={diagramName}
@@ -164,6 +172,8 @@ export function Workbench({
       <InspectorPanel
         open={inspectorOpen}
         findings={allFindings}
+        focusedElementId={focus.id}
+        focusNonce={focus.nonce}
         onSelect={handleSelectFinding}
         onApplyFix={handleApplyFix}
         aiBusy={aiBusy}

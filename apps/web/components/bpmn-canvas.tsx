@@ -30,6 +30,10 @@ interface BpmnCanvasProps {
   onGraphChange?: (graph: ProcessGraph) => void;
   onXmlChange?: (xml: string) => void;
   onReady?: (api: CanvasApi) => void;
+  /** Current findings (used by the context menu's "View problems" action). */
+  findings?: Finding[];
+  /** Open the Inspector drawer and select the element's finding. */
+  onShowProblems?: (elementId: string) => void;
 }
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
@@ -42,6 +46,8 @@ export default function BpmnCanvas({
   onGraphChange,
   onXmlChange,
   onReady,
+  findings,
+  onShowProblems,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
@@ -275,6 +281,11 @@ export default function BpmnCanvas({
         <CanvasContextMenu
           menu={menu}
           modeler={modelerRef.current}
+          findings={findings ?? []}
+          onShowProblems={(id) => {
+            setMenu(null);
+            onShowProblems?.(id);
+          }}
           onClose={() => setMenu(null)}
           onCreateMore={(x, y) => {
             setMenu(null);

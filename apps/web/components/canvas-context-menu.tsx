@@ -13,6 +13,7 @@ import {
   CircleStop,
   Diamond,
   Hand,
+  Info,
   Maximize2,
   Move,
   Pencil,
@@ -23,6 +24,8 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
+import type { Finding, Severity } from "@claril/shared";
+import { cn } from "@/lib/utils";
 
 interface ModelerServices {
   get(name: string): any;
@@ -47,9 +50,18 @@ function iconForEntry(id: string): ComponentType<{ className?: string }> {
   return Plus;
 }
 
+const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
+const severityColor: Record<Severity, string> = {
+  error: "text-error",
+  warning: "text-warning",
+  info: "text-info",
+};
+
 interface CanvasContextMenuProps {
   menu: MenuState;
   modeler: ModelerServices;
+  findings: Finding[];
+  onShowProblems: (elementId: string) => void;
   onClose: () => void;
   onCreateMore: (x: number, y: number) => void;
 }
@@ -57,9 +69,17 @@ interface CanvasContextMenuProps {
 /**
  * The action hub, grouped logically: OBJECT (the selected element's own actions,
  * pulled from bpmn-js's context-pad providers) and CANVAS / TOOLS (global).
- * Problems/findings live in the Inspector, not here.
+ * The full problem list lives in the Inspector; the OBJECT group surfaces a
+ * shortcut that opens the drawer and selects this element's finding.
  */
-export function CanvasContextMenu({ menu, modeler, onClose, onCreateMore }: CanvasContextMenuProps) {
+export function CanvasContextMenu({
+  menu,
+  modeler,
+  findings,
+  onShowProblems,
+  onClose,
+  onCreateMore,
+}: CanvasContextMenuProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -69,6 +89,16 @@ export function CanvasContextMenu({ menu, modeler, onClose, onCreateMore }: Canv
   }, [onClose]);
 
   const element = menu.elementId ? modeler.get("elementRegistry").get(menu.elementId) : null;
+
+  // Findings attached to the selected element (drives the "View problems" entry).
+  const elementFindings = useMemo(
+    () => (menu.elementId ? findings.filter((f) => f.elementId === menu.elementId) : []),
+    [findings, menu.elementId],
+  );
+  const worstSeverity = elementFindings.reduce<Severity | null>(
+    (worst, f) => (!worst || severityRank[f.severity] > severityRank[worst] ? f.severity : worst),
+    null,
+  );
 
   const padEntries = useMemo(() => {
     if (!element) return [];
@@ -132,8 +162,15 @@ export function CanvasContextMenu({ menu, modeler, onClose, onCreateMore }: Canv
     onClose();
   }
 
-  const left = Math.min(menu.x, window.innerWidth - 248);
-  const top = Math.min(menu.y, window.innerHeight - 420);
+  // Clamp the menu inside the viewport. Open at the cursor, but never run off
+  // the bottom: if the cursor is low, lift the menu so it keeps a usable
+  // height, then cap its height to the remaining space (it scrolls within).
+  const MARGIN = 8;
+  const MENU_WIDTH = 240;
+  const MIN_HEIGHT = 220;
+  const left = Math.max(MARGIN, Math.min(menu.x, window.innerWidth - MENU_WIDTH - MARGIN));
+  const top = Math.max(MARGIN, Math.min(menu.y, window.innerHeight - MARGIN - MIN_HEIGHT));
+  const maxHeight = window.innerHeight - top - MARGIN;
 
   return (
     <div
@@ -145,8 +182,8 @@ export function CanvasContextMenu({ menu, modeler, onClose, onCreateMore }: Canv
       }}
     >
       <div
-        className="absolute z-50 max-h-[80vh] w-60 overflow-y-auto rounded-[10px] border border-hairline bg-panel/95 py-1 text-sm shadow-xl backdrop-blur"
-        style={{ left, top }}
+        className="absolute z-50 w-60 overflow-y-auto overscroll-contain rounded-[10px] border border-hairline bg-panel/95 py-1 text-sm shadow-xl backdrop-blur"
+        style={{ left, top, maxHeight }}
         onClick={(e) => e.stopPropagation()}
       >
         {element && (
@@ -161,6 +198,18 @@ export function CanvasContextMenu({ menu, modeler, onClose, onCreateMore }: Canv
               />
             ))}
             <MenuItem icon={Pencil} label="Rename" onClick={rename} />
+            {elementFindings.length > 0 && menu.elementId && (
+              <MenuItem
+                icon={Info}
+                iconClassName={worstSeverity ? severityColor[worstSeverity] : undefined}
+                label={
+                  elementFindings.length === 1
+                    ? "View problem"
+                    : `View problems (${elementFindings.length})`
+                }
+                onClick={() => onShowProblems(menu.elementId as string)}
+              />
+            )}
             <Separator />
           </>
         )}
@@ -188,10 +237,12 @@ function GroupLabel({ children }: { children: ReactNode }) {
 
 function MenuItem({
   icon: Icon,
+  iconClassName,
   label,
   onClick,
 }: {
   icon: ComponentType<{ className?: string }>;
+  iconClassName?: string;
   label: string;
   onClick: (event: ReactMouseEvent) => void;
 }) {
@@ -201,7 +252,7 @@ function MenuItem({
       onClick={(e) => onClick(e)}
       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-fg transition-colors hover:bg-elevated"
     >
-      <Icon className="size-3.5 text-fg-muted" />
+      <Icon className={cn("size-3.5 text-fg-muted", iconClassName)} />
       {label}
     </button>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,10 @@ const severityDot: Record<Severity, string> = {
 interface InspectorPanelProps {
   open: boolean;
   findings: Finding[];
+  /** Element whose finding should be highlighted + scrolled into view. */
+  focusedElementId?: string;
+  /** Bumped on each request so re-selecting the same element re-scrolls. */
+  focusNonce?: number;
   onSelect?: (elementId: string) => void;
   onApplyFix?: (fix: QuickFix) => void;
   aiBusy?: boolean;
@@ -26,6 +31,8 @@ interface InspectorPanelProps {
 export function InspectorPanel({
   open,
   findings,
+  focusedElementId,
+  focusNonce,
   onSelect,
   onApplyFix,
   aiBusy,
@@ -34,6 +41,18 @@ export function InspectorPanel({
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const hasAdvice = findings.some((f) => f.source === "advisor");
+  const firstFocusedIndex = focusedElementId
+    ? findings.findIndex((f) => f.elementId === focusedElementId)
+    : -1;
+  const focusedRowRef = useRef<HTMLLIElement>(null);
+
+  // When an element is selected (e.g. from the canvas "View problems" action),
+  // scroll its finding into view inside the drawer.
+  useEffect(() => {
+    if (open && focusedElementId) {
+      focusedRowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [open, focusedElementId, focusNonce]);
 
   return (
     <aside
@@ -68,10 +87,19 @@ export function InspectorPanel({
               {findings.map((finding, index) => {
                 const clickable = Boolean(finding.elementId && onSelect);
                 const isAdvice = finding.source === "advisor";
+                const focused = Boolean(
+                  finding.elementId && finding.elementId === focusedElementId,
+                );
                 return (
                   <li
                     key={`${finding.ruleId}-${finding.elementId ?? index}-${index}`}
-                    className="flex items-start gap-1 rounded-[6px] hover:bg-elevated"
+                    ref={index === firstFocusedIndex ? focusedRowRef : undefined}
+                    className={cn(
+                      "flex items-start gap-1 rounded-[6px] transition-colors",
+                      focused
+                        ? "bg-accent/10 ring-1 ring-inset ring-accent/40"
+                        : "hover:bg-elevated",
+                    )}
                   >
                     <button
                       type="button"
