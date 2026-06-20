@@ -162,6 +162,14 @@ describe("EditPlanSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts a setDocumentation op", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Document the task",
+      ops: [{ kind: "setDocumentation", elementId: "Task_1", text: "verifies the claim" }],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it("accepts activity markers", () => {
     const parsed = EditPlanSchema.safeParse({
       summary: "Make a task multi-instance",

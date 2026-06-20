@@ -37,6 +37,7 @@ export function groupOps(ops: Op[]): OpGroups {
       case "moveToContainer": g.moved.push(`${op.elementId} → ${op.containerRef}`); break;
       case "reconnect": g.reconnected.push(op.flowId); break;
       case "updateElement": g.updated.push(`${op.elementId}${op.name ? ` → "${op.name}"` : ""}`); break;
+      case "setDocumentation": g.updated.push(`${op.elementId} → docs`); break;
       case "deleteElement": g.removed.push(op.elementId); break;
     }
   }

@@ -84,6 +84,11 @@ const UpdateElement = z.object({
   elementId: z.string(),
   name: z.string().optional(),
 });
+const SetDocumentation = z.object({
+  kind: z.literal("setDocumentation"),
+  elementId: z.string(),
+  text: z.string(),
+});
 const MoveToContainer = z.object({
   kind: z.literal("moveToContainer"),
   /** id of the existing element to move. */
@@ -112,6 +117,7 @@ export const OpSchema = z.discriminatedUnion("kind", [
   Reconnect,
   SetMarker,
   UpdateElement,
+  SetDocumentation,
   DeleteElement,
 ]);
 export type Op = z.infer<typeof OpSchema>;
@@ -134,7 +140,8 @@ const ORDER: Record<Op["kind"], number> = {
   reconnect: 8,
   setMarker: 9,
   updateElement: 10,
-  deleteElement: 11,
+  setDocumentation: 11,
+  deleteElement: 12,
 };
 
 /** Stable sort into a dependency-safe execution order. */
@@ -241,6 +248,9 @@ export function validateEditPlan(plan: EditPlan, graph: ProcessGraph): string[] 
         break;
       case "updateElement":
         ref("updateElement.elementId", op.elementId, known(op.elementId));
+        break;
+      case "setDocumentation":
+        ref("setDocumentation.elementId", op.elementId, known(op.elementId));
         break;
       case "deleteElement":
         ref("deleteElement.elementId", op.elementId, known(op.elementId));

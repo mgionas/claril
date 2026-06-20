@@ -413,6 +413,14 @@ export function applyEditPlan(
         }
         return;
       }
+      case "setDocumentation": {
+        const el = resolve(op.elementId);
+        if (!el) return;
+        const docs = op.text ? [bpmnFactory.create("bpmn:Documentation", { text: op.text })] : [];
+        modeling.updateProperties(el, { documentation: docs });
+        changed.add(el.id);
+        return;
+      }
       case "deleteElement": {
         const el = elementRegistry.get(op.elementId);
         if (el) modeling.removeElements([el]);
