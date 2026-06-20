@@ -45,7 +45,7 @@ export function ChatTab(props: ChatTabProps) {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 192)}px`;
   };
 
   const { messages, sendMessage, status } = useChat({
@@ -165,7 +165,7 @@ export function ChatTab(props: ChatTabProps) {
           <textarea
             ref={textareaRef}
             value={input}
-            rows={1}
+            rows={3}
             onChange={(e) => {
               setInput(e.target.value);
               resizeComposer();
@@ -177,7 +177,7 @@ export function ChatTab(props: ChatTabProps) {
               }
             }}
             placeholder="Ask a question or describe a change…"
-            className="block max-h-40 w-full resize-none rounded-[12px] bg-transparent py-2.5 pl-3 pr-11 text-sm leading-relaxed placeholder:text-fg-subtle focus:outline-none"
+            className="block min-h-[84px] max-h-48 w-full resize-none rounded-[12px] bg-transparent py-2.5 pl-3 pr-11 text-sm leading-relaxed placeholder:text-fg-subtle focus:outline-none"
           />
           <button
             type="button"
