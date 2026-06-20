@@ -1,7 +1,22 @@
 "use client";
 
-import { useEffect, type ComponentType } from "react";
-import { BoxSelect, Hand, Maximize2, Move, Pencil, Plus, Spline } from "lucide-react";
+import { useEffect, useMemo, type ComponentType, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  BoxSelect,
+  CircleDot,
+  CircleStop,
+  Diamond,
+  Hand,
+  Maximize2,
+  Move,
+  Pencil,
+  Plus,
+  Shuffle,
+  Spline,
+  Square,
+  Trash2,
+  Type,
+} from "lucide-react";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { applyQuickFix } from "@/lib/apply-fix";
 import { cn } from "@/lib/utils";
@@ -22,6 +37,19 @@ const severityDot: Record<Severity, string> = {
   info: "bg-info",
 };
 
+/** Map a bpmn-js context-pad entry id to a Lucide icon. */
+function iconForEntry(id: string): ComponentType<{ className?: string }> {
+  if (id.includes("delete")) return Trash2;
+  if (id.includes("connect")) return Spline;
+  if (id.includes("replace")) return Shuffle;
+  if (id.includes("gateway")) return Diamond;
+  if (id.includes("end-event")) return CircleStop;
+  if (id.includes("intermediate")) return CircleDot;
+  if (id.includes("text-annotation")) return Type;
+  if (id.includes("task") || id.includes("append")) return Square;
+  return Plus;
+}
+
 interface CanvasContextMenuProps {
   menu: MenuState;
   modeler: ModelerServices;
@@ -31,9 +59,11 @@ interface CanvasContextMenuProps {
 }
 
 /**
- * The single action hub. Right-click anywhere: create (grouped picker), tools,
- * rename, fit, and per-element executable fixes. The bpmn-js context pad still
- * handles per-element append/connect/delete on hover.
+ * The single action hub. For an object it surfaces that object's own actions
+ * (append / connect / change-type / delete) pulled straight from bpmn-js's
+ * context-pad providers — so behavior matches bpmn.io exactly (and Connect
+ * starts FROM the selected element, fixing the direction). On empty canvas it
+ * offers create + tools + fit.
  */
 export function CanvasContextMenu({
   menu,
@@ -51,6 +81,33 @@ export function CanvasContextMenu({
   }, [onClose]);
 
   const element = menu.elementId ? modeler.get("elementRegistry").get(menu.elementId) : null;
+
+  // Pull the element's own actions from bpmn-js's context-pad providers.
+  const padEntries = useMemo(() => {
+    if (!element) return [];
+    try {
+      const entries = modeler.get("contextPad").getEntries(element) as Record<string, any>;
+      return Object.entries(entries)
+        .filter(([, e]) => e && e.action && typeof e.action.click === "function")
+        .map(([id, e]) => ({
+          id,
+          title: (e.title as string) || id,
+          run: e.action.click as (event: Event, el: unknown) => void,
+        }));
+    } catch {
+      return [];
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [element]);
+
+  function runPad(entry: { run: (event: Event, el: unknown) => void }, event: ReactMouseEvent) {
+    try {
+      entry.run(event.nativeEvent, element);
+    } catch {
+      /* ignore */
+    }
+    onClose();
+  }
 
   function rename() {
     try {
@@ -89,7 +146,7 @@ export function CanvasContextMenu({
     : [];
 
   const left = Math.min(menu.x, window.innerWidth - 248);
-  const top = Math.min(menu.y, window.innerHeight - 380);
+  const top = Math.min(menu.y, window.innerHeight - 420);
 
   return (
     <div
@@ -101,22 +158,36 @@ export function CanvasContextMenu({
       }}
     >
       <div
-        className="absolute z-50 w-60 overflow-hidden rounded-[10px] border border-hairline bg-panel/95 py-1 text-sm shadow-xl backdrop-blur"
+        className="absolute z-50 max-h-[80vh] w-60 overflow-y-auto rounded-[10px] border border-hairline bg-panel/95 py-1 text-sm shadow-xl backdrop-blur"
         style={{ left, top }}
         onClick={(e) => e.stopPropagation()}
       >
-        <MenuItem icon={Plus} label="Create element…" onClick={() => onCreateMore(menu.x, menu.y)} />
-        {element && <MenuItem icon={Pencil} label="Rename" onClick={rename} />}
-
-        <Separator />
-        <p className="px-3 pb-1 pt-1 text-[10px] uppercase tracking-wide text-fg-subtle">Tools</p>
-        <MenuItem icon={Hand} label="Hand (pan)" onClick={() => tool("handTool")} />
-        <MenuItem icon={BoxSelect} label="Lasso select" onClick={() => tool("lassoTool")} />
-        <MenuItem icon={Move} label="Space tool" onClick={() => tool("spaceTool")} />
-        <MenuItem icon={Spline} label="Global connect" onClick={() => tool("globalConnect")} />
-
-        <Separator />
-        <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
+        {element ? (
+          <>
+            {padEntries.map((entry) => (
+              <MenuItem
+                key={entry.id}
+                icon={iconForEntry(entry.id)}
+                label={entry.title}
+                onClick={(e) => runPad(entry, e)}
+              />
+            ))}
+            <Separator />
+            <MenuItem icon={Pencil} label="Rename" onClick={rename} />
+          </>
+        ) : (
+          <>
+            <MenuItem icon={Plus} label="Create element…" onClick={() => onCreateMore(menu.x, menu.y)} />
+            <Separator />
+            <p className="px-3 pb-1 pt-1 text-[10px] uppercase tracking-wide text-fg-subtle">Tools</p>
+            <MenuItem icon={Hand} label="Hand (pan)" onClick={() => tool("handTool")} />
+            <MenuItem icon={BoxSelect} label="Lasso select" onClick={() => tool("lassoTool")} />
+            <MenuItem icon={Move} label="Space tool" onClick={() => tool("spaceTool")} />
+            <MenuItem icon={Spline} label="Global connect" onClick={() => tool("globalConnect")} />
+            <Separator />
+            <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
+          </>
+        )}
 
         {elementFindings.length > 0 && (
           <>
@@ -156,12 +227,12 @@ function MenuItem({
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
-  onClick: () => void;
+  onClick: (event: ReactMouseEvent) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => onClick(e)}
       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-fg transition-colors hover:bg-elevated"
     >
       <Icon className="size-3.5 text-fg-muted" />

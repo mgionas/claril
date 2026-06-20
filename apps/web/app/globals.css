@@ -51,10 +51,18 @@ body {
   display: none !important;
 }
 
-/* shapes — include .djs-dragger so drag/drop previews aren't white */
+/* shapes — themed in every interaction state so drag/hover/connect/drop
+   previews (incl. big pool/participant rects) are never white */
 .djs-element .djs-visual > :where(rect, circle, ellipse, polygon, path),
-.djs-dragger .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+.djs-dragger .djs-visual :where(rect, circle, ellipse, polygon, path) {
   stroke: #3f3f46 !important;
+  fill: #18181b !important;
+}
+.djs-element.djs-hover .djs-visual > :where(rect, circle, ellipse, polygon, path),
+.djs-element.connect-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
+.djs-element.connect-not-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
+.djs-element.drop-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
+.djs-element.drop-not-ok .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   fill: #18181b !important;
 }
 /* connections (override the shape fill above for edges) */
