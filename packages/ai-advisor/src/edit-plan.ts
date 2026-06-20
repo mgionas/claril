@@ -40,6 +40,13 @@ const UpdateElement = z.object({
   elementId: z.string(),
   name: z.string().optional(),
 });
+const MoveToContainer = z.object({
+  kind: z.literal("moveToContainer"),
+  /** id of the existing element to move. */
+  elementId: z.string(),
+  /** Target lane/pool — a tempId from this plan or an existing lane/pool id. */
+  containerRef: z.string(),
+});
 const DeleteElement = z.object({ kind: z.literal("deleteElement"), elementId: z.string() });
 
 export const OpSchema = z.discriminatedUnion("kind", [
@@ -47,6 +54,7 @@ export const OpSchema = z.discriminatedUnion("kind", [
   AddLane,
   AddNode,
   Connect,
+  MoveToContainer,
   UpdateElement,
   DeleteElement,
 ]);
@@ -63,8 +71,9 @@ const ORDER: Record<Op["kind"], number> = {
   addLane: 1,
   addNode: 2,
   connect: 3,
-  updateElement: 4,
-  deleteElement: 5,
+  moveToContainer: 4,
+  updateElement: 5,
+  deleteElement: 6,
 };
 
 /** Stable sort into a dependency-safe execution order. */

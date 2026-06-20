@@ -244,6 +244,20 @@ export function applyEditPlan(
         if (conn) changed.add(conn.id);
         return;
       }
+      case "moveToContainer": {
+        const el = resolve(op.elementId);
+        const container = asFlowNodeContainer(resolve(op.containerRef));
+        if (!el || !container || typeof el.y !== "number" || typeof container.y !== "number") {
+          if (DEBUG) console.log("[applyEditPlan] moveToContainer unresolved:", op);
+          return;
+        }
+        // Center the element vertically in the target lane/pool band; bpmn-js
+        // LaneBehavior reassigns lane membership from the new position.
+        const dy = container.y + (container.height ?? 0) / 2 - (el.y + (el.height ?? 0) / 2);
+        modeling.moveElements([el], { x: 0, y: dy }, container);
+        changed.add(el.id);
+        return;
+      }
       case "updateElement": {
         const el = elementRegistry.get(op.elementId);
         if (el && op.name !== undefined) {

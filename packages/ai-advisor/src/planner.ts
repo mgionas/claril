@@ -37,6 +37,7 @@ Each Op is exactly one of these shapes (omit optional fields you don't need):
 - {"kind":"connect","fromRef":string,"toRef":string,"flow":"sequence"|"message","label"?:string}
 - {"kind":"updateElement","elementId":string,"name"?:string}
 - {"kind":"deleteElement","elementId":string}
+- {"kind":"moveToContainer","elementId":string,"containerRef":string}  // move an EXISTING element into a different lane/pool — containerRef is a lane/pool id from POOLS & LANES
 "tempId" is a short placeholder (e.g. "t1") you assign to elements you create in THIS plan, so later ops can reference them; "fromRef"/"toRef"/"containerRef"/"poolRef" take either a tempId from this plan or an existing element id. To add a node into the flow, emit an addNode then connect ops wiring it to existing ids. If no change is warranted, return {"summary": "...", "ops": []}.
 
 ${BPMN_BEST_PRACTICES}`;

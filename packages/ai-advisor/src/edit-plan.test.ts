@@ -12,6 +12,14 @@ describe("EditPlanSchema", () => {
     const bad = EditPlanSchema.safeParse({ summary: "x", ops: [{ kind: "frobnicate" }] });
     expect(bad.success).toBe(false);
   });
+
+  it("accepts a moveToContainer op", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Move task into the Back lane",
+      ops: [{ kind: "moveToContainer", elementId: "Task_1", containerRef: "Lane_b" }],
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("orderOps", () => {

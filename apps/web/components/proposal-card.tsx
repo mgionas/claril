@@ -1,23 +1,25 @@
 "use client";
 
-import { Plus, ArrowRight, Pencil, Trash2, Check, RotateCcw, MessageCirclePlus } from "lucide-react";
+import { Plus, ArrowRight, Move, Pencil, Trash2, Check, RotateCcw, MessageCirclePlus } from "lucide-react";
 import type { EditPlan, Op } from "@claril/ai-advisor";
 
 export interface OpGroups {
   added: string[];
   connected: string[];
+  moved: string[];
   updated: string[];
   removed: string[];
 }
 
 export function groupOps(ops: Op[]): OpGroups {
-  const g: OpGroups = { added: [], connected: [], updated: [], removed: [] };
+  const g: OpGroups = { added: [], connected: [], moved: [], updated: [], removed: [] };
   for (const op of ops) {
     switch (op.kind) {
       case "addPool": g.added.push(`Pool "${op.name}"`); break;
       case "addLane": g.added.push(`Lane "${op.name}"`); break;
       case "addNode": g.added.push(`${op.type}${op.name ? ` "${op.name}"` : ""}`); break;
       case "connect": g.connected.push(`${op.flow} flow${op.label ? ` "${op.label}"` : ""}`); break;
+      case "moveToContainer": g.moved.push(`${op.elementId} → ${op.containerRef}`); break;
       case "updateElement": g.updated.push(`${op.elementId}${op.name ? ` → "${op.name}"` : ""}`); break;
       case "deleteElement": g.removed.push(op.elementId); break;
     }
@@ -28,6 +30,7 @@ export function groupOps(ops: Op[]): OpGroups {
 const SECTIONS = [
   { key: "added", icon: Plus, label: "Add", tone: "text-success" },
   { key: "connected", icon: ArrowRight, label: "Connect", tone: "text-info" },
+  { key: "moved", icon: Move, label: "Move", tone: "text-info" },
   { key: "updated", icon: Pencil, label: "Update", tone: "text-warning" },
   { key: "removed", icon: Trash2, label: "Remove", tone: "text-error" },
 ] as const;
