@@ -32,8 +32,13 @@ describe("describeSynopsis", () => {
     expect(s).toContain("Review request");
     expect(s).toMatch(/gateway/i);
   });
-  it("is shorter than the full node+flow dump for a small graph", () => {
-    // Sanity: synopsis must not be empty.
+  it("renders the sequence flows by name", () => {
+    const s = describeSynopsis(graph as never);
+    expect(s).toContain("Begin → Review request");
+    expect(s).toMatch(/Approved\?/); // gateway name in decisions
+    expect(s).toContain("yes"); // branch label
+  });
+  it("is non-empty", () => {
     expect(describeSynopsis(graph as never).length).toBeGreaterThan(0);
   });
 });

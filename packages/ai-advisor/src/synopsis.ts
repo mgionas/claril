@@ -52,11 +52,22 @@ export function describeSynopsis(graph: ProcessGraph): string {
     .map((n) => `${n.id} = ${n.name ? `"${n.name}"` : `(${n.type})`}`)
     .join("\n");
 
+  const sequence = flows
+    .map((f) => {
+      const src = nameById.get(f.sourceRef) || f.sourceRef;
+      const tgt = nameById.get(f.targetRef) || f.targetRef;
+      return `${src} → ${tgt}${f.name ? ` [${f.name}]` : ""}`;
+    })
+    .join("\n");
+
   return [
     `PROCESS SHAPE: ${nodes.length} elements, ${flows.length} flows — ${countLine}.`,
     "",
     "DECISION POINTS:",
     decisions || "(none)",
+    "",
+    "SEQUENCE FLOWS (process order):",
+    sequence || "(none)",
     "",
     "ELEMENT ID ↔ NAME (use these ids for proposeEdit):",
     idTable || "(none)",
