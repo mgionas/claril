@@ -11,10 +11,16 @@ import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
 
 interface BpmnCanvasProps {
+  initialXml?: string;
   onFindingsChange?: (findings: Finding[]) => void;
+  onXmlChange?: (xml: string) => void;
 }
 
-export default function BpmnCanvas({ onFindingsChange }: BpmnCanvasProps) {
+export default function BpmnCanvas({
+  initialXml,
+  onFindingsChange,
+  onXmlChange,
+}: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,15 +38,31 @@ export default function BpmnCanvas({ onFindingsChange }: BpmnCanvasProps) {
       }
     };
 
+    const persist = async () => {
+      try {
+        const { xml } = await modeler.saveXML({ format: true });
+        if (xml) onXmlChange?.(xml);
+      } catch {
+        // Ignore serialization errors mid-edit.
+      }
+    };
+
+    const onChanged = () => {
+      runInspection();
+      void persist();
+    };
+
     void (async () => {
       try {
-        await modeler.importXML(defaultDiagram);
+        const xml = initialXml && initialXml.trim().length > 0 ? initialXml : defaultDiagram;
+        await modeler.importXML(xml);
         const canvas = modeler.get("canvas") as unknown as {
           zoom: (mode: string, center?: string) => void;
         };
         canvas.zoom("fit-viewport", "auto");
         runInspection();
-        modeler.on("commandStack.changed", runInspection);
+        // commandStack.changed fires on edits (not on the initial import).
+        modeler.on("commandStack.changed", onChanged);
       } catch (err) {
         console.error("Failed to import diagram", err);
       }
@@ -49,7 +71,7 @@ export default function BpmnCanvas({ onFindingsChange }: BpmnCanvasProps) {
     return () => {
       modeler.destroy();
     };
-  }, [onFindingsChange]);
+  }, [initialXml, onFindingsChange, onXmlChange]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }
