@@ -81,9 +81,9 @@ body {
   font-family: ui-sans-serif, system-ui, sans-serif !important;
 }
 
-/* drag preview + selection box stay on-theme (no white flashes) */
+/* drag preview stays on-theme but muted/translucent (less aggressive) */
 .djs-dragger {
-  opacity: 0.9;
+  opacity: 0.35 !important;
 }
 .djs-lasso-overlay {
   fill: color-mix(in srgb, var(--color-accent) 12%, transparent) !important;
