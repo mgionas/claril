@@ -3,7 +3,7 @@
  * → Version. `organization` (the Org tier) and `user` come from Better Auth
  * (see ./auth). Asset Catalog tables are added in a later phase.
  */
-import { index, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
 
 export const diagramType = pgEnum("diagram_type", ["bpmn", "sequence", "c4"]);
@@ -102,6 +102,62 @@ export const version = pgTable(
   },
   (t) => [index("version_diagram_idx").on(t.diagramId)],
 );
+
+/**
+ * Persisted AI-generated process documentation, one row per diagram. Written by
+ * `runDocGen`; read on Docs-panel open so it shows instantly and only
+ * regenerates on demand. Markdown is the raw model output (rendered downstream).
+ */
+export const diagramDoc = pgTable("diagram_doc", {
+  diagramId: text("diagram_id")
+    .primaryKey()
+    .references(() => diagram.id, { onDelete: "cascade" }),
+  markdown: text("markdown").notNull(),
+  model: text("model"),
+  generatedAt: timestamp("generated_at").notNull().defaultNow(),
+});
+
+/**
+ * Per-call AI token-usage ledger. One row per model invocation (chat turn,
+ * advisor, doc-gen, edit plan, diagram generation). Best-effort: a failed insert
+ * never blocks the AI response. Aggregated for the Settings usage view
+ * (by project + by model) and summed client-side for the in-chat session meter.
+ */
+export const aiUsageKind = pgEnum("ai_usage_kind", [
+  "chat",
+  "advisor",
+  "docgen",
+  "plan",
+  "generate",
+]);
+
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    // Nullable: diagram-independent calls (e.g. generate-from-prompt before save).
+    projectId: text("project_id").references(() => project.id, { onDelete: "set null" }),
+    diagramId: text("diagram_id").references(() => diagram.id, { onDelete: "set null" }),
+    kind: aiUsageKind("kind").notNull(),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    totalTokens: integer("total_tokens").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("ai_usage_org_idx").on(t.organizationId),
+    index("ai_usage_project_idx").on(t.projectId),
+  ],
+);
+
+export type DiagramDoc = typeof diagramDoc.$inferSelect;
+export type AiUsage = typeof aiUsage.$inferSelect;
+export type NewAiUsage = typeof aiUsage.$inferInsert;
 
 /**
  * Brand-agnostic, BYOK AI provider config — one per Organization. The API key

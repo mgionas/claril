@@ -29,6 +29,13 @@
       "when": 1781970098761,
       "tag": "0003_good_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781975796433,
+      "tag": "0004_normal_the_hunter",
+      "breakpoints": true
     }
   ]
 }
