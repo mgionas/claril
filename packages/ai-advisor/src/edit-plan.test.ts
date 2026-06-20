@@ -50,6 +50,17 @@ describe("EditPlanSchema", () => {
     });
     expect(parsed.success).toBe(true);
   });
+
+  it("accepts conditional/default connect and setFlow", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Add a conditional branch",
+      ops: [
+        { kind: "connect", fromRef: "Gw_1", toRef: "Task_2", flow: "sequence", condition: "amount > 1000" },
+        { kind: "setFlow", flowId: "Flow_9", isDefault: true },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("orderOps", () => {

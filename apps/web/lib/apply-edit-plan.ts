@@ -41,6 +41,7 @@ export function applyEditPlan(
   const elementFactory = modeler.get("elementFactory");
   const autoPlace = modeler.get("autoPlace");
   const canvas = modeler.get("canvas");
+  const bpmnFactory = modeler.get("bpmnFactory");
 
   const temp = new Map<string, any>(); // tempId -> created element
   const changed = new Set<string>();
@@ -145,6 +146,20 @@ export function applyEditPlan(
     if (pred) return { x: pred.x + (pred.width ?? 100) + 110, y: center(pred).y };
     if (succ) return { x: succ.x - 110, y: center(succ).y };
     return { x: 300, y: 200 };
+  };
+
+  // Set or clear a sequence flow's condition expression.
+  const applyCondition = (conn: any, condition?: string) => {
+    if (condition === undefined) return;
+    const expr = condition
+      ? bpmnFactory.create("bpmn:FormalExpression", { body: condition })
+      : undefined;
+    modeling.updateProperties(conn, { conditionExpression: expr });
+  };
+  // Mark/unmark a flow as its source gateway's default.
+  const applyDefault = (conn: any, isDefault?: boolean) => {
+    if (isDefault === undefined || !conn.source) return;
+    modeling.updateProperties(conn.source, { default: isDefault ? conn.businessObject : undefined });
   };
 
   const DEBUG = process.env.NODE_ENV !== "production";
@@ -256,7 +271,22 @@ export function applyEditPlan(
         }
         const conn = modeling.connect(from, to);
         if (op.label && conn) modeling.updateProperties(conn, { name: op.label });
+        if (conn) {
+          applyCondition(conn, op.condition);
+          applyDefault(conn, op.isDefault);
+        }
         if (conn) changed.add(conn.id);
+        return;
+      }
+      case "setFlow": {
+        const conn = resolve(op.flowId);
+        if (!conn) {
+          if (DEBUG) console.log("[applyEditPlan] setFlow: flow not found:", op);
+          return;
+        }
+        applyCondition(conn, op.condition);
+        applyDefault(conn, op.isDefault);
+        changed.add(conn.id);
         return;
       }
       case "moveToContainer": {

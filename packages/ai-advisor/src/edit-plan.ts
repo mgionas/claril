@@ -44,6 +44,16 @@ const Connect = z.object({
   toRef: z.string(),
   label: z.string().optional(),
   flow: z.enum(["sequence", "message"]),
+  /** A condition expression for this (sequence) flow, e.g. "amount > 1000". */
+  condition: z.string().optional(),
+  /** Mark this flow as the default outgoing flow of its source gateway. */
+  isDefault: z.boolean().optional(),
+});
+const SetFlow = z.object({
+  kind: z.literal("setFlow"),
+  flowId: z.string(),
+  condition: z.string().optional(),
+  isDefault: z.boolean().optional(),
 });
 const UpdateElement = z.object({
   kind: z.literal("updateElement"),
@@ -71,6 +81,7 @@ export const OpSchema = z.discriminatedUnion("kind", [
   AddLane,
   AddNode,
   Connect,
+  SetFlow,
   MoveToContainer,
   Reconnect,
   UpdateElement,
@@ -89,10 +100,11 @@ const ORDER: Record<Op["kind"], number> = {
   addLane: 1,
   addNode: 2,
   connect: 3,
-  moveToContainer: 4,
-  reconnect: 5,
-  updateElement: 6,
-  deleteElement: 7,
+  setFlow: 4,
+  moveToContainer: 5,
+  reconnect: 6,
+  updateElement: 7,
+  deleteElement: 8,
 };
 
 /** Stable sort into a dependency-safe execution order. */

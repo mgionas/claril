@@ -19,7 +19,18 @@ export function groupOps(ops: Op[]): OpGroups {
       case "addPool": g.added.push(`Pool "${op.name}"`); break;
       case "addLane": g.added.push(`Lane "${op.name}"`); break;
       case "addNode": g.added.push(`${op.type}${op.name ? ` "${op.name}"` : ""}`); break;
-      case "connect": g.connected.push(`${op.flow} flow${op.label ? ` "${op.label}"` : ""}`); break;
+      case "connect": {
+        const extra = `${op.condition ? ` if ${op.condition}` : ""}${op.isDefault ? " (default)" : ""}`;
+        g.connected.push(`${op.flow} flow${op.label ? ` "${op.label}"` : ""}${extra}`);
+        break;
+      }
+      case "setFlow": {
+        const bits = [op.condition ? `if ${op.condition}` : "", op.isDefault ? "default" : ""]
+          .filter(Boolean)
+          .join(", ");
+        g.updated.push(`flow ${op.flowId}${bits ? ` → ${bits}` : ""}`);
+        break;
+      }
       case "moveToContainer": g.moved.push(`${op.elementId} → ${op.containerRef}`); break;
       case "reconnect": g.reconnected.push(op.flowId); break;
       case "updateElement": g.updated.push(`${op.elementId}${op.name ? ` → "${op.name}"` : ""}`); break;
