@@ -30,3 +30,4 @@ export {
   type Op,
 } from "./edit-plan";
 export { planEdits, planEditsWithUsage, buildPlannerPrompt, type PlanEditsInput } from "./planner";
+export { applyPlanToGraph } from "./plan-graph";

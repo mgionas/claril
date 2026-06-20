@@ -1,12 +1,13 @@
 import { generateText, type LanguageModelUsage } from "ai";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
-import { BPMN_BEST_PRACTICES } from "@claril/logic-inspector";
+import { BPMN_BEST_PRACTICES, inspect } from "@claril/logic-inspector";
 import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
 import type { AssetContext } from "./grounding";
 import { describeGrounding } from "./advisor";
 import { EditPlanSchema, NODE_TYPES, validateEditPlan, checkPlanScope, type EditPlan } from "./edit-plan";
+import { applyPlanToGraph } from "./plan-graph";
 
 export interface PlanEditsInput {
   graph: ProcessGraph;
@@ -116,13 +117,39 @@ export async function planEditsWithUsage(
   let plan = parseEditPlanResponse(first.text);
   let usage = first.usage;
 
-  // Deterministic validation + scope guard + one self-repair pass: hand the
-  // model its own plan and the concrete problems (orphan nodes, unknown refs,
-  // over-scoped ops) so it corrects them before the user ever sees the card.
-  const problems = [
-    ...validateEditPlan(plan, input.graph),
-    ...checkPlanScope(plan, input.instruction, input.graph),
-  ];
+  // Deterministic validation + scope guard + soundness, then one self-repair
+  // pass: hand the model its own plan and the concrete problems (orphan nodes,
+  // unknown refs, over-scoped ops, structural errors the change would
+  // introduce) so it corrects them before the user ever sees the card.
+  const collectProblems = (p: EditPlan): string[] => {
+    // Simulate the plan's effect on the graph and surface only NEW
+    // error-severity findings — pre-existing errors and warnings don't block.
+    const soundnessProblems = (() => {
+      try {
+        const before = new Set(
+          input.findings
+            .filter((f) => f.severity === "error")
+            .map((f) => `${f.ruleId}@${f.elementId ?? ""}`),
+        );
+        const after = inspect(applyPlanToGraph(input.graph, p));
+        return after
+          .filter((f) => f.severity === "error" && !before.has(`${f.ruleId}@${f.elementId ?? ""}`))
+          .map(
+            (f) =>
+              `Your change introduces a structural error: ${f.message}${f.elementId ? ` (at ${f.elementId})` : ""}`,
+          );
+      } catch {
+        return [];
+      }
+    })();
+    return [
+      ...validateEditPlan(p, input.graph),
+      ...checkPlanScope(p, input.instruction, input.graph),
+      ...soundnessProblems,
+    ];
+  };
+
+  const problems = collectProblems(plan);
   if (problems.length > 0) {
     const repairPrompt = [
       base,
@@ -139,11 +166,9 @@ export async function planEditsWithUsage(
       const second = await generateText({ model, system: PLANNER_SYSTEM_PROMPT, prompt: repairPrompt });
       const repaired = parseEditPlanResponse(second.text);
       usage = sumUsage(usage, second.usage);
-      // Accept the repair only if it's no worse than the original (combined).
-      const repairedProblems =
-        validateEditPlan(repaired, input.graph).length +
-        checkPlanScope(repaired, input.instruction, input.graph).length;
-      if (repairedProblems <= problems.length) plan = repaired;
+      // Accept the repair only if it's no worse than the original (combined:
+      // validation + scope + soundness).
+      if (collectProblems(repaired).length <= problems.length) plan = repaired;
     } catch {
       /* keep the first plan if the repair attempt fails to parse */
     }
