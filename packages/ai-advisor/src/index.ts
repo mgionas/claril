@@ -10,6 +10,7 @@ export { createModel } from "./provider";
 export { testConnection, type ConnectionTestResult } from "./test-connection";
 export { advise, type AdviseInput } from "./advisor";
 export { generateProcessDoc, type DocGenInput } from "./docgen";
+export { generateBpmnXml } from "./generate-bpmn";
 export { answerQuestion, type QuestionInput } from "./qa";
 export {
   describeAssetContext,

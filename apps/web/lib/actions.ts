@@ -8,10 +8,13 @@ import type { ProcessGraph } from "@claril/logic-inspector";
 import {
   advise,
   generateProcessDoc,
+  generateBpmnXml,
   answerQuestion,
   DEFAULT_MODELS,
   type AiProvider,
 } from "@claril/ai-advisor";
+import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
+import { layoutProcess } from "bpmn-auto-layout";
 import { auth } from "@/lib/auth";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { assertDiagramAccess } from "@/lib/tenancy";
@@ -266,4 +269,68 @@ export async function runAdvisorQuestion(
 ): Promise<string> {
   const { config, assetContext } = await resolveAiContext(diagramId);
   return answerQuestion({ graph, findings, question, assetContext }, config);
+}
+
+/** Remove a leading/trailing markdown code fence (```xml … ```) if present. */
+function stripCodeFences(raw: string): string {
+  let text = raw.trim();
+  if (text.startsWith("```")) {
+    // Drop the opening fence line (``` or ```xml / ```bpmn).
+    const firstNewline = text.indexOf("\n");
+    text = firstNewline === -1 ? "" : text.slice(firstNewline + 1);
+    // Drop a trailing closing fence.
+    const lastFence = text.lastIndexOf("```");
+    if (lastFence !== -1) text = text.slice(0, lastFence);
+  }
+  return text.trim();
+}
+
+/**
+ * Generate a BPMN diagram from a natural-language description. Resolves the
+ * org-level BYOK config (like {@link runDocGen}), asks the model for semantic
+ * BPMN XML, strips any markdown fences, runs `bpmn-auto-layout` (DOM-free) to
+ * add diagram interchange so it renders, then validates with the shared
+ * `@claril/bpmn-parse`. Returns the laid-out, validated XML. Throws a friendly
+ * error if the model's output cannot be turned into a valid diagram.
+ *
+ * No persistence happens here — the caller passes the returned XML to
+ * `createDiagram(projectId, "bpmn", name, content)`.
+ */
+export async function generateDiagramFromPrompt(description: string): Promise<string> {
+  const prompt = description.trim();
+  if (!prompt) throw new Error("Describe the process you want to generate.");
+
+  // Same BYOK resolution as every other T3 capability. Throws
+  // "No AI provider configured." when AI is off.
+  const { config } = await resolveAiContext();
+
+  const raw = await generateBpmnXml(prompt, config);
+  const semantic = stripCodeFences(raw);
+  if (!semantic) {
+    throw new Error("The AI returned an empty diagram. Try a more detailed description.");
+  }
+
+  let laidOut: string;
+  try {
+    laidOut = await layoutProcess(semantic);
+  } catch (cause) {
+    throw new Error(
+      "The AI produced BPMN that could not be laid out. Try rephrasing the description.",
+      { cause },
+    );
+  }
+
+  try {
+    await parseBpmnXml(laidOut);
+  } catch (cause) {
+    if (cause instanceof BpmnParseError) {
+      throw new Error(
+        "The AI produced invalid BPMN. Try rephrasing the description.",
+        { cause },
+      );
+    }
+    throw cause;
+  }
+
+  return laidOut;
 }
