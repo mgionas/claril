@@ -17,18 +17,20 @@ status: active · author: Giorgi Naskhidashvili
 
 **Links:** [Repository](https://github.com/mgionas/claril) · [Brand domain](https://claril.dev)
 
-30 components · 18 capabilities · 0 endpoints · 13 data entities.
+35 components · 24 capabilities · 0 endpoints · 13 data entities.
 
 **Monorepo** — 4 workspace packages: apps/web, packages/db, packages/logic-inspector, packages/shared
 
-**Component roles:** 14 module · 5 service · 5 ui · 3 config · 1 layout · 1 page · 1 route
+**Component roles:** 14 module · 7 service · 6 ui · 3 config · 3 page · 1 layout · 1 route
 
-**Domains:** Web (15) · Logic inspector (8) · Db (6) · Misc (1)
+**Domains:** Web (20) · Logic inspector (8) · Db (6) · Misc (1)
 
 ### What it does (capabilities)
 - **apps/web/app/** — Home, Root Layout
-- **apps/web/components/** — Bpmn Canvas, Command Bar, Inspector Panel, Top Bar, Workbench
-- **apps/web/lib/** — Bpmn Registry To Graph, Cn
+- **apps/web/app/sign-in/** — Sign In Page
+- **apps/web/app/sign-up/** — Sign Up Page
+- **apps/web/components/** — Auth Form, Bpmn Canvas, Command Bar, Inspector Panel, Top Bar, Workbench
+- **apps/web/lib/** — Bpmn Registry To Graph, Cn, Create Diagram Version, Get Or Create User Diagram, Save Diagram Content
 - **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From
 
 ### Data model
@@ -46,8 +48,8 @@ status: active · author: Giorgi Naskhidashvili
 - **member** <sub>packages/db/src/schema/auth.ts:74</sub>: id, organizationId, userId, createdAt  →text →text
 - **invitation** <sub>packages/db/src/schema/auth.ts:87</sub>: id, organizationId, email, role, status, expiresAt, inviterId  →text →text
 
-### Primary process: Auth all process
-Route → better-auth → @/lib
+### Primary process: Home process
+Page → next → @/lib → @/components
 
 **Stack:** build: Turborepo · framework: Next.js · language: TypeScript · orm: Drizzle · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
 _+ 7 other libraries (see the web Overview)._

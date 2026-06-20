@@ -28,7 +28,55 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/app/page.tsx:3",
+          "ref": "apps/web/app/page.tsx:7",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/app/sign-in/page.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `SignInPage` in apps/web/app/sign-in/page.tsx",
+      "id": "cap:apps/web/app/sign-in/page.tsx#SignInPage",
+      "name": "Sign In Page",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/sign-in/page.tsx:3",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/app/sign-up/page.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `SignUpPage` in apps/web/app/sign-up/page.tsx",
+      "id": "cap:apps/web/app/sign-up/page.tsx#SignUpPage",
+      "name": "Sign Up Page",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/sign-up/page.tsx:3",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/auth-form.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `AuthForm` in apps/web/components/auth-form.tsx",
+      "id": "cap:apps/web/components/auth-form.tsx#AuthForm",
+      "name": "Auth Form",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/auth-form.tsx:20",
           "source": "code"
         }
       ]
@@ -44,7 +92,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/bpmn-canvas.tsx:17",
+          "ref": "apps/web/components/bpmn-canvas.tsx:19",
           "source": "code"
         }
       ]
@@ -92,7 +140,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/top-bar.tsx:3",
+          "ref": "apps/web/components/top-bar.tsx:21",
           "source": "code"
         }
       ]
@@ -108,7 +156,39 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/workbench.tsx:13",
+          "ref": "apps/web/components/workbench.tsx:21",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/actions.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `createDiagramVersion` in apps/web/lib/actions.ts",
+      "id": "cap:apps/web/lib/actions.ts#createDiagramVersion",
+      "name": "Create Diagram Version",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/actions.ts:26",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/actions.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `saveDiagramContent` in apps/web/lib/actions.ts",
+      "id": "cap:apps/web/lib/actions.ts#saveDiagramContent",
+      "name": "Save Diagram Content",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/actions.ts:17",
           "source": "code"
         }
       ]
@@ -125,6 +205,22 @@
         {
           "confidence": 0.6,
           "ref": "apps/web/lib/bpmn-to-graph.ts:31",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/data.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `getOrCreateUserDiagram` in apps/web/lib/data.ts",
+      "id": "cap:apps/web/lib/data.ts#getOrCreateUserDiagram",
+      "name": "Get Or Create User Diagram",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/data.ts:17",
           "source": "code"
         }
       ]
@@ -345,6 +441,57 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/app/sign-in/page.tsx",
+      "kind": "module",
+      "name": "apps/web/app/sign-in/page.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/sign-in/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "page",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/app/sign-up/page.tsx",
+      "kind": "module",
+      "name": "apps/web/app/sign-up/page.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/sign-up/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "page",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/auth-form.tsx",
+      "kind": "module",
+      "name": "apps/web/components/auth-form.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/auth-form.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/components/bpmn-canvas.tsx",
       "kind": "module",
       "name": "apps/web/components/bpmn-canvas.tsx",
@@ -430,6 +577,23 @@
     {
       "confidence": 0.95,
       "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/actions.ts",
+      "kind": "module",
+      "name": "apps/web/lib/actions.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
       "id": "comp:apps/web/lib/auth-client.ts",
       "kind": "module",
       "name": "apps/web/lib/auth-client.ts",
@@ -472,6 +636,23 @@
         {
           "confidence": 0.95,
           "ref": "apps/web/lib/bpmn-to-graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/data.ts",
+      "kind": "module",
+      "name": "apps/web/lib/data.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/data.ts:1",
           "source": "code"
         }
       ],
@@ -1432,9 +1613,101 @@
         }
       ],
       "status": "draft"
+    },
+    {
+      "components": [
+        "comp:apps/web/app/sign-in/page.tsx"
+      ],
+      "confidence": 0.55,
+      "description": "The Sign in screen.",
+      "id": "feature:sign-in",
+      "name": "Sign in",
+      "provenance": [
+        {
+          "confidence": 0.55,
+          "ref": "apps/web/app/sign-in/page.tsx",
+          "source": "code"
+        }
+      ],
+      "status": "draft"
+    },
+    {
+      "components": [
+        "comp:apps/web/app/sign-up/page.tsx"
+      ],
+      "confidence": 0.55,
+      "description": "The Sign up screen.",
+      "id": "feature:sign-up",
+      "name": "Sign up",
+      "provenance": [
+        {
+          "confidence": 0.55,
+          "ref": "apps/web/app/sign-up/page.tsx",
+          "source": "code"
+        }
+      ],
+      "status": "draft"
     }
   ],
   "flows": [
+    {
+      "confidence": 0.6,
+      "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
+      "featureId": "feature:home",
+      "id": "flow:home",
+      "name": "Home flow",
+      "participants": [
+        "comp:apps/web/app/page.tsx",
+        "sys:ext:next",
+        "sys:ext:@/lib",
+        "sys:ext:@/components"
+      ],
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "steps": [
+        {
+          "action": "calls",
+          "participant": "comp:apps/web/app/page.tsx",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/page.tsx:1",
+              "source": "code"
+            }
+          ],
+          "to": "sys:ext:next"
+        },
+        {
+          "action": "calls",
+          "participant": "comp:apps/web/app/page.tsx",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/page.tsx:3",
+              "source": "code"
+            }
+          ],
+          "to": "sys:ext:@/lib"
+        },
+        {
+          "action": "calls",
+          "participant": "comp:apps/web/app/page.tsx",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/page.tsx:5",
+              "source": "code"
+            }
+          ],
+          "to": "sys:ext:@/components"
+        }
+      ]
+    },
     {
       "confidence": 0.6,
       "description": "Behavior of \"Auth all\": the page, the components it renders, and the services it calls.",
@@ -1482,29 +1755,61 @@
     },
     {
       "confidence": 0.6,
-      "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
-      "featureId": "feature:home",
-      "id": "flow:home",
-      "name": "Home flow",
+      "description": "Behavior of \"Sign in\": the page, the components it renders, and the services it calls.",
+      "featureId": "feature:sign-in",
+      "id": "flow:sign-in",
+      "name": "Sign in flow",
       "participants": [
-        "comp:apps/web/app/page.tsx",
+        "comp:apps/web/app/sign-in/page.tsx",
         "sys:ext:@/components"
       ],
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/app/page.tsx:1",
+          "ref": "apps/web/app/sign-in/page.tsx:1",
           "source": "code"
         }
       ],
       "steps": [
         {
           "action": "calls",
-          "participant": "comp:apps/web/app/page.tsx",
+          "participant": "comp:apps/web/app/sign-in/page.tsx",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/page.tsx:1",
+              "ref": "apps/web/app/sign-in/page.tsx:1",
+              "source": "code"
+            }
+          ],
+          "to": "sys:ext:@/components"
+        }
+      ]
+    },
+    {
+      "confidence": 0.6,
+      "description": "Behavior of \"Sign up\": the page, the components it renders, and the services it calls.",
+      "featureId": "feature:sign-up",
+      "id": "flow:sign-up",
+      "name": "Sign up flow",
+      "participants": [
+        "comp:apps/web/app/sign-up/page.tsx",
+        "sys:ext:@/components"
+      ],
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/sign-up/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "steps": [
+        {
+          "action": "calls",
+          "participant": "comp:apps/web/app/sign-up/page.tsx",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/sign-up/page.tsx:1",
               "source": "code"
             }
           ],
@@ -1513,7 +1818,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-06-20T11:02:25.404Z",
+  "generatedAt": "2026-06-20T11:12:58.579Z",
   "groups": [
     {
       "confidence": 0.85,
@@ -1523,14 +1828,19 @@
         "comp:apps/web/app/api/auth/[...all]/route.ts",
         "comp:apps/web/app/layout.tsx",
         "comp:apps/web/app/page.tsx",
+        "comp:apps/web/app/sign-in/page.tsx",
+        "comp:apps/web/app/sign-up/page.tsx",
+        "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
         "comp:apps/web/components/command-bar.tsx",
         "comp:apps/web/components/inspector-panel.tsx",
         "comp:apps/web/components/top-bar.tsx",
         "comp:apps/web/components/workbench.tsx",
+        "comp:apps/web/lib/actions.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
+        "comp:apps/web/lib/data.ts",
         "comp:apps/web/lib/default-diagram.ts",
         "comp:apps/web/lib/utils.ts",
         "comp:apps/web/next.config.ts",
@@ -1646,9 +1956,11 @@
       "id": "group:layer:domain",
       "kind": "layer",
       "members": [
+        "comp:apps/web/lib/actions.ts",
         "comp:apps/web/lib/auth-client.ts",
         "comp:apps/web/lib/auth.ts",
         "comp:apps/web/lib/bpmn-to-graph.ts",
+        "comp:apps/web/lib/data.ts",
         "comp:apps/web/lib/default-diagram.ts",
         "comp:apps/web/lib/utils.ts",
         "comp:packages/db/src/client.ts",
@@ -1683,6 +1995,9 @@
       "members": [
         "comp:apps/web/app/layout.tsx",
         "comp:apps/web/app/page.tsx",
+        "comp:apps/web/app/sign-in/page.tsx",
+        "comp:apps/web/app/sign-up/page.tsx",
+        "comp:apps/web/components/auth-form.tsx",
         "comp:apps/web/components/bpmn-canvas.tsx",
         "comp:apps/web/components/command-bar.tsx",
         "comp:apps/web/components/inspector-panel.tsx",
@@ -1803,35 +2118,35 @@
   "processes": [
     {
       "confidence": 0.6,
-      "description": "Behavior of \"Auth all\": the page, the components it renders, and the services it calls.",
-      "id": "proc:auth-all",
-      "name": "Auth all process",
+      "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
+      "id": "proc:home",
+      "name": "Home process",
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+          "ref": "apps/web/app/page.tsx:1",
           "source": "code"
         }
       ],
       "tasks": [
         {
-          "id": "task:comp:apps/web/app/api/auth/[...all]/route.ts",
-          "name": "Route",
+          "id": "task:comp:apps/web/app/page.tsx",
+          "name": "Page",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+              "ref": "apps/web/app/page.tsx:1",
               "source": "code"
             }
           ]
         },
         {
-          "id": "task:sys:ext:better-auth",
-          "name": "better-auth",
+          "id": "task:sys:ext:next",
+          "name": "next",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+              "ref": "apps/web/app/page.tsx:1",
               "source": "code"
             }
           ]
@@ -1842,7 +2157,18 @@
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "apps/web/app/api/auth/[...all]/route.ts:1",
+              "ref": "apps/web/app/page.tsx:1",
+              "source": "code"
+            }
+          ]
+        },
+        {
+          "id": "task:sys:ext:@/components",
+          "name": "@/components",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "apps/web/app/page.tsx:1",
               "source": "code"
             }
           ]
@@ -1921,11 +2247,131 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/app/page.tsx:1",
+          "ref": "apps/web/app/page.tsx:5",
           "source": "code"
         }
       ],
       "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/page.tsx",
+      "id": "rel:comp:apps/web/app/page.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/page.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:3",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/page.tsx",
+      "id": "rel:comp:apps/web/app/page.tsx=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/page.tsx → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:1",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/sign-in/page.tsx",
+      "id": "rel:comp:apps/web/app/sign-in/page.tsx=>sys:ext:@/components",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/sign-in/page.tsx → sys:ext:@/components",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/sign-in/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/sign-up/page.tsx",
+      "id": "rel:comp:apps/web/app/sign-up/page.tsx=>sys:ext:@/components",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/sign-up/page.tsx → sys:ext:@/components",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/sign-up/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/auth-form.tsx",
+      "id": "rel:comp:apps/web/components/auth-form.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/auth-form.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/auth-form.tsx:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/auth-form.tsx",
+      "id": "rel:comp:apps/web/components/auth-form.tsx=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/auth-form.tsx → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/auth-form.tsx:4",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/auth-form.tsx:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/auth-form.tsx",
+      "id": "rel:comp:apps/web/components/auth-form.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/auth-form.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/auth-form.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
     },
     {
       "confidence": 0.95,
@@ -2065,17 +2511,47 @@
     {
       "confidence": 0.95,
       "from": "comp:apps/web/components/top-bar.tsx",
+      "id": "rel:comp:apps/web/components/top-bar.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/top-bar.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/top-bar.tsx:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/top-bar.tsx",
       "id": "rel:comp:apps/web/components/top-bar.tsx=>sys:ext:lucide-react",
       "kind": "depends_on",
       "name": "comp:apps/web/components/top-bar.tsx → sys:ext:lucide-react",
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/top-bar.tsx:1",
+          "ref": "apps/web/components/top-bar.tsx:3",
           "source": "code"
         }
       ],
       "to": "sys:ext:lucide-react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/top-bar.tsx",
+      "id": "rel:comp:apps/web/components/top-bar.tsx=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/top-bar.tsx → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/top-bar.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
     },
     {
       "confidence": 0.95,
@@ -2086,11 +2562,6 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "apps/web/components/workbench.tsx:6",
-          "source": "code"
-        },
-        {
-          "confidence": 0.95,
           "ref": "apps/web/components/workbench.tsx:7",
           "source": "code"
         },
@@ -2098,9 +2569,29 @@
           "confidence": 0.95,
           "ref": "apps/web/components/workbench.tsx:8",
           "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:9",
+          "source": "code"
         }
       ],
       "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/workbench.tsx",
+      "id": "rel:comp:apps/web/components/workbench.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/workbench.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
     },
     {
       "confidence": 0.95,
@@ -2146,6 +2637,66 @@
         }
       ],
       "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:@claril/db",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:@claril/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/db"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:drizzle-orm",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-orm"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/actions.ts",
+      "id": "rel:comp:apps/web/lib/actions.ts=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/actions.ts → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/actions.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
     },
     {
       "confidence": 0.95,
@@ -2221,6 +2772,66 @@
         }
       ],
       "to": "sys:ext:@claril/logic-inspector"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/data.ts",
+      "id": "rel:comp:apps/web/lib/data.ts=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/data.ts → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/data.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/data.ts",
+      "id": "rel:comp:apps/web/lib/data.ts=>sys:ext:@claril/db",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/data.ts → sys:ext:@claril/db",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/data.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/db"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/data.ts",
+      "id": "rel:comp:apps/web/lib/data.ts=>sys:ext:drizzle-orm",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/data.ts → sys:ext:drizzle-orm",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/data.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:drizzle-orm"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/data.ts",
+      "id": "rel:comp:apps/web/lib/data.ts=>sys:ext:node:crypto",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/data.ts → sys:ext:node:crypto",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/data.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:node:crypto"
     },
     {
       "confidence": 0.95,
@@ -2975,6 +3586,21 @@
         {
           "confidence": 0.95,
           "ref": "next",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "Node.js runtime/builtin module",
+      "externalKind": "runtime",
+      "id": "sys:ext:node:crypto",
+      "kind": "external",
+      "name": "node:crypto",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "node:crypto",
           "source": "code"
         }
       ]
