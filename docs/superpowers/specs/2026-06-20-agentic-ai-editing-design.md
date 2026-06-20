@@ -18,11 +18,12 @@ elements, with the human approving before anything is applied.
 1. **Execution model:** AI returns a typed, validated **EditPlan**; the app shows
    it as a card + a ghost diff on the canvas; the user **Applies or Discards**.
    Deterministic execution, one undo step. (Not live mutation, not raw-XML regen.)
-2. **Chat is the main right panel.** The right drawer becomes the **Assistant**:
-   deterministic findings render as **cards inside it**, and the conversation +
-   instruction input live in the same panel. It must still work with **AI off**
-   (findings cards + a "connect AI" prompt instead of the input) — the
-   deterministic inspector stays the offline moat, just re-homed into this panel.
+2. **The right panel swaps on AI state.** With **AI off**, the right panel is the
+   deterministic **Inspector** exactly as today (findings list, fly-to, Fix) — the
+   offline moat, unchanged. When the user **activates/connects AI**, the panel
+   becomes the **Assistant** chat, which surfaces the same findings as **cards
+   inside the conversation** alongside the instruction input. One panel, two
+   modes, chosen by `aiConnected`.
 3. **First slice = agentic edit + HITL.** Persistence, multi-turn history, and
    accumulated project knowledge are later slices.
 
@@ -81,18 +82,19 @@ Before applying for real:
    `CanvasApi.reloadXml(snapshot)` (revert) — both already exist from W4.
 This avoids a second headless modeler and reuses W4's differ/markers/reload.
 
-### 5. Assistant panel — `apps/web/components/assistant-panel.tsx`
-Replaces the Inspector drawer as the main right panel (the W4 History drawer and
-the canvas toggles stay). Contents, top→bottom:
-- **Findings cards** (deterministic, always rendered — AI-off safe): severity,
+### 5. Right panel — Inspector ↔ Assistant (by `aiConnected`)
+The right drawer renders the existing **`InspectorPanel`** when AI is off, and the
+new **`assistant-panel.tsx`** when AI is connected (the W4 History drawer and the
+canvas toggles stay in both modes). The Assistant, top→bottom:
+- **Findings cards** (the same deterministic findings, as cards): severity,
   message, `Fix`, `Show on canvas` (reuse current finding row behavior).
 - **Conversation** (slice 1: minimal — the latest instruction + AI summary +
   change-plan card; full multi-turn history is slice 2).
 - **Input + suggestion chips**: `[Generate from prompt] [Fix all] [Document]
-  [Ask…]`. When AI is off, the input is replaced by a "Connect AI" prompt that
-  opens `AiSettingsDialog`.
+  [Ask…]`.
 Merges today's **Ask AI / Q&A / doc-gen** entry points into this one surface
-(the command-bar buttons become chips here).
+(the command-bar buttons become chips here). The AI-off path keeps the current
+Inspector untouched, so the deterministic experience is unchanged.
 
 ## Data flow
 
