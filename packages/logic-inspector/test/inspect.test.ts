@@ -106,4 +106,114 @@ describe("logic inspector", () => {
     };
     expect(ruleIds(graph)).toContain("best-practice/implicit-gateway");
   });
+
+  it("flags an infinite loop (cycle with no exit)", () => {
+    const graph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "a", type: "task", name: "A" },
+        { id: "b", type: "task", name: "B" },
+      ],
+      flows: [
+        { id: "f1", sourceRef: "start", targetRef: "a" },
+        { id: "f2", sourceRef: "a", targetRef: "b" },
+        { id: "f3", sourceRef: "b", targetRef: "a" },
+      ],
+    };
+    expect(ruleIds(graph)).toContain("structural/infinite-loop");
+  });
+
+  it("does not flag a loop that has an exit", () => {
+    const graph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "a", type: "task" },
+        { id: "b", type: "exclusiveGateway", name: "Again?" },
+        { id: "end", type: "endEvent" },
+      ],
+      flows: [
+        { id: "f1", sourceRef: "start", targetRef: "a" },
+        { id: "f2", sourceRef: "a", targetRef: "b" },
+        { id: "f3", sourceRef: "b", targetRef: "a" },
+        { id: "f4", sourceRef: "b", targetRef: "end" },
+      ],
+    };
+    expect(ruleIds(graph)).not.toContain("structural/infinite-loop");
+  });
+
+  it("flags a mixed gateway (merges and splits)", () => {
+    const graph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "a", type: "task" },
+        { id: "b", type: "task" },
+        { id: "g", type: "parallelGateway", name: "G" },
+        { id: "e1", type: "endEvent" },
+        { id: "e2", type: "endEvent" },
+      ],
+      flows: [
+        { id: "f0", sourceRef: "start", targetRef: "a" },
+        { id: "f0b", sourceRef: "start", targetRef: "b" },
+        { id: "f1", sourceRef: "a", targetRef: "g" },
+        { id: "f2", sourceRef: "b", targetRef: "g" },
+        { id: "f3", sourceRef: "g", targetRef: "e1" },
+        { id: "f4", sourceRef: "g", targetRef: "e2" },
+      ],
+    };
+    expect(ruleIds(graph)).toContain("structural/mixed-gateway");
+  });
+
+  it("flags an implicit join (task with multiple incoming flows)", () => {
+    const graph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "a", type: "task" },
+        { id: "b", type: "task" },
+        { id: "merge", type: "task", name: "Merge" },
+        { id: "end", type: "endEvent" },
+      ],
+      flows: [
+        { id: "f1", sourceRef: "start", targetRef: "a" },
+        { id: "f2", sourceRef: "start", targetRef: "b" },
+        { id: "f3", sourceRef: "a", targetRef: "merge" },
+        { id: "f4", sourceRef: "b", targetRef: "merge" },
+        { id: "f5", sourceRef: "merge", targetRef: "end" },
+      ],
+    };
+    expect(ruleIds(graph)).toContain("best-practice/implicit-join");
+  });
+
+  it("flags an unlabeled decision gateway", () => {
+    const graph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "g", type: "exclusiveGateway" },
+        { id: "e1", type: "endEvent" },
+        { id: "e2", type: "endEvent" },
+      ],
+      flows: [
+        { id: "f1", sourceRef: "start", targetRef: "g" },
+        { id: "f2", sourceRef: "g", targetRef: "e1" },
+        { id: "f3", sourceRef: "g", targetRef: "e2" },
+      ],
+    };
+    expect(ruleIds(graph)).toContain("best-practice/unlabeled-gateway");
+  });
+
+  it("flags multiple start events", () => {
+    const graph: ProcessGraph = {
+      nodes: [
+        { id: "s1", type: "startEvent" },
+        { id: "s2", type: "startEvent" },
+        { id: "t", type: "task" },
+        { id: "end", type: "endEvent" },
+      ],
+      flows: [
+        { id: "f1", sourceRef: "s1", targetRef: "t" },
+        { id: "f2", sourceRef: "s2", targetRef: "t" },
+        { id: "f3", sourceRef: "t", targetRef: "end" },
+      ],
+    };
+    expect(ruleIds(graph)).toContain("best-practice/multiple-start-events");
+  });
 });

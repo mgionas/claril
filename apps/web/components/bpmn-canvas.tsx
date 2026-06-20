@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
-import type { Finding } from "@claril/shared";
+import type { Finding, Severity } from "@claril/shared";
 import { inspect } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
 import { defaultDiagram } from "@/lib/default-diagram";
@@ -12,27 +12,84 @@ import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
 
 interface BpmnCanvasProps {
   initialXml?: string;
+  /** Element to scroll to + select (e.g. when a finding is clicked). */
+  focusElementId?: string;
+  /** Bumped on each focus request so re-clicking the same finding re-triggers. */
+  focusNonce?: number;
   onFindingsChange?: (findings: Finding[]) => void;
   onXmlChange?: (xml: string) => void;
 }
 
+const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
+
 export default function BpmnCanvas({
   initialXml,
+  focusElementId,
+  focusNonce,
   onFindingsChange,
   onXmlChange,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const modelerRef = useRef<BpmnModeler | null>(null);
+  const markedRef = useRef<string[]>([]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const modeler = new BpmnModeler({ container });
+    modelerRef.current = modeler;
+
+    const renderFindings = (findings: Finding[]) => {
+      const overlays = modeler.get("overlays") as unknown as {
+        clear: () => void;
+        add: (id: string, type: string, opts: unknown) => void;
+      };
+      const canvas = modeler.get("canvas") as unknown as {
+        addMarker: (id: string, cls: string) => void;
+        removeMarker: (id: string, cls: string) => void;
+      };
+
+      overlays.clear();
+      for (const id of markedRef.current) {
+        canvas.removeMarker(id, "claril-flagged-error");
+        canvas.removeMarker(id, "claril-flagged-warning");
+      }
+
+      // Worst severity per element.
+      const worst = new Map<string, Severity>();
+      for (const f of findings) {
+        if (!f.elementId) continue;
+        const current = worst.get(f.elementId);
+        if (!current || severityRank[f.severity] > severityRank[current]) {
+          worst.set(f.elementId, f.severity);
+        }
+      }
+
+      const marked: string[] = [];
+      for (const [elementId, severity] of worst) {
+        try {
+          if (severity === "error" || severity === "warning") {
+            canvas.addMarker(elementId, `claril-flagged-${severity}`);
+          }
+          overlays.add(elementId, "claril-finding", {
+            position: { top: -10, right: 10 },
+            html: `<div class="claril-finding claril-finding--${severity}"></div>`,
+          });
+          marked.push(elementId);
+        } catch {
+          // Element may not be present (e.g. mid-edit); ignore.
+        }
+      }
+      markedRef.current = marked;
+    };
 
     const runInspection = () => {
       try {
         const registry = modeler.get("elementRegistry") as unknown as ElementRegistryLike;
-        onFindingsChange?.(inspect(bpmnRegistryToGraph(registry)));
+        const findings = inspect(bpmnRegistryToGraph(registry));
+        onFindingsChange?.(findings);
+        renderFindings(findings);
       } catch {
         // Ignore transient model states during editing.
       }
@@ -61,7 +118,6 @@ export default function BpmnCanvas({
         };
         canvas.zoom("fit-viewport", "auto");
         runInspection();
-        // commandStack.changed fires on edits (not on the initial import).
         modeler.on("commandStack.changed", onChanged);
       } catch (err) {
         console.error("Failed to import diagram", err);
@@ -70,8 +126,33 @@ export default function BpmnCanvas({
 
     return () => {
       modeler.destroy();
+      modelerRef.current = null;
+      markedRef.current = [];
     };
   }, [initialXml, onFindingsChange, onXmlChange]);
+
+  // Scroll to + select an element when a finding is clicked.
+  useEffect(() => {
+    const modeler = modelerRef.current;
+    if (!modeler || !focusElementId) return;
+    try {
+      const registry = modeler.get("elementRegistry") as unknown as {
+        get: (id: string) => unknown;
+      };
+      const element = registry.get(focusElementId);
+      if (!element) return;
+      const canvas = modeler.get("canvas") as unknown as {
+        scrollToElement: (el: unknown) => void;
+      };
+      const selection = modeler.get("selection") as unknown as {
+        select: (el: unknown) => void;
+      };
+      canvas.scrollToElement(element);
+      selection.select(element);
+    } catch {
+      // Ignore.
+    }
+  }, [focusElementId, focusNonce]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }

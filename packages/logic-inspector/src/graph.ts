@@ -39,3 +39,58 @@ export function reachableFrom(graph: ProcessGraph, startIds: string[]): Set<stri
   }
   return seen;
 }
+
+/**
+ * Tarjan's strongly-connected-components, over edges between existing nodes.
+ * Used to detect cycles (loops). Each returned component is a list of node ids.
+ */
+export function stronglyConnectedComponents(graph: ProcessGraph): string[][] {
+  const ids = new Set(graph.nodes.map((n) => n.id));
+  const adjacency = new Map<string, string[]>();
+  for (const flow of graph.flows) {
+    if (!ids.has(flow.sourceRef) || !ids.has(flow.targetRef)) continue;
+    const targets = adjacency.get(flow.sourceRef) ?? [];
+    targets.push(flow.targetRef);
+    adjacency.set(flow.sourceRef, targets);
+  }
+
+  let counter = 0;
+  const index = new Map<string, number>();
+  const lowlink = new Map<string, number>();
+  const onStack = new Set<string>();
+  const stack: string[] = [];
+  const result: string[][] = [];
+
+  const connect = (v: string): void => {
+    index.set(v, counter);
+    lowlink.set(v, counter);
+    counter += 1;
+    stack.push(v);
+    onStack.add(v);
+
+    for (const w of adjacency.get(v) ?? []) {
+      if (!index.has(w)) {
+        connect(w);
+        lowlink.set(v, Math.min(lowlink.get(v) ?? 0, lowlink.get(w) ?? 0));
+      } else if (onStack.has(w)) {
+        lowlink.set(v, Math.min(lowlink.get(v) ?? 0, index.get(w) ?? 0));
+      }
+    }
+
+    if (lowlink.get(v) === index.get(v)) {
+      const component: string[] = [];
+      let w: string;
+      do {
+        w = stack.pop() as string;
+        onStack.delete(w);
+        component.push(w);
+      } while (w !== v);
+      result.push(component);
+    }
+  };
+
+  for (const node of graph.nodes) {
+    if (!index.has(node.id)) connect(node.id);
+  }
+  return result;
+}

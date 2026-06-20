@@ -21,9 +21,15 @@ interface WorkbenchProps {
 export function Workbench({ diagramId, diagramName, initialXml, userName }: WorkbenchProps) {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [focus, setFocus] = useState<{ id: string; nonce: number }>({ id: "", nonce: 0 });
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleFindings = useCallback((next: Finding[]) => setFindings(next), []);
+
+  const handleSelectFinding = useCallback(
+    (id: string) => setFocus((prev) => ({ id, nonce: prev.nonce + 1 })),
+    [],
+  );
 
   const handleXmlChange = useCallback(
     (xml: string) => {
@@ -42,11 +48,13 @@ export function Workbench({ diagramId, diagramName, initialXml, userName }: Work
     <main className="relative h-screen w-screen overflow-hidden bg-canvas text-fg">
       <BpmnCanvas
         initialXml={initialXml}
+        focusElementId={focus.id}
+        focusNonce={focus.nonce}
         onFindingsChange={handleFindings}
         onXmlChange={handleXmlChange}
       />
       <TopBar diagramName={diagramName} userName={userName} saveState={saveState} />
-      <InspectorPanel findings={findings} />
+      <InspectorPanel findings={findings} onSelect={handleSelectFinding} />
       <CommandBar />
     </main>
   );

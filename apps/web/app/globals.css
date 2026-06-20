@@ -99,3 +99,27 @@ body {
 .djs-context-pad .entry:hover {
   color: var(--color-accent) !important;
 }
+
+/* ---- logic-inspector finding overlays + markers ---- */
+.claril-finding {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px var(--color-canvas);
+}
+.claril-finding--error {
+  background: var(--color-error);
+}
+.claril-finding--warning {
+  background: var(--color-warning);
+}
+.claril-finding--info {
+  background: var(--color-info);
+}
+
+.djs-element.claril-flagged-error .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-error) !important;
+}
+.djs-element.claril-flagged-warning .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-warning) !important;
+}

@@ -1,5 +1,13 @@
 import type { Finding } from "@claril/shared";
-import { isEnd, isStart, outgoing, reachableFrom } from "../graph";
+import {
+  incoming,
+  isEnd,
+  isGateway,
+  isStart,
+  outgoing,
+  reachableFrom,
+  stronglyConnectedComponents,
+} from "../graph";
 import type { Rule } from "./types";
 
 /** A process must have at least one start event. */
@@ -86,6 +94,52 @@ export const deadEnd: Rule = {
         elementId: node.id,
         message: `"${node.name ?? node.id}" has no outgoing flow and is not an end event (dead end).`,
         quickFix: "Connect it onward, or convert it to an end event.",
+      }));
+  },
+};
+
+/** A loop (strongly-connected cycle) with no flow leaving it traps tokens. */
+export const infiniteLoop: Rule = {
+  id: "structural/infinite-loop",
+  run(graph) {
+    const findings: Finding[] = [];
+    for (const component of stronglyConnectedComponents(graph)) {
+      const isCycle =
+        component.length > 1 ||
+        graph.flows.some((f) => f.sourceRef === component[0] && f.targetRef === component[0]);
+      if (!isCycle) continue;
+
+      const inComponent = new Set(component);
+      const hasExit = graph.flows.some(
+        (f) => inComponent.has(f.sourceRef) && !inComponent.has(f.targetRef),
+      );
+      if (hasExit) continue;
+
+      const names = component.map((id) => graph.nodes.find((n) => n.id === id)?.name ?? id);
+      findings.push({
+        ruleId: "structural/infinite-loop",
+        severity: "error",
+        elementId: component[0],
+        message: `Loop with no exit: ${names.join(" → ")} can never complete.`,
+        quickFix: "Add a gateway with a flow that leaves the loop.",
+      });
+    }
+    return findings;
+  },
+};
+
+/** A gateway that both merges (>1 in) and splits (>1 out) is ambiguous. */
+export const mixedGateway: Rule = {
+  id: "structural/mixed-gateway",
+  run(graph) {
+    return graph.nodes
+      .filter(isGateway)
+      .filter((n) => incoming(graph, n.id).length > 1 && outgoing(graph, n.id).length > 1)
+      .map((n): Finding => ({
+        ruleId: "structural/mixed-gateway",
+        severity: "warning",
+        elementId: n.id,
+        message: `"${n.name ?? n.id}" both merges and splits flow; use separate join and split gateways.`,
       }));
   },
 };
