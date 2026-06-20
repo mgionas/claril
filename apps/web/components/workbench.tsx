@@ -2,9 +2,10 @@
 
 import { useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import type { Finding } from "@claril/shared";
+import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { runAdvisor, saveDiagramContent } from "@/lib/actions";
+import type { CanvasApi } from "@/components/bpmn-canvas";
 import { TopBar, type SaveState } from "@/components/top-bar";
 import { InspectorPanel } from "@/components/inspector-panel";
 import { CommandBar } from "@/components/command-bar";
@@ -41,6 +42,15 @@ export function Workbench({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const graphRef = useRef<ProcessGraph | null>(null);
   const findingsRef = useRef<Finding[]>([]);
+  const canvasApiRef = useRef<CanvasApi | null>(null);
+
+  const handleReady = useCallback((api: CanvasApi) => {
+    canvasApiRef.current = api;
+  }, []);
+
+  const handleApplyFix = useCallback((fix: QuickFix) => {
+    canvasApiRef.current?.applyFix(fix);
+  }, []);
 
   const handleFindings = useCallback((next: Finding[]) => {
     findingsRef.current = next;
@@ -100,6 +110,7 @@ export function Workbench({
         onFindingsChange={handleFindings}
         onGraphChange={handleGraph}
         onXmlChange={handleXmlChange}
+        onReady={handleReady}
       />
       <TopBar
         diagramName={diagramName}
@@ -112,6 +123,7 @@ export function Workbench({
       <InspectorPanel
         findings={allFindings}
         onSelect={handleSelectFinding}
+        onApplyFix={handleApplyFix}
         aiBusy={aiBusy}
         aiError={aiError}
       />

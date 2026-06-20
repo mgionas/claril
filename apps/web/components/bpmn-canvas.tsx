@@ -4,10 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
-import type { Finding, Severity } from "@claril/shared";
+import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
+import { applyQuickFix } from "@/lib/apply-fix";
 import { defaultDiagram } from "@/lib/default-diagram";
+
+export interface CanvasApi {
+  applyFix: (fix: QuickFix) => void;
+}
 
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
@@ -21,6 +26,7 @@ interface BpmnCanvasProps {
   onFindingsChange?: (findings: Finding[]) => void;
   onGraphChange?: (graph: ProcessGraph) => void;
   onXmlChange?: (xml: string) => void;
+  onReady?: (api: CanvasApi) => void;
 }
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
@@ -32,6 +38,7 @@ export default function BpmnCanvas({
   onFindingsChange,
   onGraphChange,
   onXmlChange,
+  onReady,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
@@ -135,6 +142,11 @@ export default function BpmnCanvas({
         runInspection();
         modeler.on("commandStack.changed", onChanged);
         setReady(true);
+        onReady?.({
+          applyFix: (fix) => {
+            if (modelerRef.current) applyQuickFix(modelerRef.current, fix);
+          },
+        });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);
       }
@@ -146,7 +158,7 @@ export default function BpmnCanvas({
       modelerRef.current = null;
       markedRef.current = [];
     };
-  }, [initialXml, onFindingsChange, onGraphChange, onXmlChange]);
+  }, [initialXml, onFindingsChange, onGraphChange, onXmlChange, onReady]);
 
   // Scroll to + select an element when a finding is clicked.
   useEffect(() => {

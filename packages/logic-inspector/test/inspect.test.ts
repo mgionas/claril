@@ -216,4 +216,29 @@ describe("logic inspector", () => {
     };
     expect(ruleIds(graph)).toContain("best-practice/multiple-start-events");
   });
+
+  it("attaches executable fixes to structural findings", () => {
+    const deadEndGraph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "task", type: "task" },
+      ],
+      flows: [{ id: "f1", sourceRef: "start", targetRef: "task" }],
+    };
+    const deadEnd = inspect(deadEndGraph).find((f) => f.ruleId === "structural/dead-end");
+    expect(deadEnd?.fix).toEqual({ kind: "appendEndEvent", elementId: "task" });
+
+    const danglingGraph: ProcessGraph = {
+      nodes: [
+        { id: "start", type: "startEvent" },
+        { id: "end", type: "endEvent" },
+      ],
+      flows: [
+        { id: "f1", sourceRef: "start", targetRef: "ghost" },
+        { id: "f2", sourceRef: "start", targetRef: "end" },
+      ],
+    };
+    const dangling = inspect(danglingGraph).find((f) => f.ruleId === "structural/dangling-flow");
+    expect(dangling?.fix).toEqual({ kind: "removeElement", elementId: "f1" });
+  });
 });

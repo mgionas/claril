@@ -1,15 +1,9 @@
 "use client";
 
 import { useEffect, type ComponentType } from "react";
-import {
-  Circle,
-  CircleStop,
-  Diamond,
-  Pencil,
-  Square,
-  Trash2,
-} from "lucide-react";
-import type { Finding, Severity } from "@claril/shared";
+import { Circle, Maximize2, Pencil, Square } from "lucide-react";
+import type { Finding, QuickFix, Severity } from "@claril/shared";
+import { applyQuickFix } from "@/lib/apply-fix";
 import { cn } from "@/lib/utils";
 
 interface ModelerServices {
@@ -35,6 +29,12 @@ interface CanvasContextMenuProps {
   onClose: () => void;
 }
 
+/**
+ * Right-click menu. Deliberately does NOT duplicate the bpmn-js context pad
+ * (append / connect / delete / replace live there). It adds Claril-specific
+ * value: rename, executable quick-fixes, the element's findings, and a couple
+ * of canvas helpers on empty space.
+ */
 export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasContextMenuProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -45,18 +45,6 @@ export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasCo
   }, [onClose]);
 
   const element = menu.elementId ? modeler.get("elementRegistry").get(menu.elementId) : null;
-  const isConnection = Boolean(element && Array.isArray(element.waypoints));
-  const isShape = Boolean(element) && !isConnection;
-
-  function append(type: string) {
-    try {
-      const shape = modeler.get("elementFactory").createShape({ type });
-      modeler.get("autoPlace").append(element, shape);
-    } catch {
-      /* ignore */
-    }
-    onClose();
-  }
 
   function rename() {
     try {
@@ -67,9 +55,9 @@ export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasCo
     onClose();
   }
 
-  function remove() {
+  function fitView() {
     try {
-      modeler.get("modeling").removeElements([element]);
+      modeler.get("canvas").zoom("fit-viewport", "auto");
     } catch {
       /* ignore */
     }
@@ -91,12 +79,20 @@ export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasCo
     onClose();
   }
 
+  function fix(quickFix: QuickFix) {
+    applyQuickFix(modeler, quickFix);
+    onClose();
+  }
+
   const elementFindings = menu.elementId
     ? findings.filter((f) => f.elementId === menu.elementId)
     : [];
 
-  const left = Math.min(menu.x, window.innerWidth - 240);
-  const top = Math.min(menu.y, window.innerHeight - 280);
+  const left = Math.min(menu.x, window.innerWidth - 248);
+  const top = Math.min(menu.y, window.innerHeight - 300);
+
+  const hasElementSection = Boolean(element);
+  const hasFindings = elementFindings.length > 0;
 
   return (
     <div
@@ -108,30 +104,11 @@ export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasCo
       }}
     >
       <div
-        className="absolute z-50 w-56 overflow-hidden rounded-[10px] border border-hairline bg-panel/95 py-1 text-sm shadow-xl backdrop-blur"
+        className="absolute z-50 w-60 overflow-hidden rounded-[10px] border border-hairline bg-panel/95 py-1 text-sm shadow-xl backdrop-blur"
         style={{ left, top }}
         onClick={(e) => e.stopPropagation()}
       >
-        {isShape && (
-          <>
-            <MenuItem icon={Square} label="Append task" onClick={() => append("bpmn:Task")} />
-            <MenuItem
-              icon={Diamond}
-              label="Append gateway"
-              onClick={() => append("bpmn:ExclusiveGateway")}
-            />
-            <MenuItem
-              icon={CircleStop}
-              label="Append end event"
-              onClick={() => append("bpmn:EndEvent")}
-            />
-            <Separator />
-            <MenuItem icon={Pencil} label="Rename" onClick={rename} />
-            <MenuItem icon={Trash2} label="Delete" onClick={remove} danger />
-          </>
-        )}
-
-        {isConnection && <MenuItem icon={Trash2} label="Delete" onClick={remove} danger />}
+        {hasElementSection && <MenuItem icon={Pencil} label="Rename" onClick={rename} />}
 
         {!element && (
           <>
@@ -141,24 +118,34 @@ export function CanvasContextMenu({ menu, modeler, findings, onClose }: CanvasCo
               onClick={() => createAtPoint("bpmn:StartEvent")}
             />
             <MenuItem icon={Square} label="Add task" onClick={() => createAtPoint("bpmn:Task")} />
+            <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
           </>
         )}
 
-        {elementFindings.length > 0 && (
+        {hasFindings && (
           <>
-            <Separator />
+            {hasElementSection && <Separator />}
             <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-fg-subtle">
               Findings
             </p>
             {elementFindings.map((f, i) => (
-              <div key={`${f.ruleId}-${i}`} className="flex gap-2 px-3 py-1.5">
+              <div key={`${f.ruleId}-${i}`} className="flex items-start gap-2 px-3 py-1.5">
                 <span
                   className={cn("mt-1 size-1.5 shrink-0 rounded-full", severityDot[f.severity])}
                 />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-xs leading-snug">{f.message}</p>
                   {f.quickFix && <p className="text-[10px] text-fg-subtle">{f.quickFix}</p>}
                 </div>
+                {f.fix && (
+                  <button
+                    type="button"
+                    onClick={() => f.fix && fix(f.fix)}
+                    className="shrink-0 rounded-[6px] border border-hairline px-2 py-0.5 text-[11px] text-accent transition-colors hover:bg-accent/10"
+                  >
+                    Fix
+                  </button>
+                )}
               </div>
             ))}
           </>
@@ -172,21 +159,16 @@ function MenuItem({
   icon: Icon,
   label,
   onClick,
-  danger,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
-  danger?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-elevated",
-        danger ? "text-error" : "text-fg",
-      )}
+      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-fg transition-colors hover:bg-elevated"
     >
       <Icon className="size-3.5 text-fg-muted" />
       {label}

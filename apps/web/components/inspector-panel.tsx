@@ -1,4 +1,4 @@
-import type { Finding, Severity } from "@claril/shared";
+import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { cn } from "@/lib/utils";
 
 const severityDot: Record<Severity, string> = {
@@ -10,11 +10,18 @@ const severityDot: Record<Severity, string> = {
 interface InspectorPanelProps {
   findings: Finding[];
   onSelect?: (elementId: string) => void;
+  onApplyFix?: (fix: QuickFix) => void;
   aiBusy?: boolean;
   aiError?: string | null;
 }
 
-export function InspectorPanel({ findings, onSelect, aiBusy, aiError }: InspectorPanelProps) {
+export function InspectorPanel({
+  findings,
+  onSelect,
+  onApplyFix,
+  aiBusy,
+  aiError,
+}: InspectorPanelProps) {
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
   const hasAdvice = findings.some((f) => f.source === "advisor");
@@ -36,9 +43,7 @@ export function InspectorPanel({ findings, onSelect, aiBusy, aiError }: Inspecto
       </div>
 
       <div className="overflow-y-auto p-2">
-        {aiBusy && (
-          <p className="px-2 py-2 text-xs text-accent">✦ Asking the AI advisor…</p>
-        )}
+        {aiBusy && <p className="px-2 py-2 text-xs text-accent">✦ Asking the AI advisor…</p>}
         {aiError && <p className="px-2 py-2 text-xs text-error">{aiError}</p>}
 
         {findings.length === 0 && !aiBusy ? (
@@ -49,14 +54,17 @@ export function InspectorPanel({ findings, onSelect, aiBusy, aiError }: Inspecto
               const clickable = Boolean(finding.elementId && onSelect);
               const isAdvice = finding.source === "advisor";
               return (
-                <li key={`${finding.ruleId}-${finding.elementId ?? index}-${index}`}>
+                <li
+                  key={`${finding.ruleId}-${finding.elementId ?? index}-${index}`}
+                  className="flex items-start gap-1 rounded-[6px] hover:bg-elevated"
+                >
                   <button
                     type="button"
                     disabled={!clickable}
                     onClick={() => finding.elementId && onSelect?.(finding.elementId)}
                     className={cn(
-                      "flex w-full gap-2 rounded-[6px] px-2 py-2 text-left transition-colors",
-                      clickable ? "hover:bg-elevated" : "cursor-default",
+                      "flex flex-1 gap-2 px-2 py-2 text-left",
+                      clickable ? "cursor-pointer" : "cursor-default",
                     )}
                   >
                     <span
@@ -80,6 +88,16 @@ export function InspectorPanel({ findings, onSelect, aiBusy, aiError }: Inspecto
                       </p>
                     </div>
                   </button>
+                  {finding.fix && onApplyFix && (
+                    <button
+                      type="button"
+                      onClick={() => onApplyFix(finding.fix as QuickFix)}
+                      title="Apply this fix"
+                      className="mr-1 mt-1.5 shrink-0 rounded-[6px] border border-hairline px-2 py-1 text-[11px] text-accent transition-colors hover:bg-accent/10"
+                    >
+                      Fix
+                    </button>
+                  )}
                 </li>
               );
             })}

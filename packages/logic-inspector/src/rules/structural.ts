@@ -15,12 +15,14 @@ export const missingStartEvent: Rule = {
   id: "structural/missing-start-event",
   run(graph) {
     if (graph.nodes.some(isStart)) return [];
+    const source = graph.nodes.find((n) => incoming(graph, n.id).length === 0);
     return [
       {
         ruleId: "structural/missing-start-event",
         severity: "error",
         message: "Process has no start event.",
         quickFix: "Add a start event and connect it to the first activity.",
+        ...(source ? { fix: { kind: "prependStartEvent", elementId: source.id } } : {}),
       },
     ];
   },
@@ -31,12 +33,14 @@ export const missingEndEvent: Rule = {
   id: "structural/missing-end-event",
   run(graph) {
     if (graph.nodes.some(isEnd)) return [];
+    const sink = graph.nodes.find((n) => !isEnd(n) && outgoing(graph, n.id).length === 0);
     return [
       {
         ruleId: "structural/missing-end-event",
         severity: "error",
         message: "Process has no end event.",
         quickFix: "Add an end event so the process can complete.",
+        ...(sink ? { fix: { kind: "appendEndEvent", elementId: sink.id } } : {}),
       },
     ];
   },
@@ -56,6 +60,8 @@ export const danglingFlow: Rule = {
           severity: "error",
           elementId: flow.id,
           message: `Sequence flow "${flow.id}" references a missing node "${missing}".`,
+          quickFix: "Remove the broken sequence flow.",
+          fix: { kind: "removeElement", elementId: flow.id },
         };
       });
   },
@@ -78,6 +84,8 @@ export const unreachableNode: Rule = {
         severity: "error",
         elementId: node.id,
         message: `"${node.name ?? node.id}" is unreachable from any start event.`,
+        quickFix: "Connect it from the main flow, or remove it.",
+        fix: { kind: "removeElement", elementId: node.id },
       }));
   },
 };
@@ -93,7 +101,8 @@ export const deadEnd: Rule = {
         severity: "warning",
         elementId: node.id,
         message: `"${node.name ?? node.id}" has no outgoing flow and is not an end event (dead end).`,
-        quickFix: "Connect it onward, or convert it to an end event.",
+        quickFix: "Append an end event.",
+        fix: { kind: "appendEndEvent", elementId: node.id },
       }));
   },
 };
