@@ -8,6 +8,7 @@ import type { ProcessGraph } from "@claril/logic-inspector";
 import { advise, type AiProvider } from "@claril/ai-advisor";
 import { auth } from "@/lib/auth";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+import { assertDiagramAccess } from "@/lib/tenancy";
 import { encryptSecret } from "@/lib/crypto";
 
 async function requireUserId(): Promise<string> {
@@ -20,7 +21,8 @@ async function requireUserId(): Promise<string> {
 
 /** Persist a diagram's content (debounced autosave from the canvas). */
 export async function saveDiagramContent(diagramId: string, content: string): Promise<void> {
-  await requireUserId();
+  const userId = await requireUserId();
+  await assertDiagramAccess(userId, diagramId);
   await db
     .update(schema.diagram)
     .set({ content, updatedAt: new Date() })
@@ -30,6 +32,7 @@ export async function saveDiagramContent(diagramId: string, content: string): Pr
 /** Snapshot the current content as a named version. */
 export async function createDiagramVersion(diagramId: string, label?: string): Promise<void> {
   const userId = await requireUserId();
+  await assertDiagramAccess(userId, diagramId);
   const rows = await db
     .select({ content: schema.diagram.content })
     .from(schema.diagram)

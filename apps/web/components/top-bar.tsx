@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -41,8 +42,14 @@ export function TopBar({
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between p-3">
       <div className="pointer-events-auto flex items-center gap-2 rounded-[10px] border border-hairline bg-panel/80 px-3 py-1.5 backdrop-blur">
-        <span className="size-2 rounded-full bg-accent" />
-        <span className="text-sm font-medium">Claril</span>
+        <Link
+          href="/"
+          title="Back to projects"
+          className="flex items-center gap-2 transition-opacity hover:opacity-80"
+        >
+          <span className="size-2 rounded-full bg-accent" />
+          <span className="text-sm font-medium">Claril</span>
+        </Link>
         <span className="text-fg-subtle">/</span>
         <span className="text-sm text-fg-muted">{diagramName}</span>
         <span className="text-fg-subtle">·</span>
