@@ -1,17 +1,962 @@
 {
   "actors": [],
-  "capabilities": [],
-  "components": [],
+  "capabilities": [
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `incoming` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#incoming",
+      "name": "Incoming",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:17",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `isEnd` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#isEnd",
+      "name": "Is End",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:4",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `isGateway` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#isGateway",
+      "name": "Is Gateway",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:5",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `isStart` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#isStart",
+      "name": "Is Start",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:3",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `isTask` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#isTask",
+      "name": "Is Task",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:6",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `nodeMap` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#nodeMap",
+      "name": "Node Map",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:9",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `outgoing` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#outgoing",
+      "name": "Outgoing",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:13",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `reachableFrom` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#reachableFrom",
+      "name": "Reachable From",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:22",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/inspect.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `inspect` in packages/logic-inspector/src/inspect.ts",
+      "id": "cap:packages/logic-inspector/src/inspect.ts#inspect",
+      "name": "Inspect",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/inspect.ts:11",
+          "source": "code"
+        }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/graph.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/graph.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/index.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/index.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/inspect.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/inspect.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/inspect.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/rules/best-practice.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/rules/best-practice.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/best-practice.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/rules/index.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/rules/index.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/rules/structural.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/rules/structural.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/structural.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/rules/types.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/rules/types.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/types.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:packages-logic-inspector",
+      "id": "comp:packages/logic-inspector/src/types.ts",
+      "kind": "module",
+      "name": "packages/logic-inspector/src/types.ts",
+      "package": "packages/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/types.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:misc",
+      "id": "comp:packages/shared/src/index.ts",
+      "kind": "module",
+      "name": "packages/shared/src/index.ts",
+      "package": "packages/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/shared/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "module",
+      "systemId": "sys:claril"
+    }
+  ],
   "dataEntities": [],
   "endpoints": [],
   "features": [],
-  "flows": [],
-  "generatedAt": "2026-06-20T10:23:38.878Z",
-  "groups": [],
-  "processes": [],
+  "flows": [
+    {
+      "confidence": 0.6,
+      "description": "Call/dependency sequence from packages/logic-inspector/src/graph.ts (structural).",
+      "id": "flow:packages/logic-inspector/src/graph.ts",
+      "name": "Graph sequence",
+      "participants": [
+        "comp:packages/logic-inspector/src/graph.ts",
+        "comp:packages/logic-inspector/src/types.ts"
+      ],
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "steps": [
+        {
+          "action": "uses",
+          "participant": "comp:packages/logic-inspector/src/graph.ts",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "packages/logic-inspector/src/graph.ts:1",
+              "source": "code"
+            }
+          ],
+          "to": "comp:packages/logic-inspector/src/types.ts"
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-06-20T10:43:01.338Z",
+  "groups": [
+    {
+      "confidence": 0.85,
+      "id": "group:domain:misc",
+      "kind": "domain",
+      "members": [
+        "comp:packages/shared/src/index.ts"
+      ],
+      "name": "Misc",
+      "provenance": [
+        {
+          "confidence": 0.85,
+          "ref": "packages/shared/src/index.ts",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.85,
+      "id": "group:domain:packages-logic-inspector",
+      "kind": "domain",
+      "members": [
+        "comp:packages/logic-inspector/src/graph.ts",
+        "comp:packages/logic-inspector/src/index.ts",
+        "comp:packages/logic-inspector/src/inspect.ts",
+        "comp:packages/logic-inspector/src/rules/best-practice.ts",
+        "comp:packages/logic-inspector/src/rules/index.ts",
+        "comp:packages/logic-inspector/src/rules/structural.ts",
+        "comp:packages/logic-inspector/src/rules/types.ts",
+        "comp:packages/logic-inspector/src/types.ts"
+      ],
+      "name": "Logic inspector",
+      "provenance": [
+        {
+          "confidence": 0.85,
+          "ref": "packages/logic-inspector/src/graph.ts",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.8,
+      "id": "group:layer:domain",
+      "kind": "layer",
+      "members": [
+        "comp:packages/logic-inspector/src/graph.ts",
+        "comp:packages/logic-inspector/src/index.ts",
+        "comp:packages/logic-inspector/src/inspect.ts",
+        "comp:packages/logic-inspector/src/rules/best-practice.ts",
+        "comp:packages/logic-inspector/src/rules/index.ts",
+        "comp:packages/logic-inspector/src/rules/structural.ts",
+        "comp:packages/logic-inspector/src/rules/types.ts",
+        "comp:packages/logic-inspector/src/types.ts",
+        "comp:packages/shared/src/index.ts"
+      ],
+      "name": "Domain",
+      "order": 3,
+      "provenance": [
+        {
+          "confidence": 0.8,
+          "ref": "derived:layer:domain",
+          "source": "code"
+        }
+      ]
+    }
+  ],
+  "manifest": {
+    "agents": [
+      {
+        "file": ".claude/agents/ai-advisor-engineer.md",
+        "name": "ai-advisor-engineer",
+        "role": "Use for the AI layer — the provider-agnostic LLMProvider abstraction (Vercel AI SDK), BYOK config, structured output, grounding prompts on inspector findings + the Asset Catalog, and the AI-only features (NL→BPMN, conversational editing, advisor critique, Q&A). Consult the claude-api skill for current model details."
+      },
+      {
+        "file": ".claude/agents/backend-engineer.md",
+        "name": "backend-engineer",
+        "role": "Use for server-side work — Next.js route handlers, the standalone MCP/REST analysis server, Better Auth integration, BYOK provider configuration, request validation, and wiring the logic-inspector/ai-advisor packages into API surfaces."
+      },
+      {
+        "file": ".claude/agents/canvas-engineer.md",
+        "name": "canvas-engineer",
+        "role": "Use for the diagram canvas and editors — bpmn-js integration, BPMN/Sequence/C4 editors, custom renderers, palette/context-pad replacements, theming the SVG canvas to the design system, finding overlays, auto-layout, and import/export of BPMN XML."
+      },
+      {
+        "file": ".claude/agents/catalog-engineer.md",
+        "name": "catalog-engineer",
+        "role": "Use for the Asset Catalog subsystem — the Jira-Assets-style CMDB: custom object-type schemas, assets with custom fields, asset-to-asset references, binding diagram elements to assets, impact analysis, and feeding asset metadata to the AI advisor."
+      },
+      {
+        "file": ".claude/agents/db-architect.md",
+        "name": "db-architect",
+        "role": "Use for the database and persistence layer — Drizzle ORM schema, Postgres modeling, the Org→Workspace→Project→Diagram→Version tenancy, roles, the Asset Catalog tables, Better Auth tables, migrations, and query helpers."
+      },
+      {
+        "file": ".claude/agents/docs-writer.md",
+        "name": "docs-writer",
+        "role": "Use for documentation — maintaining docs/, writing ADRs, keeping README current, contributor/onboarding guides, and curating the Archmantic knowledge layer (overview + domain names/descriptions) once components exist."
+      },
+      {
+        "file": ".claude/agents/inspector-engineer.md",
+        "name": "inspector-engineer",
+        "role": "Use for the logic-inspector — Claril's deterministic BPMN analysis engine and core IP. Graph modeling over BPMN, structural/soundness/best-practice rules, the Finding type, workflow-net soundness, quick-fixes, and their unit tests. Pure TypeScript, framework-independent."
+      },
+      {
+        "file": ".claude/agents/ui-engineer.md",
+        "name": "ui-engineer",
+        "role": "Use for the web app shell and UI — Next.js App Router pages/layouts, Tailwind 4 + shadcn/ui components, the canvas-maximal floating-panel layout, the ⌘K command palette, design tokens, dark mode, and AI status/badge affordances. Not for diagram-canvas internals (use canvas-engineer)."
+      }
+    ],
+    "author": {
+      "github": "mgionas",
+      "name": "Giorgi Naskhidashvili"
+    },
+    "goal": "Claril is an open-source, self-hostable architecture & process intelligence workbench for Solution Architects and Architects. It unifies BPMN process models, UML sequence diagrams, and C4 architecture models in one tool, backed by a deterministic logic inspector that catches structural defects and an AI advisor (brand-agnostic, BYOK) that critiques design — grounded by an organization-level Asset Catalog so services are defined once and understood everywhere. The tool is fully useful with zero AI configured; AI is an amplifier, never a gate.",
+    "history": [
+      {
+        "date": "2026-06-20",
+        "note": "Project bootstrapped: name=Claril, AGPL-3.0, Next.js 16 / bpmn-js / Better Auth / Drizzle / Vercel AI SDK stack locked; monorepo scaffolding started."
+      }
+    ],
+    "links": [
+      {
+        "label": "Repository",
+        "url": "https://github.com/mgionas/claril"
+      },
+      {
+        "label": "Brand domain",
+        "url": "https://claril.dev"
+      }
+    ],
+    "status": "active",
+    "team": [
+      {
+        "name": "ui-engineer",
+        "role": "Next.js app shell, Tailwind 4 + shadcn/ui, floating-panel canvas-maximal layout, command palette, design system"
+      },
+      {
+        "name": "canvas-engineer",
+        "role": "bpmn-js + diagram editors (BPMN/Sequence/C4), custom renderers, SVG theming, finding overlays"
+      },
+      {
+        "name": "backend-engineer",
+        "role": "Next route handlers + standalone MCP/REST, Better Auth, BYOK provider config, server validation"
+      },
+      {
+        "name": "db-architect",
+        "role": "Drizzle + Postgres schema, Org→Workspace→Project→Diagram→Version tenancy, roles, migrations"
+      },
+      {
+        "name": "inspector-engineer",
+        "role": "Deterministic logic-inspector engine (core IP): BPMN graph analysis, rules, soundness"
+      },
+      {
+        "name": "ai-advisor-engineer",
+        "role": "Vercel AI SDK provider abstraction, BYOK, structured output, grounding on findings + catalog"
+      },
+      {
+        "name": "catalog-engineer",
+        "role": "Asset Catalog / CMDB: custom-schema engine, asset references, diagram element binding, impact analysis"
+      },
+      {
+        "name": "docs-writer",
+        "role": "docs/, ADRs, README, Archmantic curation, contributor guides"
+      }
+    ]
+  },
+  "processes": [
+    {
+      "confidence": 0.6,
+      "description": "Modules orchestrated from the packages/logic-inspector/src/graph.ts entry point (structural; refined by Tier 2).",
+      "id": "proc:packages/logic-inspector/src/graph.ts",
+      "name": "Graph flow",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task:comp:packages/logic-inspector/src/graph.ts",
+          "name": "Graph",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "packages/logic-inspector/src/graph.ts:1",
+              "source": "code"
+            }
+          ]
+        },
+        {
+          "id": "task:comp:packages/logic-inspector/src/types.ts",
+          "name": "Types",
+          "provenance": [
+            {
+              "confidence": 0.6,
+              "ref": "packages/logic-inspector/src/types.ts:1",
+              "source": "code"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "project": "claril",
-  "relations": [],
+  "relations": [
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/graph.ts",
+      "id": "rel:comp:packages/logic-inspector/src/graph.ts=>comp:packages/logic-inspector/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/graph.ts → comp:packages/logic-inspector/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/index.ts=>comp:packages/logic-inspector/src/graph.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/index.ts → comp:packages/logic-inspector/src/graph.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/index.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/graph.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/index.ts=>comp:packages/logic-inspector/src/inspect.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/index.ts → comp:packages/logic-inspector/src/inspect.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/index.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/inspect.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/index.ts=>comp:packages/logic-inspector/src/rules/index.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/index.ts → comp:packages/logic-inspector/src/rules/index.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/index.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/index.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/index.ts=>comp:packages/logic-inspector/src/rules/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/index.ts → comp:packages/logic-inspector/src/rules/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/index.ts:5",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/index.ts=>comp:packages/logic-inspector/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/index.ts → comp:packages/logic-inspector/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/inspect.ts",
+      "id": "rel:comp:packages/logic-inspector/src/inspect.ts=>comp:packages/logic-inspector/src/rules/index.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/inspect.ts → comp:packages/logic-inspector/src/rules/index.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/inspect.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/index.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/inspect.ts",
+      "id": "rel:comp:packages/logic-inspector/src/inspect.ts=>comp:packages/logic-inspector/src/rules/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/inspect.ts → comp:packages/logic-inspector/src/rules/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/inspect.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/inspect.ts",
+      "id": "rel:comp:packages/logic-inspector/src/inspect.ts=>comp:packages/logic-inspector/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/inspect.ts → comp:packages/logic-inspector/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/inspect.ts:4",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/inspect.ts",
+      "id": "rel:comp:packages/logic-inspector/src/inspect.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/inspect.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/inspect.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/best-practice.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/best-practice.ts=>comp:packages/logic-inspector/src/graph.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/best-practice.ts → comp:packages/logic-inspector/src/graph.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/best-practice.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/graph.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/best-practice.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/best-practice.ts=>comp:packages/logic-inspector/src/rules/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/best-practice.ts → comp:packages/logic-inspector/src/rules/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/best-practice.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/best-practice.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/best-practice.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/best-practice.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/best-practice.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/index.ts=>comp:packages/logic-inspector/src/rules/best-practice.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/index.ts → comp:packages/logic-inspector/src/rules/best-practice.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/index.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/best-practice.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/index.ts=>comp:packages/logic-inspector/src/rules/structural.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/index.ts → comp:packages/logic-inspector/src/rules/structural.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/index.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/structural.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/index.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/index.ts=>comp:packages/logic-inspector/src/rules/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/index.ts → comp:packages/logic-inspector/src/rules/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/index.ts:9",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/structural.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/structural.ts=>comp:packages/logic-inspector/src/graph.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/structural.ts → comp:packages/logic-inspector/src/graph.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/structural.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/graph.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/structural.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/structural.ts=>comp:packages/logic-inspector/src/rules/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/structural.ts → comp:packages/logic-inspector/src/rules/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/structural.ts:3",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/rules/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/structural.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/structural.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/structural.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/structural.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/types.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/types.ts=>comp:packages/logic-inspector/src/types.ts",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/types.ts → comp:packages/logic-inspector/src/types.ts",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/types.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "comp:packages/logic-inspector/src/types.ts"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:packages/logic-inspector/src/rules/types.ts",
+      "id": "rel:comp:packages/logic-inspector/src/rules/types.ts=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:packages/logic-inspector/src/rules/types.ts → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "packages/logic-inspector/src/rules/types.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    }
+  ],
   "schemaVersion": "0.2.0",
-  "systems": [],
-  "technologies": []
+  "systems": [
+    {
+      "confidence": 0.95,
+      "description": "Open-source AI-powered architecture & process modeling workbench (BPMN, Sequence, C4) with a deterministic logic inspector and AI advisor.",
+      "id": "sys:claril",
+      "kind": "internal",
+      "name": "claril",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json:1",
+          "source": "repo"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@claril/shared",
+      "kind": "external",
+      "name": "@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@claril/shared",
+          "source": "code"
+        }
+      ]
+    }
+  ],
+  "technologies": [
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@claril/shared)",
+      "id": "tech:@claril/shared",
+      "name": "@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "workspace:*"
+    },
+    {
+      "category": "build",
+      "confidence": 0.95,
+      "description": "build (turbo)",
+      "id": "tech:turbo",
+      "name": "Turborepo",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^2.9.18"
+    },
+    {
+      "category": "language",
+      "confidence": 0.95,
+      "description": "language (typescript)",
+      "id": "tech:typescript",
+      "name": "TypeScript",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^6.0.3"
+    },
+    {
+      "category": "testing",
+      "confidence": 0.95,
+      "description": "testing (vitest)",
+      "id": "tech:vitest",
+      "name": "Vitest",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^4.1.9"
+    }
+  ],
+  "workspaces": [
+    "packages/logic-inspector",
+    "packages/shared"
+  ]
 }

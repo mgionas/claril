@@ -30,3 +30,6 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Archmantic (keep project.json; ignore generated logs/snapshots)
+.archmantic/usage.jsonl
