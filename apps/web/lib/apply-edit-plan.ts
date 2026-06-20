@@ -192,20 +192,14 @@ export function applyEditPlan(
     modeling.updateProperties(el, { loopCharacteristics: lc });
   };
 
-  const DEBUG = process.env.NODE_ENV !== "production";
-  if (DEBUG) console.log("[applyEditPlan] ops (ordered):", orderOps(plan.ops));
-
   for (const op of orderOps(plan.ops)) {
     try {
       applyOne(op);
-    } catch (e) {
-      if (DEBUG) console.log("[applyEditPlan] op threw:", op, e);
+    } catch {
       // Skip an individual op that can't resolve its refs; the plan card
       // already warned. Do not abort the whole batch mid-way.
     }
   }
-
-  if (DEBUG) console.log("[applyEditPlan] changedIds:", [...changed]);
 
   function applyOne(op: Op) {
     switch (op.kind) {
@@ -304,14 +298,7 @@ export function applyEditPlan(
         if (consumed.has(op)) return; // already created by autoPlace.append
         const from = resolve(op.fromRef);
         const to = resolve(op.toRef);
-        if (!from || !to) {
-          if (DEBUG)
-            console.log("[applyEditPlan] connect unresolved:", op, {
-              fromResolved: !!from,
-              toResolved: !!to,
-            });
-          return;
-        }
+        if (!from || !to) return;
         const conn = modeling.connect(from, to);
         if (op.label && conn) modeling.updateProperties(conn, { name: op.label });
         if (conn) {
@@ -323,10 +310,7 @@ export function applyEditPlan(
       }
       case "setFlow": {
         const conn = resolve(op.flowId);
-        if (!conn) {
-          if (DEBUG) console.log("[applyEditPlan] setFlow: flow not found:", op);
-          return;
-        }
+        if (!conn) return;
         applyCondition(conn, op.condition);
         applyDefault(conn, op.isDefault);
         changed.add(conn.id);
@@ -342,10 +326,7 @@ export function applyEditPlan(
       case "moveToContainer": {
         const el = resolve(op.elementId);
         const container = asFlowNodeContainer(resolve(op.containerRef));
-        if (!el || !container || typeof el.y !== "number" || typeof container.y !== "number") {
-          if (DEBUG) console.log("[applyEditPlan] moveToContainer unresolved:", op);
-          return;
-        }
+        if (!el || !container || typeof el.y !== "number" || typeof container.y !== "number") return;
         // Center the element vertically in the target lane/pool band; bpmn-js
         // LaneBehavior reassigns lane membership from the new position.
         const dy = container.y + (container.height ?? 0) / 2 - (el.y + (el.height ?? 0) / 2);
@@ -355,10 +336,7 @@ export function applyEditPlan(
       }
       case "reconnect": {
         const conn = resolve(op.flowId);
-        if (!conn) {
-          if (DEBUG) console.log("[applyEditPlan] reconnect: flow not found:", op);
-          return;
-        }
+        if (!conn) return;
         if (op.newSourceRef) {
           const ns = resolve(op.newSourceRef);
           if (ns) modeling.reconnectStart(conn, ns, mid(ns));

@@ -89,12 +89,7 @@ export async function POST(req: Request) {
             .describe("A precise description of the change the user asked for."),
         }),
         execute: async ({ instruction }) => {
-          const plan = await planEdits({ graph, findings, instruction, assetContext }, config);
-          if (process.env.NODE_ENV !== "production") {
-            console.log("[proposeEdit] instruction:", instruction);
-            console.log("[proposeEdit] plan:", JSON.stringify(plan, null, 2));
-          }
-          return plan;
+          return planEdits({ graph, findings, instruction, assetContext }, config);
         },
       }),
     },
