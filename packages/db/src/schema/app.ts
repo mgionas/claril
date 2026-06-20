@@ -144,6 +144,21 @@ export const chatMessage = pgTable(
 );
 
 /**
+ * Cached compact process synopsis for a diagram, so the chat route grounds the
+ * model on a small structured summary instead of re-sending the full node/flow
+ * dump every turn. Regenerated when `graphHash` changes.
+ */
+export const diagramKnowledge = pgTable("diagram_knowledge", {
+  diagramId: text("diagram_id")
+    .primaryKey()
+    .references(() => diagram.id, { onDelete: "cascade" }),
+  summary: text("summary").notNull(),
+  graphHash: text("graph_hash").notNull(),
+  model: text("model"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
  * Per-call AI token-usage ledger. One row per model invocation (chat turn,
  * advisor, doc-gen, edit plan, diagram generation). Best-effort: a failed insert
  * never blocks the AI response. Aggregated for the Settings usage view

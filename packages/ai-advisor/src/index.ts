@@ -10,7 +10,8 @@ export { createModel } from "./provider";
 export type { LanguageModelUsage } from "ai";
 export { testConnection, type ConnectionTestResult } from "./test-connection";
 export { advise, adviseWithUsage, type AdviseInput } from "./advisor";
-export { describeGrounding as describeGroundingPrompt } from "./advisor";
+export { describeGrounding as describeGroundingPrompt, describeFindings } from "./advisor";
+export { graphHash, describeSynopsis } from "./synopsis";
 export { generateProcessDoc, generateProcessDocWithUsage, type DocGenInput } from "./docgen";
 export { generateBpmnXml, generateBpmnXmlWithUsage } from "./generate-bpmn";
 export {

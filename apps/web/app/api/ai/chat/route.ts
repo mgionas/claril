@@ -9,9 +9,10 @@ import {
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
-import { createModel, planEdits, describeGroundingPrompt } from "@claril/ai-advisor";
+import { createModel, planEdits, describeFindings, describeAssetContext } from "@claril/ai-advisor";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
 import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
+import { getOrRefreshSynopsis } from "@/lib/knowledge";
 import { stripLoneSurrogates } from "@/lib/sanitize";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
@@ -60,8 +61,17 @@ export async function POST(req: Request) {
     ? await buildDiagramAssetContext(orgId, diagramId)
     : undefined;
   const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
+  const synopsis = await getOrRefreshSynopsis(diagramId, graph, config.model ?? "unknown");
   const grounding = stripLoneSurrogates(
-    describeGroundingPrompt({ graph, findings, assetContext }),
+    [
+      synopsis,
+      "",
+      "DETERMINISTIC FINDINGS (facts from the logic inspector):",
+      describeFindings(findings),
+      assetContext
+        ? `\nBOUND ASSETS (Asset Catalog — real service semantics):\n${describeAssetContext(assetContext)}`
+        : "",
+    ].join("\n"),
   );
 
   const result = streamText({

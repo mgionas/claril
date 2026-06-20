@@ -57,6 +57,13 @@
       "when": 1781985500106,
       "tag": "0007_nifty_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781986191495,
+      "tag": "0008_cold_mimic",
+      "breakpoints": true
     }
   ]
 }
