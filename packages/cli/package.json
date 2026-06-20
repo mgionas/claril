@@ -1,0 +1,35 @@
+{
+  "name": "@claril/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "description": "Claril CLI — lint BPMN with the deterministic logic inspector, plus a stdio MCP server.",
+  "bin": {
+    "claril": "./bin/claril.js"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@claril/bpmn-parse": "workspace:*",
+    "@claril/logic-inspector": "workspace:*",
+    "@claril/shared": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "tinyglobby": "^0.2.17",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@claril/bpmn-parse",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "description": "Headless BPMN 2.0 XML -> ProcessGraph parser for the Claril logic inspector (Node, no browser/DOM).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@claril/logic-inspector": "workspace:*",
+    "bpmn-moddle": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
