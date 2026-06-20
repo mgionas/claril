@@ -27,8 +27,8 @@ interface ChatTabProps {
   handleRef: Ref<ChatTabHandle>;
   getContext: () => ChatContext;
   /** Live-apply a proposed plan to the canvas. */
-  onProposal: (plan: EditPlan) => void;
-  planApplied: boolean;
+  onProposal: (plan: EditPlan, toolCallId: string) => void;
+  pendingProposalId: string | null;
   onApplyPlan: () => void;
   onDiscardPlan: () => void;
   onKeepRefining: () => void;
@@ -76,12 +76,14 @@ export function ChatTab(props: ChatTabProps) {
   useImperativeHandle(props.handleRef, () => ({
     ask: (text) => send(text),
     focusComposer: () => {
-      const el = textareaRef.current;
-      if (el) {
-        el.focus();
-        const len = el.value.length;
-        el.setSelectionRange(len, len);
-      }
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (el) {
+          el.focus();
+          const len = el.value.length;
+          el.setSelectionRange(len, len);
+        }
+      });
     },
   }));
 
@@ -95,7 +97,7 @@ export function ChatTab(props: ChatTabProps) {
           !seenProposals.current.has(part.toolCallId)
         ) {
           seenProposals.current.add(part.toolCallId);
-          props.onProposal(part.output as EditPlan);
+          props.onProposal(part.output as EditPlan, part.toolCallId);
         }
       }
     }
@@ -144,7 +146,8 @@ export function ChatTab(props: ChatTabProps) {
                     <ProposalCard
                       key={i}
                       plan={part.output as EditPlan}
-                      applied={props.planApplied}
+                      pending={part.toolCallId === props.pendingProposalId}
+                      busy={busy}
                       onApply={props.onApplyPlan}
                       onDiscard={props.onDiscardPlan}
                       onKeepRefining={props.onKeepRefining}

@@ -63,8 +63,8 @@ export function BpmnWorkbench({
   const [docBusy, setDocBusy] = useState(false);
   const [docError, setDocError] = useState<string | null>(null);
 
-  // Whether the live-applied AI edit plan has been accepted (vs. revertable).
-  const [planApplied, setPlanApplied] = useState(false);
+  // Which proposal (by toolCallId) is the one currently awaiting review.
+  const [pendingProposalId, setPendingProposalId] = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const graphRef = useRef<ProcessGraph | null>(null);
@@ -216,26 +216,24 @@ export function BpmnWorkbench({
   }, [aiConnected, docMarkdown, generateDocs]);
 
   // Apply the AI's proposed plan live, marked violet pending review.
-  const handleProposal = useCallback((proposed: EditPlan) => {
-    setPlanApplied(false);
-    if (proposed.ops.length > 0) {
-      preEditXmlRef.current = currentXmlRef.current;
-      const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
-      canvasApiRef.current?.markAiEdit(changed);
-      setPlanApplied(true); // applied to canvas; awaiting Approve / Roll back
-    }
+  const handleProposal = useCallback((proposed: EditPlan, toolCallId: string) => {
+    if (proposed.ops.length === 0) return;
+    preEditXmlRef.current = currentXmlRef.current;
+    const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
+    canvasApiRef.current?.markAiEdit(changed);
+    setPendingProposalId(toolCallId); // this proposal is now the one awaiting review
   }, []);
 
   const handleApplyPlan = useCallback(() => {
     canvasApiRef.current?.clearAiEdit();
-    setPlanApplied(false); // resolved
+    setPendingProposalId(null); // resolved
     forceSnapshot("ai", "AI edit"); // change already applied to the model; snapshot it
   }, [forceSnapshot]);
 
   const handleDiscardPlan = useCallback(() => {
     canvasApiRef.current?.clearAiEdit();
     void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
-    setPlanApplied(false);
+    setPendingProposalId(null);
   }, []);
 
   const handleKeepRefining = useCallback(() => {
@@ -349,7 +347,7 @@ export function BpmnWorkbench({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         getChatContext={getChatContext}
-        planApplied={planApplied}
+        pendingProposalId={pendingProposalId}
         onProposal={handleProposal}
         onApplyPlan={handleApplyPlan}
         onDiscardPlan={handleDiscardPlan}
