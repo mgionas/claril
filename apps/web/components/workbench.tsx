@@ -14,6 +14,8 @@ interface WorkbenchProps {
   aiProvider?: string;
   /** Persisted AI documentation markdown (BPMN only); null if none. */
   initialDoc?: string | null;
+  /** Persisted chat transcript (BPMN only); hydrates the chat. */
+  initialChatMessages?: { id: string; role: string; parts: unknown }[];
 }
 
 /**
@@ -32,6 +34,7 @@ export function Workbench({
   aiConnected,
   aiProvider,
   initialDoc,
+  initialChatMessages,
 }: WorkbenchProps) {
   if (kind === "bpmn") {
     return (
@@ -43,6 +46,7 @@ export function Workbench({
         aiConnected={aiConnected}
         aiProvider={aiProvider}
         initialDoc={initialDoc}
+        initialChatMessages={initialChatMessages}
       />
     );
   }

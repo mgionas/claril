@@ -3,7 +3,7 @@
  * → Version. `organization` (the Org tier) and `user` come from Better Auth
  * (see ./auth). Asset Catalog tables are added in a later phase.
  */
-import { index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
 
 export const diagramType = pgEnum("diagram_type", ["bpmn", "sequence", "c4"]);
@@ -123,6 +123,25 @@ export const diagramDoc = pgTable("diagram_doc", {
   model: text("model"),
   generatedAt: timestamp("generated_at").notNull().defaultNow(),
 });
+
+/**
+ * Persisted chat transcript, one row per UI message, scoped to a diagram. Lets
+ * the assistant conversation survive page reloads. `parts` is the AI SDK
+ * UIMessage parts array (text + tool outputs) stored verbatim as JSON.
+ */
+export const chatMessage = pgTable(
+  "chat_message",
+  {
+    id: text("id").primaryKey(), // the UIMessage id (client-generated)
+    diagramId: text("diagram_id")
+      .notNull()
+      .references(() => diagram.id, { onDelete: "cascade" }),
+    role: text("role").notNull(), // "user" | "assistant" | "system"
+    parts: jsonb("parts").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("chat_message_diagram_idx").on(t.diagramId)],
+);
 
 /**
  * Per-call AI token-usage ledger. One row per model invocation (chat turn,

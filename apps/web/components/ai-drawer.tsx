@@ -24,6 +24,7 @@ export interface AiDrawerProps {
   activeTab: "chat" | "problems";
   onTabChange: (tab: "chat" | "problems") => void;
   getChatContext: () => { graph: ProcessGraph | null; findings: Finding[]; diagramId: string };
+  initialChatMessages?: { id: string; role: string; parts: unknown }[];
   pendingProposalId: string | null;
   onProposal: (plan: EditPlan, toolCallId: string) => void;
   onApplyPlan: () => void;
@@ -88,6 +89,8 @@ export function AiDrawer(props: AiDrawerProps) {
               <ChatTab
                 handleRef={props.chatHandleRef}
                 getContext={props.getChatContext}
+                diagramId={props.getChatContext().diagramId}
+                initialMessages={props.initialChatMessages}
                 pendingProposalId={props.pendingProposalId}
                 onProposal={props.onProposal}
                 onApplyPlan={props.onApplyPlan}

@@ -3,12 +3,13 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Send, Wand2, FileText } from "lucide-react";
+import { Send, Wand2, FileText, Trash2 } from "lucide-react";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import type { EditPlan } from "@claril/ai-advisor";
 import { ChatBubble } from "@/components/chat-bubble";
 import { ProposalCard } from "@/components/proposal-card";
+import { appendChatMessages, clearChat } from "@/lib/chat-actions";
 
 export interface ChatTabHandle {
   /** Inject a message into the transcript (used by "Ask AI" from Problems). */
@@ -26,6 +27,8 @@ interface ChatContext {
 interface ChatTabProps {
   handleRef: Ref<ChatTabHandle>;
   getContext: () => ChatContext;
+  diagramId: string;
+  initialMessages?: { id: string; role: string; parts: unknown }[];
   /** Live-apply a proposed plan to the canvas. */
   onProposal: (plan: EditPlan, toolCallId: string) => void;
   pendingProposalId: string | null;
@@ -51,9 +54,30 @@ export function ChatTab(props: ChatTabProps) {
     el.style.height = `${Math.min(el.scrollHeight, 192)}px`;
   };
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({ api: "/api/ai/chat" }),
+    messages: (props.initialMessages as never) ?? undefined,
   });
+
+  const persistedIds = useRef<Set<string>>(new Set());
+  // Seed with hydrated ids so we never re-insert them.
+  useEffect(() => {
+    for (const m of props.initialMessages ?? []) persistedIds.current.add(m.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist each finished turn (messages whose id we haven't stored yet).
+  useEffect(() => {
+    if (status !== "ready") return;
+    const fresh = messages.filter((m) => !persistedIds.current.has(m.id));
+    if (fresh.length === 0) return;
+    for (const m of fresh) persistedIds.current.add(m.id);
+    void appendChatMessages(
+      props.getContext().diagramId,
+      fresh.map((m) => ({ id: m.id, role: m.role, parts: m.parts })),
+    ).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, messages]);
 
   const send = (text: string) => {
     const t = text.trim();
@@ -171,6 +195,17 @@ export function ChatTab(props: ChatTabProps) {
           <div className="flex flex-wrap gap-1">
             <Chip icon={Wand2} label="Review" onClick={props.onReview} />
             <Chip icon={FileText} label="Document" onClick={props.onGenerateDocs} />
+            {messages.length > 0 && (
+              <Chip
+                icon={Trash2}
+                label="Clear"
+                onClick={() => {
+                  setMessages([]);
+                  persistedIds.current.clear();
+                  void clearChat(props.getContext().diagramId).catch(() => {});
+                }}
+              />
+            )}
           </div>
           {sessionTokens > 0 && (
             <span className="text-[10px] text-fg-subtle" title="Tokens used this session">

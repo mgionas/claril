@@ -32,6 +32,8 @@ interface BpmnWorkbenchProps {
   aiProvider?: string;
   /** Persisted AI documentation markdown, loaded server-side (null if none). */
   initialDoc?: string | null;
+  /** Persisted chat transcript, loaded server-side (hydrates the chat). */
+  initialChatMessages?: { id: string; role: string; parts: unknown }[];
 }
 
 /**
@@ -47,6 +49,7 @@ export function BpmnWorkbench({
   aiConnected,
   aiProvider,
   initialDoc,
+  initialChatMessages,
 }: BpmnWorkbenchProps) {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [advisorFindings, setAdvisorFindings] = useState<Finding[]>([]);
@@ -347,6 +350,7 @@ export function BpmnWorkbench({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         getChatContext={getChatContext}
+        initialChatMessages={initialChatMessages}
         pendingProposalId={pendingProposalId}
         onProposal={handleProposal}
         onApplyPlan={handleApplyPlan}
