@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
+import { CanvasPalette } from "@/components/canvas-palette";
 import type { Finding, Severity } from "@claril/shared";
 import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
@@ -34,6 +35,7 @@ export default function BpmnCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
   const markedRef = useRef<string[]>([]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -128,6 +130,7 @@ export default function BpmnCanvas({
         canvas.zoom("fit-viewport", "auto");
         runInspection();
         modeler.on("commandStack.changed", onChanged);
+        setReady(true);
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);
       }
@@ -164,5 +167,11 @@ export default function BpmnCanvas({
     }
   }, [focusElementId, focusNonce]);
 
-  return <div ref={containerRef} className="absolute inset-0" />;
+  return (
+    <div className="absolute inset-0">
+      {/* Dedicated, React-untouched node for bpmn-js to render into. */}
+      <div ref={containerRef} className="absolute inset-0" />
+      {ready && modelerRef.current && <CanvasPalette modeler={modelerRef.current} />}
+    </div>
+  );
 }

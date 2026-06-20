@@ -100,22 +100,29 @@ body {
   stroke: color-mix(in srgb, var(--color-accent) 50%, transparent) !important;
 }
 
-/* palette + context pad: dark frosted */
-.djs-palette,
+/* Hide bpmn-js's default left palette — replaced by our custom CanvasPalette. */
+.djs-palette {
+  display: none !important;
+}
+
+/* Context pad (contextual actions next to an element) + popups: dark frosted. */
 .djs-context-pad .group,
 .djs-popup {
-  background-color: rgba(24, 24, 27, 0.9) !important;
+  background-color: rgba(24, 24, 27, 0.92) !important;
   border: 1px solid var(--color-hairline) !important;
   color: var(--color-fg) !important;
   backdrop-filter: blur(8px);
 }
-.djs-palette .entry,
 .djs-context-pad .entry {
   color: var(--color-fg-muted) !important;
+  border-radius: 6px;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
-.djs-palette .entry:hover,
 .djs-context-pad .entry:hover {
   color: var(--color-accent) !important;
+  background-color: var(--color-elevated) !important;
 }
 
 /* ---- logic-inspector finding overlays + markers ---- */
