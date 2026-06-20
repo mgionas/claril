@@ -1,0 +1,15 @@
+{
+  "name": "claril",
+  "version": "0.1.0",
+  "description": "Open-source AI-powered architecture & process modeling workbench (BPMN, Sequence, C4) with a deterministic logic inspector and AI advisor.",
+  "license": "AGPL-3.0-only",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  },
+  "private": true
+}
