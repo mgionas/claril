@@ -21,6 +21,17 @@ describe("EditPlanSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts addNode for new task and gateway types", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "Add a send task and an inclusive gateway",
+      ops: [
+        { kind: "addNode", tempId: "t1", type: "sendTask", name: "Notify" },
+        { kind: "addNode", tempId: "t2", type: "inclusiveGateway", name: "Which?" },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it("accepts a reconnect op", () => {
     const parsed = EditPlanSchema.safeParse({
       summary: "Re-point a flow",
