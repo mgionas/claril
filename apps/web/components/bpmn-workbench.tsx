@@ -9,11 +9,14 @@ import {
   runAdvisor,
   runAdvisorQuestion,
   runDocGen,
+  runDiagramEdit,
   saveDiagramContent,
 } from "@/lib/actions";
 import type { CanvasApi } from "@/components/bpmn-canvas";
+import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
 import { InspectorPanel } from "@/components/inspector-panel";
+import { AssistantPanel } from "@/components/assistant-panel";
 import { VersionsPanel } from "@/components/versions-panel";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
@@ -63,12 +66,17 @@ export function BpmnWorkbench({
   const [docBusy, setDocBusy] = useState(false);
   const [docError, setDocError] = useState<string | null>(null);
 
+  const [plan, setPlan] = useState<EditPlan | null>(null);
+  const [planApplied, setPlanApplied] = useState(false);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const graphRef = useRef<ProcessGraph | null>(null);
   const findingsRef = useRef<Finding[]>([]);
   const canvasApiRef = useRef<CanvasApi | null>(null);
   // Latest serialized XML from the canvas — read by the History diff.
   const currentXmlRef = useRef<string>(initialXml);
+  const preEditXmlRef = useRef<string>(initialXml);
 
   // Surface AI work in the drawer automatically.
   useEffect(() => {
@@ -215,6 +223,56 @@ export function BpmnWorkbench({
     }
   }, [aiConnected, diagramId]);
 
+  const handleInstruct = useCallback(
+    async (instruction: string) => {
+      if (!aiConnected) {
+        setSettingsOpen(true);
+        return;
+      }
+      if (!graphRef.current) return;
+      setInspectorOpen(true);
+      setAiMessage(null);
+      setPlan(null);
+      setPlanApplied(false);
+      setAiBusy(true);
+      setAiError(null);
+      try {
+        const result = await runDiagramEdit(
+          graphRef.current,
+          findingsRef.current,
+          instruction,
+          diagramId,
+        );
+        setAiMessage(result.summary);
+        setPlan(result);
+        if (result.ops.length > 0) {
+          // Snapshot, apply live, highlight the change (Discard reverts).
+          preEditXmlRef.current = currentXmlRef.current;
+          const changed = canvasApiRef.current?.applyEditPlan(result) ?? [];
+          canvasApiRef.current?.showDiff({ added: changed, removed: [], changed: [], layout: [] });
+        }
+      } catch (err) {
+        setAiError(err instanceof Error ? err.message : "AI request failed.");
+      } finally {
+        setAiBusy(false);
+      }
+    },
+    [aiConnected, diagramId],
+  );
+
+  const handleApplyPlan = useCallback(() => {
+    canvasApiRef.current?.clearDiff();
+    setPlanApplied(true); // change already on the model; autosave already fired
+  }, []);
+
+  const handleDiscardPlan = useCallback(() => {
+    canvasApiRef.current?.clearDiff();
+    void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
+    setPlan(null);
+    setPlanApplied(false);
+    setAiMessage(null);
+  }, []);
+
   const allFindings = advisorFindings.length > 0 ? [...findings, ...advisorFindings] : findings;
   const errorCount = allFindings.filter((f) => f.severity === "error").length;
   const warningCount = allFindings.filter((f) => f.severity === "warning").length;
@@ -313,19 +371,38 @@ export function BpmnWorkbench({
         </button>
       </div>
 
-      <InspectorPanel
-        open={inspectorOpen}
-        findings={allFindings}
-        focusedElementId={focus.id}
-        focusNonce={focus.nonce}
-        onSelect={handleSelectFinding}
-        onApplyFix={handleApplyFix}
-        aiBusy={aiBusy}
-        aiError={aiError}
-        qaQuestion={qaQuestion}
-        qaAnswer={qaAnswer}
-        onClearQa={handleClearQa}
-      />
+      {aiConnected ? (
+        <AssistantPanel
+          open={inspectorOpen}
+          findings={allFindings}
+          aiBusy={aiBusy}
+          aiError={aiError}
+          message={aiMessage}
+          plan={plan}
+          planApplied={planApplied}
+          onSelect={handleSelectFinding}
+          onApplyFix={handleApplyFix}
+          onInstruct={handleInstruct}
+          onAskAi={handleAskAi}
+          onGenerateDocs={handleGenerateDocs}
+          onApplyPlan={handleApplyPlan}
+          onDiscardPlan={handleDiscardPlan}
+        />
+      ) : (
+        <InspectorPanel
+          open={inspectorOpen}
+          findings={allFindings}
+          focusedElementId={focus.id}
+          focusNonce={focus.nonce}
+          onSelect={handleSelectFinding}
+          onApplyFix={handleApplyFix}
+          aiBusy={aiBusy}
+          aiError={aiError}
+          qaQuestion={qaQuestion}
+          qaAnswer={qaAnswer}
+          onClearQa={handleClearQa}
+        />
+      )}
 
       <VersionsPanel
         open={historyOpen}
