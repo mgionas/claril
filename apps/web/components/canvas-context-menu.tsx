@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type ComponentType } from "react";
-import { Circle, Maximize2, Pencil, Plus, Square } from "lucide-react";
+import { BoxSelect, Hand, Maximize2, Move, Pencil, Plus, Spline } from "lucide-react";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
 import { applyQuickFix } from "@/lib/apply-fix";
 import { cn } from "@/lib/utils";
@@ -31,10 +31,9 @@ interface CanvasContextMenuProps {
 }
 
 /**
- * Right-click menu. Deliberately does NOT duplicate the bpmn-js context pad
- * (append / connect / delete / replace live there). It adds Claril-specific
- * value: rename, executable quick-fixes, the element's findings, and a couple
- * of canvas helpers on empty space.
+ * The single action hub. Right-click anywhere: create (grouped picker), tools,
+ * rename, fit, and per-element executable fixes. The bpmn-js context pad still
+ * handles per-element append/connect/delete on hover.
  */
 export function CanvasContextMenu({
   menu,
@@ -71,15 +70,9 @@ export function CanvasContextMenu({
     onClose();
   }
 
-  function createAtPoint(type: string) {
+  function tool(service: string) {
     try {
-      const canvas = modeler.get("canvas");
-      const viewbox = canvas.viewbox();
-      const rect = canvas.getContainer().getBoundingClientRect();
-      const x = viewbox.x + (menu.x - rect.left) / viewbox.scale;
-      const y = viewbox.y + (menu.y - rect.top) / viewbox.scale;
-      const shape = modeler.get("elementFactory").createShape({ type });
-      modeler.get("modeling").createShape(shape, { x, y }, canvas.getRootElement());
+      modeler.get(service).toggle();
     } catch {
       /* ignore */
     }
@@ -96,10 +89,7 @@ export function CanvasContextMenu({
     : [];
 
   const left = Math.min(menu.x, window.innerWidth - 248);
-  const top = Math.min(menu.y, window.innerHeight - 300);
-
-  const hasElementSection = Boolean(element);
-  const hasFindings = elementFindings.length > 0;
+  const top = Math.min(menu.y, window.innerHeight - 380);
 
   return (
     <div
@@ -115,31 +105,23 @@ export function CanvasContextMenu({
         style={{ left, top }}
         onClick={(e) => e.stopPropagation()}
       >
-        {hasElementSection && <MenuItem icon={Pencil} label="Rename" onClick={rename} />}
+        <MenuItem icon={Plus} label="Create element…" onClick={() => onCreateMore(menu.x, menu.y)} />
+        {element && <MenuItem icon={Pencil} label="Rename" onClick={rename} />}
 
-        {!element && (
-          <>
-            <MenuItem
-              icon={Circle}
-              label="Add start event"
-              onClick={() => createAtPoint("bpmn:StartEvent")}
-            />
-            <MenuItem icon={Square} label="Add task" onClick={() => createAtPoint("bpmn:Task")} />
-            <MenuItem
-              icon={Plus}
-              label="More elements…"
-              onClick={() => onCreateMore(menu.x, menu.y)}
-            />
-            <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
-          </>
-        )}
+        <Separator />
+        <p className="px-3 pb-1 pt-1 text-[10px] uppercase tracking-wide text-fg-subtle">Tools</p>
+        <MenuItem icon={Hand} label="Hand (pan)" onClick={() => tool("handTool")} />
+        <MenuItem icon={BoxSelect} label="Lasso select" onClick={() => tool("lassoTool")} />
+        <MenuItem icon={Move} label="Space tool" onClick={() => tool("spaceTool")} />
+        <MenuItem icon={Spline} label="Global connect" onClick={() => tool("globalConnect")} />
 
-        {hasFindings && (
+        <Separator />
+        <MenuItem icon={Maximize2} label="Fit to view" onClick={fitView} />
+
+        {elementFindings.length > 0 && (
           <>
-            {hasElementSection && <Separator />}
-            <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-fg-subtle">
-              Findings
-            </p>
+            <Separator />
+            <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-fg-subtle">Findings</p>
             {elementFindings.map((f, i) => (
               <div key={`${f.ruleId}-${i}`} className="flex items-start gap-2 px-3 py-1.5">
                 <span

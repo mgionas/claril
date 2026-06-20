@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
-import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
 import { ElementPicker } from "@/components/element-picker";
 import type { Finding, QuickFix, Severity } from "@claril/shared";
@@ -47,7 +46,6 @@ export default function BpmnCanvas({
   const modelerRef = useRef<BpmnModeler | null>(null);
   const markedRef = useRef<string[]>([]);
   const findingsRef = useRef<Finding[]>([]);
-  const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
 
@@ -155,7 +153,6 @@ export default function BpmnCanvas({
         canvas.zoom("fit-viewport", "auto");
         runInspection();
         modeler.on("commandStack.changed", onChanged);
-        setReady(true);
         onReady?.({
           applyFix: (fix) => {
             if (modelerRef.current) applyQuickFix(modelerRef.current, fix);
@@ -212,12 +209,6 @@ export default function BpmnCanvas({
     >
       {/* Dedicated, React-untouched node for bpmn-js to render into. */}
       <div ref={containerRef} className="absolute inset-0" />
-      {ready && modelerRef.current && (
-        <CanvasPalette
-          modeler={modelerRef.current}
-          onMore={(x, y) => setPicker({ x, y })}
-        />
-      )}
       {menu && modelerRef.current && (
         <CanvasContextMenu
           menu={menu}
