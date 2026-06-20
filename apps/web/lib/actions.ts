@@ -271,18 +271,29 @@ export async function runAdvisorQuestion(
   return answerQuestion({ graph, findings, question, assetContext }, config);
 }
 
-/** Remove a leading/trailing markdown code fence (```xml … ```) if present. */
+/**
+ * Remove markdown code fences (```xml … ```) if present — including the common
+ * case where the model emits a short note before/after the block. We extract the
+ * content of the first fenced block when one exists, otherwise return the input
+ * trimmed (so already-bare XML is untouched). This is more robust than only
+ * peeling a leading fence: some providers prepend "Here is the BPMN:".
+ */
 function stripCodeFences(raw: string): string {
-  let text = raw.trim();
+  const text = raw.trim();
+  // Prefer the content of the first fenced block, if any.
+  const fenced = /```(?:xml|bpmn)?\s*\n?([\s\S]*?)```/i.exec(text);
+  if (fenced?.[1]) return fenced[1].trim();
+  // No closing fence — peel a leading fence line if present.
   if (text.startsWith("```")) {
-    // Drop the opening fence line (``` or ```xml / ```bpmn).
     const firstNewline = text.indexOf("\n");
-    text = firstNewline === -1 ? "" : text.slice(firstNewline + 1);
-    // Drop a trailing closing fence.
-    const lastFence = text.lastIndexOf("```");
-    if (lastFence !== -1) text = text.slice(0, lastFence);
+    return firstNewline === -1 ? "" : text.slice(firstNewline + 1).trim();
   }
-  return text.trim();
+  return text;
+}
+
+/** Count occurrences of a BPMN DI edge element regardless of namespace prefix. */
+function countDiEdges(xml: string): number {
+  return (xml.match(/<[\w-]*:?BPMNEdge[\s/>]/g) ?? []).length;
 }
 
 /**
@@ -320,8 +331,9 @@ export async function generateDiagramFromPrompt(description: string): Promise<st
     );
   }
 
+  let parsed: Awaited<ReturnType<typeof parseBpmnXml>>;
   try {
-    await parseBpmnXml(laidOut);
+    parsed = await parseBpmnXml(laidOut);
   } catch (cause) {
     if (cause instanceof BpmnParseError) {
       throw new Error(
@@ -330,6 +342,25 @@ export async function generateDiagramFromPrompt(description: string): Promise<st
       );
     }
     throw cause;
+  }
+
+  // The diagram is structurally valid but may still be unrenderable. The layout
+  // engine (bpmn-auto-layout) derives node positions and connections from each
+  // flow node's <incoming>/<outgoing> child refs; when the model emits only
+  // sequenceFlow sourceRef/targetRef (or wraps multiple pools the engine can't
+  // place), the result is disconnected, arrow-less boxes. Detect that here —
+  // every sequence flow should yield a DI edge — and fail loudly so the user
+  // gets an actionable message instead of a blank/broken canvas.
+  const flowCount = parsed.graph.flows.length;
+  if (flowCount === 0) {
+    throw new Error(
+      "The AI returned a process with no connected steps. Try a more detailed description.",
+    );
+  }
+  if (countDiEdges(laidOut) < flowCount) {
+    throw new Error(
+      "The AI produced a process whose steps aren’t connected, so it can’t be drawn. Try rephrasing the description.",
+    );
   }
 
   return laidOut;
