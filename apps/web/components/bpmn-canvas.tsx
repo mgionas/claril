@@ -444,6 +444,7 @@ export default function BpmnCanvas({
       modelerRef.current = null;
       markedRef.current = [];
       diffMarkedRef.current = [];
+      aiEditMarkedRef.current = [];
     };
   }, [initialXml, onFindingsChange, onGraphChange, onXmlChange, onReady]);
 
