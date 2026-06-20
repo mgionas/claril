@@ -290,30 +290,44 @@ export async function runDocGen(
   return value;
 }
 
-/** Read the persisted AI documentation for a diagram, if any. */
+/**
+ * Read the persisted AI documentation for a diagram, if any. Best-effort: the
+ * `diagram_doc` table is an optional cache, so a query failure (e.g. the
+ * migration hasn't been applied on a fresh/self-hosted DB) degrades to "no
+ * persisted doc" rather than crashing the diagram page.
+ */
 export async function getDiagramDoc(diagramId: string): Promise<string | null> {
   const userId = await requireUserId();
   await assertDiagramAccess(userId, diagramId);
-  const rows = await db
-    .select({ markdown: schema.diagramDoc.markdown })
-    .from(schema.diagramDoc)
-    .where(eq(schema.diagramDoc.diagramId, diagramId))
-    .limit(1);
-  return rows[0]?.markdown ?? null;
+  try {
+    const rows = await db
+      .select({ markdown: schema.diagramDoc.markdown })
+      .from(schema.diagramDoc)
+      .where(eq(schema.diagramDoc.diagramId, diagramId))
+      .limit(1);
+    return rows[0]?.markdown ?? null;
+  } catch {
+    return null;
+  }
 }
 
+/** Persist generated docs. Best-effort — never block doc generation on it. */
 async function upsertDiagramDoc(
   diagramId: string,
   markdown: string,
   model: string | null,
 ): Promise<void> {
-  await db
-    .insert(schema.diagramDoc)
-    .values({ diagramId, markdown, model, generatedAt: new Date() })
-    .onConflictDoUpdate({
-      target: schema.diagramDoc.diagramId,
-      set: { markdown, model, generatedAt: new Date() },
-    });
+  try {
+    await db
+      .insert(schema.diagramDoc)
+      .values({ diagramId, markdown, model, generatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: schema.diagramDoc.diagramId,
+        set: { markdown, model, generatedAt: new Date() },
+      });
+  } catch {
+    // Optional cache; if the table is missing the doc is simply not persisted.
+  }
 }
 
 /** Plan model edits from a natural-language instruction. Grounded + BYOK. */

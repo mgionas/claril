@@ -49,8 +49,20 @@ export interface UsageSummary {
   byModel: UsageRow[];
 }
 
-/** Aggregate an org's usage, grouped by project name and by model. */
+/**
+ * Aggregate an org's usage, grouped by project name and by model. Best-effort:
+ * if the `ai_usage` table is absent (migration not yet applied) this returns an
+ * empty summary instead of throwing, so the settings page still renders.
+ */
 export async function getUsageSummary(organizationId: string): Promise<UsageSummary> {
+  try {
+    return await queryUsageSummary(organizationId);
+  } catch {
+    return { totalTokens: 0, byProject: [], byModel: [] };
+  }
+}
+
+async function queryUsageSummary(organizationId: string): Promise<UsageSummary> {
   const byModelRows = await db
     .select({
       label: schema.aiUsage.model,
