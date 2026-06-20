@@ -73,6 +73,8 @@ Mapped to the agent team so they can run in parallel where independent.
 | **W6** | Advisor doc-gen + Q&A modes (G4) | `ai-advisor-engineer` | ✅ shipped |
 | **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | 🔄 in progress |
 | **W8** | Provider connect: guided AI-setup wizard (steps/animation/instructions) + Vercel AI Gateway + BYOK + optional Google OAuth→Vertex | `ai-advisor-engineer` + `ui-engineer` | queued |
+| **W9** | AI drawer redesign: tabbed Chat + Problems, sent/received bubbles, specialized proposal cards, progressive phases, markdown doc viewer + DB persistence + Regenerate, token usage (Settings + chat) | `ui-engineer` + `ai-advisor-engineer` | 🔄 on branch `feat/ai-drawer-redesign` |
+| **W10** | History & review batch — **F1** History (auto-versioning + top-bar dropdown, replaces archive), **F2** AI-edit review (on-board marks + Approve/Roll back/Keep refining), **F3** chat memory + DB knowledge cache + token cut + surrogate sanitize | `ui-engineer` + `canvas-engineer` + `db-architect` | 🔄 F1 plan ready (spec `docs/superpowers/specs/2026-06-20-history-ai-review-chat-memory-design.md`) |
 
 Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
 inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
