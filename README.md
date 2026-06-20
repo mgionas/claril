@@ -38,6 +38,18 @@ pnpm dev                             # http://localhost:3000
 
 Run the inspector tests with `pnpm test`.
 
+## Self-hosting (Docker)
+
+Run the whole stack (app + Postgres + migrations) with one command:
+
+```bash
+cp .env.example .env     # then set BETTER_AUTH_SECRET
+docker compose up -d --build   # http://localhost:3000
+```
+
+See [docs/self-hosting.md](docs/self-hosting.md) for required env vars, using an
+external Postgres (e.g. Neon), and operations.
+
 ## Project layout
 
 ```
