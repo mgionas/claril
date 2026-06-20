@@ -3,6 +3,150 @@
   "capabilities": [
     {
       "componentIds": [
+        "comp:apps/web/app/layout.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `RootLayout` in apps/web/app/layout.tsx",
+      "id": "cap:apps/web/app/layout.tsx#RootLayout",
+      "name": "Root Layout",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/layout.tsx:10",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/app/page.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `Home` in apps/web/app/page.tsx",
+      "id": "cap:apps/web/app/page.tsx#Home",
+      "name": "Home",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/app/page.tsx:3",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/bpmn-canvas.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `BpmnCanvas` in apps/web/components/bpmn-canvas.tsx",
+      "id": "cap:apps/web/components/bpmn-canvas.tsx#BpmnCanvas",
+      "name": "Bpmn Canvas",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/bpmn-canvas.tsx:17",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/command-bar.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `CommandBar` in apps/web/components/command-bar.tsx",
+      "id": "cap:apps/web/components/command-bar.tsx#CommandBar",
+      "name": "Command Bar",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/command-bar.tsx:3",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/inspector-panel.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `InspectorPanel` in apps/web/components/inspector-panel.tsx",
+      "id": "cap:apps/web/components/inspector-panel.tsx#InspectorPanel",
+      "name": "Inspector Panel",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/inspector-panel.tsx:10",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/top-bar.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `TopBar` in apps/web/components/top-bar.tsx",
+      "id": "cap:apps/web/components/top-bar.tsx#TopBar",
+      "name": "Top Bar",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/top-bar.tsx:3",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/components/workbench.tsx"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `Workbench` in apps/web/components/workbench.tsx",
+      "id": "cap:apps/web/components/workbench.tsx#Workbench",
+      "name": "Workbench",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/components/workbench.tsx:13",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/bpmn-to-graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `bpmnRegistryToGraph` in apps/web/lib/bpmn-to-graph.ts",
+      "id": "cap:apps/web/lib/bpmn-to-graph.ts#bpmnRegistryToGraph",
+      "name": "Bpmn Registry To Graph",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/bpmn-to-graph.ts:31",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:apps/web/lib/utils.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `cn` in apps/web/lib/utils.ts",
+      "id": "cap:apps/web/lib/utils.ts#cn",
+      "name": "Cn",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "apps/web/lib/utils.ts:4",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
         "comp:packages/logic-inspector/src/graph.ts"
       ],
       "confidence": 0.6,
@@ -147,6 +291,210 @@
     }
   ],
   "components": [
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/app/layout.tsx",
+      "kind": "module",
+      "name": "apps/web/app/layout.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/layout.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "layout",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/app/page.tsx",
+      "kind": "module",
+      "name": "apps/web/app/page.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "page",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/bpmn-canvas.tsx",
+      "kind": "module",
+      "name": "apps/web/components/bpmn-canvas.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/command-bar.tsx",
+      "kind": "module",
+      "name": "apps/web/components/command-bar.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/command-bar.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/inspector-panel.tsx",
+      "kind": "module",
+      "name": "apps/web/components/inspector-panel.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/inspector-panel.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/top-bar.tsx",
+      "kind": "module",
+      "name": "apps/web/components/top-bar.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/top-bar.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/components/workbench.tsx",
+      "kind": "module",
+      "name": "apps/web/components/workbench.tsx",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:1",
+          "source": "code"
+        }
+      ],
+      "role": "ui",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/bpmn-to-graph.ts",
+      "kind": "module",
+      "name": "apps/web/lib/bpmn-to-graph.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/bpmn-to-graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/default-diagram.ts",
+      "kind": "module",
+      "name": "apps/web/lib/default-diagram.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/default-diagram.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/lib/utils.ts",
+      "kind": "module",
+      "name": "apps/web/lib/utils.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/utils.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "service",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/next.config.ts",
+      "kind": "module",
+      "name": "apps/web/next.config.ts",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/next.config.ts:1",
+          "source": "code"
+        }
+      ],
+      "role": "config",
+      "systemId": "sys:claril"
+    },
+    {
+      "confidence": 0.95,
+      "groupId": "group:domain:apps-web",
+      "id": "comp:apps/web/postcss.config.mjs",
+      "kind": "module",
+      "name": "apps/web/postcss.config.mjs",
+      "package": "apps/web",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/postcss.config.mjs:1",
+          "source": "code"
+        }
+      ],
+      "role": "config",
+      "systemId": "sys:claril"
+    },
     {
       "confidence": 0.95,
       "groupId": "group:domain:packages-logic-inspector",
@@ -303,42 +651,88 @@
   ],
   "dataEntities": [],
   "endpoints": [],
-  "features": [],
+  "features": [
+    {
+      "components": [
+        "comp:apps/web/app/page.tsx"
+      ],
+      "confidence": 0.55,
+      "description": "The Home screen.",
+      "id": "feature:home",
+      "name": "Home",
+      "provenance": [
+        {
+          "confidence": 0.55,
+          "ref": "apps/web/app/page.tsx",
+          "source": "code"
+        }
+      ],
+      "status": "draft"
+    }
+  ],
   "flows": [
     {
       "confidence": 0.6,
-      "description": "Call/dependency sequence from packages/logic-inspector/src/graph.ts (structural).",
-      "id": "flow:packages/logic-inspector/src/graph.ts",
-      "name": "Graph sequence",
+      "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
+      "featureId": "feature:home",
+      "id": "flow:home",
+      "name": "Home flow",
       "participants": [
-        "comp:packages/logic-inspector/src/graph.ts",
-        "comp:packages/logic-inspector/src/types.ts"
+        "comp:apps/web/app/page.tsx",
+        "sys:ext:@/components"
       ],
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "packages/logic-inspector/src/graph.ts:1",
+          "ref": "apps/web/app/page.tsx:1",
           "source": "code"
         }
       ],
       "steps": [
         {
-          "action": "uses",
-          "participant": "comp:packages/logic-inspector/src/graph.ts",
+          "action": "calls",
+          "participant": "comp:apps/web/app/page.tsx",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "packages/logic-inspector/src/graph.ts:1",
+              "ref": "apps/web/app/page.tsx:1",
               "source": "code"
             }
           ],
-          "to": "comp:packages/logic-inspector/src/types.ts"
+          "to": "sys:ext:@/components"
         }
       ]
     }
   ],
-  "generatedAt": "2026-06-20T10:43:01.338Z",
+  "generatedAt": "2026-06-20T10:53:04.120Z",
   "groups": [
+    {
+      "confidence": 0.85,
+      "id": "group:domain:apps-web",
+      "kind": "domain",
+      "members": [
+        "comp:apps/web/app/layout.tsx",
+        "comp:apps/web/app/page.tsx",
+        "comp:apps/web/components/bpmn-canvas.tsx",
+        "comp:apps/web/components/command-bar.tsx",
+        "comp:apps/web/components/inspector-panel.tsx",
+        "comp:apps/web/components/top-bar.tsx",
+        "comp:apps/web/components/workbench.tsx",
+        "comp:apps/web/lib/bpmn-to-graph.ts",
+        "comp:apps/web/lib/default-diagram.ts",
+        "comp:apps/web/lib/utils.ts",
+        "comp:apps/web/next.config.ts",
+        "comp:apps/web/postcss.config.mjs"
+      ],
+      "name": "Web",
+      "provenance": [
+        {
+          "confidence": 0.85,
+          "ref": "apps/web/app/layout.tsx",
+          "source": "code"
+        }
+      ]
+    },
     {
       "confidence": 0.85,
       "id": "group:domain:misc",
@@ -380,9 +774,30 @@
     },
     {
       "confidence": 0.8,
+      "id": "group:layer:config",
+      "kind": "layer",
+      "members": [
+        "comp:apps/web/next.config.ts",
+        "comp:apps/web/postcss.config.mjs"
+      ],
+      "name": "Config",
+      "order": 5,
+      "provenance": [
+        {
+          "confidence": 0.8,
+          "ref": "derived:layer:config",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.8,
       "id": "group:layer:domain",
       "kind": "layer",
       "members": [
+        "comp:apps/web/lib/bpmn-to-graph.ts",
+        "comp:apps/web/lib/default-diagram.ts",
+        "comp:apps/web/lib/utils.ts",
         "comp:packages/logic-inspector/src/graph.ts",
         "comp:packages/logic-inspector/src/index.ts",
         "comp:packages/logic-inspector/src/inspect.ts",
@@ -399,6 +814,29 @@
         {
           "confidence": 0.8,
           "ref": "derived:layer:domain",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.8,
+      "id": "group:layer:presentation",
+      "kind": "layer",
+      "members": [
+        "comp:apps/web/app/layout.tsx",
+        "comp:apps/web/app/page.tsx",
+        "comp:apps/web/components/bpmn-canvas.tsx",
+        "comp:apps/web/components/command-bar.tsx",
+        "comp:apps/web/components/inspector-panel.tsx",
+        "comp:apps/web/components/top-bar.tsx",
+        "comp:apps/web/components/workbench.tsx"
+      ],
+      "name": "Presentation",
+      "order": 0,
+      "provenance": [
+        {
+          "confidence": 0.8,
+          "ref": "derived:layer:presentation",
           "source": "code"
         }
       ]
@@ -507,35 +945,35 @@
   "processes": [
     {
       "confidence": 0.6,
-      "description": "Modules orchestrated from the packages/logic-inspector/src/graph.ts entry point (structural; refined by Tier 2).",
-      "id": "proc:packages/logic-inspector/src/graph.ts",
-      "name": "Graph flow",
+      "description": "Behavior of \"Home\": the page, the components it renders, and the services it calls.",
+      "id": "proc:home",
+      "name": "Home process",
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "packages/logic-inspector/src/graph.ts:1",
+          "ref": "apps/web/app/page.tsx:1",
           "source": "code"
         }
       ],
       "tasks": [
         {
-          "id": "task:comp:packages/logic-inspector/src/graph.ts",
-          "name": "Graph",
+          "id": "task:comp:apps/web/app/page.tsx",
+          "name": "Page",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "packages/logic-inspector/src/graph.ts:1",
+              "ref": "apps/web/app/page.tsx:1",
               "source": "code"
             }
           ]
         },
         {
-          "id": "task:comp:packages/logic-inspector/src/types.ts",
-          "name": "Types",
+          "id": "task:sys:ext:@/components",
+          "name": "@/components",
           "provenance": [
             {
               "confidence": 0.6,
-              "ref": "packages/logic-inspector/src/types.ts:1",
+              "ref": "apps/web/app/page.tsx:1",
               "source": "code"
             }
           ]
@@ -545,6 +983,331 @@
   ],
   "project": "claril",
   "relations": [
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/layout.tsx",
+      "id": "rel:comp:apps/web/app/layout.tsx=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/layout.tsx → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/layout.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/layout.tsx",
+      "id": "rel:comp:apps/web/app/layout.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/layout.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/layout.tsx:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/app/page.tsx",
+      "id": "rel:comp:apps/web/app/page.tsx=>sys:ext:@/components",
+      "kind": "depends_on",
+      "name": "comp:apps/web/app/page.tsx → sys:ext:@/components",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/app/page.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:7",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:8",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:@claril/logic-inspector",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:6",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/logic-inspector"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:bpmn-js",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:bpmn-js",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:4",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:10",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:11",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:bpmn-js"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/bpmn-canvas.tsx",
+      "id": "rel:comp:apps/web/components/bpmn-canvas.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/bpmn-canvas.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/bpmn-canvas.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/command-bar.tsx",
+      "id": "rel:comp:apps/web/components/command-bar.tsx=>sys:ext:lucide-react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/command-bar.tsx → sys:ext:lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/command-bar.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:lucide-react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/inspector-panel.tsx",
+      "id": "rel:comp:apps/web/components/inspector-panel.tsx=>sys:ext:@/lib",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/inspector-panel.tsx → sys:ext:@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/inspector-panel.tsx:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/lib"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/inspector-panel.tsx",
+      "id": "rel:comp:apps/web/components/inspector-panel.tsx=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/inspector-panel.tsx → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/inspector-panel.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/top-bar.tsx",
+      "id": "rel:comp:apps/web/components/top-bar.tsx=>sys:ext:lucide-react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/top-bar.tsx → sys:ext:lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/top-bar.tsx:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:lucide-react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/workbench.tsx",
+      "id": "rel:comp:apps/web/components/workbench.tsx=>sys:ext:@/components",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/workbench.tsx → sys:ext:@/components",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:6",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:7",
+          "source": "code"
+        },
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:8",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@/components"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/workbench.tsx",
+      "id": "rel:comp:apps/web/components/workbench.tsx=>sys:ext:@claril/shared",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/workbench.tsx → sys:ext:@claril/shared",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:5",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/shared"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/workbench.tsx",
+      "id": "rel:comp:apps/web/components/workbench.tsx=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/workbench.tsx → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:4",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/components/workbench.tsx",
+      "id": "rel:comp:apps/web/components/workbench.tsx=>sys:ext:react",
+      "kind": "depends_on",
+      "name": "comp:apps/web/components/workbench.tsx → sys:ext:react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/components/workbench.tsx:3",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:react"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/bpmn-to-graph.ts",
+      "id": "rel:comp:apps/web/lib/bpmn-to-graph.ts=>sys:ext:@claril/logic-inspector",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/bpmn-to-graph.ts → sys:ext:@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/bpmn-to-graph.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:@claril/logic-inspector"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/utils.ts",
+      "id": "rel:comp:apps/web/lib/utils.ts=>sys:ext:clsx",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/utils.ts → sys:ext:clsx",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/utils.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:clsx"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/lib/utils.ts",
+      "id": "rel:comp:apps/web/lib/utils.ts=>sys:ext:tailwind-merge",
+      "kind": "depends_on",
+      "name": "comp:apps/web/lib/utils.ts → sys:ext:tailwind-merge",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/lib/utils.ts:2",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:tailwind-merge"
+    },
+    {
+      "confidence": 0.95,
+      "from": "comp:apps/web/next.config.ts",
+      "id": "rel:comp:apps/web/next.config.ts=>sys:ext:next",
+      "kind": "depends_on",
+      "name": "comp:apps/web/next.config.ts → sys:ext:next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "apps/web/next.config.ts:1",
+          "source": "code"
+        }
+      ],
+      "to": "sys:ext:next"
+    },
     {
       "confidence": 0.95,
       "from": "comp:packages/logic-inspector/src/graph.ts",
@@ -881,6 +1644,51 @@
       "confidence": 0.95,
       "description": "External library",
       "externalKind": "library",
+      "id": "sys:ext:@/components",
+      "kind": "external",
+      "name": "@/components",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@/components",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@/lib",
+      "kind": "external",
+      "name": "@/lib",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@/lib",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:@claril/logic-inspector",
+      "kind": "external",
+      "name": "@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "@claril/logic-inspector",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
       "id": "sys:ext:@claril/shared",
       "kind": "external",
       "name": "@claril/shared",
@@ -891,9 +1699,114 @@
           "source": "code"
         }
       ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:bpmn-js",
+      "kind": "external",
+      "name": "bpmn-js",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "bpmn-js",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:clsx",
+      "kind": "external",
+      "name": "clsx",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "clsx",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:lucide-react",
+      "kind": "external",
+      "name": "lucide-react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "lucide-react",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:next",
+      "kind": "external",
+      "name": "next",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "next",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:react",
+      "kind": "external",
+      "name": "react",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "react",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "confidence": 0.95,
+      "description": "External library",
+      "externalKind": "library",
+      "id": "sys:ext:tailwind-merge",
+      "kind": "external",
+      "name": "tailwind-merge",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "tailwind-merge",
+          "source": "code"
+        }
+      ]
     }
   ],
   "technologies": [
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (@claril/logic-inspector)",
+      "id": "tech:@claril/logic-inspector",
+      "name": "@claril/logic-inspector",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "workspace:*"
+    },
     {
       "category": "library",
       "confidence": 0.95,
@@ -908,6 +1821,126 @@
         }
       ],
       "version": "workspace:*"
+    },
+    {
+      "category": "ui",
+      "confidence": 0.95,
+      "description": "ui (bpmn-js)",
+      "id": "tech:bpmn-js",
+      "name": "bpmn-js",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^18.18.0"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (clsx)",
+      "id": "tech:clsx",
+      "name": "clsx",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^2.1.1"
+    },
+    {
+      "category": "ui",
+      "confidence": 0.95,
+      "description": "ui (lucide-react)",
+      "id": "tech:lucide-react",
+      "name": "lucide",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^1.21.0"
+    },
+    {
+      "category": "framework",
+      "confidence": 0.95,
+      "description": "framework (next)",
+      "id": "tech:next",
+      "name": "Next.js",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^16.2.9"
+    },
+    {
+      "category": "ui",
+      "confidence": 0.95,
+      "description": "ui (react)",
+      "id": "tech:react",
+      "name": "React",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^19.2.7"
+    },
+    {
+      "category": "ui",
+      "confidence": 0.95,
+      "description": "ui (react-dom)",
+      "id": "tech:react-dom",
+      "name": "React DOM",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^19.2.7"
+    },
+    {
+      "category": "library",
+      "confidence": 0.95,
+      "description": "library (tailwind-merge)",
+      "id": "tech:tailwind-merge",
+      "name": "tailwind-merge",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^3.6.0"
+    },
+    {
+      "category": "ui",
+      "confidence": 0.95,
+      "description": "ui (tailwindcss)",
+      "id": "tech:tailwindcss",
+      "name": "Tailwind CSS",
+      "provenance": [
+        {
+          "confidence": 0.95,
+          "ref": "package.json",
+          "source": "repo"
+        }
+      ],
+      "version": "^4.3.1"
     },
     {
       "category": "build",
@@ -956,6 +1989,7 @@
     }
   ],
   "workspaces": [
+    "apps/web",
     "packages/logic-inspector",
     "packages/shared"
   ]
