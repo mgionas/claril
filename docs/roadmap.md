@@ -40,7 +40,7 @@ The recent push turned the AI from advisor → **co-editor**: tabbed Chat/Proble
 ## Next steps (proposed priority)
 
 1. **Confirm AI-editing quality live** — verify the Phase 5 scope + soundness guards actually stop the over-engineering on the real failing prompts; if layout still looks messy, decide whether the deferred **Phase 5.3 pool-safe relayout** is worth the risk.
-2. **W8 — Provider-connect wizard** (guided BYOK setup + AI Gateway + optional Google OAuth→Vertex). *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
+2. **W8 — Provider-connect wizard.** Iteration 1 (**guided per-provider instructions**) — spec + plan ready (`docs/superpowers/{specs,plans}/2026-06-21-w8-guided-provider-connect*`). Queued for later iterations: multi-provider switching, AI Gateway, Google OAuth→Vertex. *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
 3. **P4 — Collaboration** (comments → review workflow → multiplayer) once the single-user editing loop is trustworthy.
 
 *Deferred: W11 Phase 5.3 (pool-safe relayout — runtime-risky); user-task assignment + asset-binding-via-proposeEdit (Phase 4); the two Phase-4 minors (associate connection-hint, artifact ids in synopsis id table).*
