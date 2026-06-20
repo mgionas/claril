@@ -3,6 +3,7 @@
 import { LogOut, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 export type SaveState = "saved" | "saving" | "error";
 
@@ -16,9 +17,19 @@ interface TopBarProps {
   diagramName: string;
   userName: string;
   saveState: SaveState;
+  aiConnected: boolean;
+  aiProvider?: string;
+  onOpenAiSettings: () => void;
 }
 
-export function TopBar({ diagramName, userName, saveState }: TopBarProps) {
+export function TopBar({
+  diagramName,
+  userName,
+  saveState,
+  aiConnected,
+  aiProvider,
+  onOpenAiSettings,
+}: TopBarProps) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -39,13 +50,21 @@ export function TopBar({ diagramName, userName, saveState }: TopBarProps) {
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
-        <div
-          className="flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-3 py-1.5 backdrop-blur"
-          title="No AI provider configured — everything deterministic still works."
+        <button
+          type="button"
+          onClick={onOpenAiSettings}
+          title={
+            aiConnected
+              ? `AI provider: ${aiProvider ?? "connected"} — click to change`
+              : "No AI provider configured — everything deterministic still works. Click to set up."
+          }
+          className="flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-3 py-1.5 backdrop-blur transition-colors hover:border-fg-subtle"
         >
-          <Sparkles className="size-3.5 text-fg-subtle" />
-          <span className="text-xs text-fg-muted">AI: off</span>
-        </div>
+          <Sparkles className={cn("size-3.5", aiConnected ? "text-accent" : "text-fg-subtle")} />
+          <span className="text-xs text-fg-muted">
+            {aiConnected ? `AI: ${aiProvider ?? "on"}` : "AI: off"}
+          </span>
+        </button>
         <button
           type="button"
           onClick={handleSignOut}

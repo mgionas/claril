@@ -102,3 +102,22 @@ export const version = pgTable(
   },
   (t) => [index("version_diagram_idx").on(t.diagramId)],
 );
+
+/**
+ * Brand-agnostic, BYOK AI provider config — one per Organization. The API key
+ * is stored encrypted (AES-256-GCM); never in plaintext. AI features are off
+ * when this row is absent (or has no key for cloud providers).
+ */
+export const aiProviderConfig = pgTable("ai_provider_config", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
+    .notNull()
+    .unique()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  // anthropic | openai | google | mistral | ollama
+  provider: text("provider").notNull(),
+  model: text("model"),
+  baseUrl: text("base_url"),
+  encryptedKey: text("encrypted_key"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

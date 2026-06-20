@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import type { Finding, Severity } from "@claril/shared";
-import { inspect } from "@claril/logic-inspector";
+import { inspect, type ProcessGraph } from "@claril/logic-inspector";
 import { bpmnRegistryToGraph, type ElementRegistryLike } from "@/lib/bpmn-to-graph";
 import { defaultDiagram } from "@/lib/default-diagram";
 
@@ -17,6 +17,7 @@ interface BpmnCanvasProps {
   /** Bumped on each focus request so re-clicking the same finding re-triggers. */
   focusNonce?: number;
   onFindingsChange?: (findings: Finding[]) => void;
+  onGraphChange?: (graph: ProcessGraph) => void;
   onXmlChange?: (xml: string) => void;
 }
 
@@ -27,6 +28,7 @@ export default function BpmnCanvas({
   focusElementId,
   focusNonce,
   onFindingsChange,
+  onGraphChange,
   onXmlChange,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +89,9 @@ export default function BpmnCanvas({
     const runInspection = () => {
       try {
         const registry = modeler.get("elementRegistry") as unknown as ElementRegistryLike;
-        const findings = inspect(bpmnRegistryToGraph(registry));
+        const graph = bpmnRegistryToGraph(registry);
+        const findings = inspect(graph);
+        onGraphChange?.(graph);
         onFindingsChange?.(findings);
         renderFindings(findings);
       } catch {
@@ -129,7 +133,7 @@ export default function BpmnCanvas({
       modelerRef.current = null;
       markedRef.current = [];
     };
-  }, [initialXml, onFindingsChange, onXmlChange]);
+  }, [initialXml, onFindingsChange, onGraphChange, onXmlChange]);
 
   // Scroll to + select an element when a finding is clicked.
   useEffect(() => {
