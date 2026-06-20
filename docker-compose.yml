@@ -1,0 +1,70 @@
+# Claril — full self-host stack: Postgres + schema migration + web app.
+#
+#   docker compose up -d --build
+#
+# Configuration comes from a local .env file (see .env.example). All values
+# below have sensible defaults so `docker compose up` works out of the box for
+# a quick trial; set at least BETTER_AUTH_SECRET for any real deployment.
+#
+# To use an external Postgres (e.g. Neon) instead of the bundled `db` service:
+# set DATABASE_URL in .env to your connection string and start only the app:
+#   docker compose up -d --build migrate web
+
+services:
+  # --- PostgreSQL (vanilla; no proprietary cloud dependency) ----------------
+  db:
+    image: postgres:17.2-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-claril}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claril}
+      POSTGRES_DB: ${POSTGRES_DB:-claril}
+    volumes:
+      - claril_pgdata:/var/lib/postgresql/data
+    # Exposed for local inspection; comment out to keep Postgres internal-only.
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-claril} -d ${POSTGRES_DB:-claril}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --- One-shot schema migration (Drizzle) ----------------------------------
+  # Runs `drizzle-kit migrate`, then exits 0. `web` waits for it to complete.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-claril}:${POSTGRES_PASSWORD:-claril}@db:5432/${POSTGRES_DB:-claril}}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # --- Next.js 16 web app (standalone) --------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-claril}:${POSTGRES_PASSWORD:-claril}@db:5432/${POSTGRES_DB:-claril}}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-please-change-me-with-openssl-rand-base64-32}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  claril_pgdata:
