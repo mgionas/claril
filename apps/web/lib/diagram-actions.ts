@@ -119,6 +119,12 @@ export async function createDiagram(
   projectId: string,
   kind: DiagramKind = "bpmn",
   name?: string,
+  /**
+   * Optional starter content. When provided (e.g. an imported `.bpmn` file or
+   * AI-generated XML), the diagram is seeded with it verbatim instead of the
+   * kind's default seed. Callers that omit it keep the existing behaviour.
+   */
+  content?: string,
 ): Promise<{ id: string }> {
   const userId = await requireUserId();
   await assertProjectAccess(userId, projectId);
@@ -129,7 +135,7 @@ export async function createDiagram(
       projectId,
       type: kind,
       name: name?.trim() || defaultNameForKind(kind),
-      content: seedForKind(kind),
+      content: content ?? seedForKind(kind),
     });
     await tx
       .update(schema.project)

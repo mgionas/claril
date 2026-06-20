@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import type { DiagramKind } from "@/lib/default-diagram";
 import {
-  createDiagram,
   createProject,
   deleteDiagram,
   deleteProject,
@@ -28,25 +27,17 @@ import {
 } from "@/lib/diagram-actions";
 import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { NewDiagramDialog } from "@/components/new-diagram-dialog";
 
 interface DashboardProps {
   userName: string;
   projects: ProjectWithDiagrams[];
+  /** Whether an AI provider is configured — gates the "Generate with AI" mode. */
+  aiConnected: boolean;
 }
 
 const inputClass =
   "rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors focus:border-accent";
-
-const DIAGRAM_KINDS: {
-  kind: DiagramKind;
-  label: string;
-  description: string;
-  icon: typeof Workflow;
-}[] = [
-  { kind: "bpmn", label: "BPMN process", description: "bpmn-js canvas", icon: Workflow },
-  { kind: "sequence", label: "Sequence", description: "Mermaid", icon: GitBranch },
-  { kind: "c4", label: "C4 model", description: "Mermaid", icon: Boxes },
-];
 
 const KIND_ICON: Record<DiagramKind, typeof Workflow> = {
   bpmn: Workflow,
@@ -67,7 +58,7 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function Dashboard({ userName, projects }: DashboardProps) {
+export function Dashboard({ userName, projects, aiConnected }: DashboardProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [creatingProject, setCreatingProject] = useState(false);
@@ -173,7 +164,7 @@ export function Dashboard({ userName, projects }: DashboardProps) {
         ) : (
           <div className="flex flex-col gap-4">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.id} project={project} aiConnected={aiConnected} />
             ))}
           </div>
         )}
@@ -202,14 +193,20 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
+function ProjectCard({
+  project,
+  aiConnected,
+}: {
+  project: ProjectWithDiagrams;
+  aiConnected: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(true);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(project.name);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [kindMenuOpen, setKindMenuOpen] = useState(false);
+  const [newDiagramOpen, setNewDiagramOpen] = useState(false);
 
   function commitRename(e: FormEvent) {
     e.preventDefault();
@@ -236,14 +233,6 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
     startTransition(async () => {
       await deleteProject(project.id);
       router.refresh();
-    });
-  }
-
-  function handleNewDiagram(kind: DiagramKind) {
-    setKindMenuOpen(false);
-    startTransition(async () => {
-      const { id } = await createDiagram(project.id, kind);
-      router.push(`/d/${id}`);
     });
   }
 
@@ -288,43 +277,22 @@ function ProjectCard({ project }: { project: ProjectWithDiagrams }) {
           </button>
         )}
 
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setKindMenuOpen((m) => !m)}
-            onBlur={() => setTimeout(() => setKindMenuOpen(false), 120)}
-            disabled={pending}
-            aria-haspopup="menu"
-            aria-expanded={kindMenuOpen}
-            className="flex items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 py-1.5 text-xs text-fg-muted transition-colors hover:text-fg disabled:opacity-50"
-          >
-            <Plus className="size-3.5" />
-            New diagram
-            <ChevronDown className="size-3" />
-          </button>
-          {kindMenuOpen && (
-            <div
-              role="menu"
-              className="absolute right-0 top-full z-20 mt-1 w-52 overflow-hidden rounded-[8px] border border-hairline bg-elevated py-1 backdrop-blur"
-            >
-              {DIAGRAM_KINDS.map(({ kind, label, description, icon: Icon }) => (
-                <button
-                  key={kind}
-                  type="button"
-                  role="menuitem"
-                  onMouseDown={() => handleNewDiagram(kind)}
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-panel"
-                >
-                  <Icon className="size-4 shrink-0 text-fg-subtle" />
-                  <span className="flex flex-col">
-                    <span className="text-sm text-fg">{label}</span>
-                    <span className="text-[11px] text-fg-subtle">{description}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => setNewDiagramOpen(true)}
+          disabled={pending}
+          className="flex items-center gap-1.5 rounded-[6px] border border-hairline px-2.5 py-1.5 text-xs text-fg-muted transition-colors hover:text-fg disabled:opacity-50"
+        >
+          <Plus className="size-3.5" />
+          New diagram
+        </button>
+
+        <NewDiagramDialog
+          projectId={project.id}
+          open={newDiagramOpen}
+          onOpenChange={setNewDiagramOpen}
+          aiConnected={aiConnected}
+        />
 
         <div className="relative">
           <button
