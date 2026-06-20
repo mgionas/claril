@@ -27,6 +27,18 @@
   color-scheme: dark;
 }
 
+/* Step-transition fade for the AI setup wizard / settings (no JS deps). */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 html,
 body {
   height: 100%;
