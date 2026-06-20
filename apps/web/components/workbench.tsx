@@ -12,6 +12,8 @@ interface WorkbenchProps {
   userName: string;
   aiConnected: boolean;
   aiProvider?: string;
+  /** Persisted AI documentation markdown (BPMN only); null if none. */
+  initialDoc?: string | null;
 }
 
 /**
@@ -29,6 +31,7 @@ export function Workbench({
   userName,
   aiConnected,
   aiProvider,
+  initialDoc,
 }: WorkbenchProps) {
   if (kind === "bpmn") {
     return (
@@ -39,6 +42,7 @@ export function Workbench({
         userName={userName}
         aiConnected={aiConnected}
         aiProvider={aiProvider}
+        initialDoc={initialDoc}
       />
     );
   }

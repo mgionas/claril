@@ -9,7 +9,6 @@ import {
   adviseWithUsage,
   generateProcessDocWithUsage,
   generateBpmnXmlWithUsage,
-  answerQuestion,
   planEditsWithUsage,
   DEFAULT_MODELS,
   type AiProvider,
@@ -339,20 +338,6 @@ export async function runDiagramEdit(
     usage,
   });
   return plan;
-}
-
-/**
- * Answer a user's natural-language question about the diagram in prose, grounded
- * the same way as the advisor. Returns the answer string. BYOK / provider-agnostic.
- */
-export async function runAdvisorQuestion(
-  graph: ProcessGraph,
-  findings: Finding[],
-  question: string,
-  diagramId?: string,
-): Promise<string> {
-  const { config, assetContext } = await resolveAiContext(diagramId);
-  return answerQuestion({ graph, findings, question, assetContext }, config);
 }
 
 /**

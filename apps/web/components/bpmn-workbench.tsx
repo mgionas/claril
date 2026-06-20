@@ -5,18 +5,12 @@ import dynamic from "next/dynamic";
 import { ChevronLeft, History } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
-import {
-  runAdvisor,
-  runAdvisorQuestion,
-  runDocGen,
-  runDiagramEdit,
-  saveDiagramContent,
-} from "@/lib/actions";
+import { runAdvisor, runDocGen, saveDiagramContent } from "@/lib/actions";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
-import { InspectorPanel } from "@/components/inspector-panel";
-import { AssistantPanel } from "@/components/assistant-panel";
+import { AiDrawer } from "@/components/ai-drawer";
+import type { ChatTabHandle } from "@/components/chat-tab";
 import { VersionsPanel } from "@/components/versions-panel";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
@@ -33,12 +27,14 @@ interface BpmnWorkbenchProps {
   userName: string;
   aiConnected: boolean;
   aiProvider?: string;
+  /** Persisted AI documentation markdown, loaded server-side (null if none). */
+  initialDoc?: string | null;
 }
 
 /**
  * BPMN workbench: bpmn-js canvas + the deterministic inspector / advisor /
- * asset-binding surface. These are BPMN-only — non-BPMN kinds use a different
- * workbench shell and never mount any of this (see workbench.tsx dispatch).
+ * asset-binding surface, plus the tabbed AI drawer (Chat + Problems). These are
+ * BPMN-only — non-BPMN kinds use a different workbench shell (see workbench.tsx).
  */
 export function BpmnWorkbench({
   diagramId,
@@ -47,6 +43,7 @@ export function BpmnWorkbench({
   userName,
   aiConnected,
   aiProvider,
+  initialDoc,
 }: BpmnWorkbenchProps) {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [advisorFindings, setAdvisorFindings] = useState<Finding[]>([]);
@@ -57,24 +54,22 @@ export function BpmnWorkbench({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  // Q&A (prose answer, distinct from critique findings).
-  const [qaQuestion, setQaQuestion] = useState<string | null>(null);
-  const [qaAnswer, setQaAnswer] = useState<string | null>(null);
-  // Doc-gen (Markdown), shown in its own panel.
+  const [activeTab, setActiveTab] = useState<"chat" | "problems">("chat");
+  // Doc-gen (Markdown), shown in its own slide-over; seeded from persisted doc.
   const [docOpen, setDocOpen] = useState(false);
-  const [docMarkdown, setDocMarkdown] = useState<string | null>(null);
+  const [docMarkdown, setDocMarkdown] = useState<string | null>(initialDoc ?? null);
   const [docBusy, setDocBusy] = useState(false);
   const [docError, setDocError] = useState<string | null>(null);
 
-  const [plan, setPlan] = useState<EditPlan | null>(null);
+  // Whether the live-applied AI edit plan has been accepted (vs. revertable).
   const [planApplied, setPlanApplied] = useState(false);
-  const [aiMessage, setAiMessage] = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const graphRef = useRef<ProcessGraph | null>(null);
   const findingsRef = useRef<Finding[]>([]);
   const canvasApiRef = useRef<CanvasApi | null>(null);
-  // Latest serialized XML from the canvas — read by the History diff.
+  const chatHandleRef = useRef<ChatTabHandle>(null);
+  // Latest serialized XML from the canvas — read by the History diff + edit undo.
   const currentXmlRef = useRef<string>(initialXml);
   const preEditXmlRef = useRef<string>(initialXml);
 
@@ -106,9 +101,10 @@ export function BpmnWorkbench({
     [],
   );
 
-  // From the canvas context menu: open the drawer and select the element's finding.
+  // From the canvas context menu: open the drawer's Problems tab and select.
   const handleShowProblems = useCallback((id: string) => {
     setInspectorOpen(true);
+    setActiveTab("problems");
     setFocus((prev) => ({ id, nonce: prev.nonce + 1 }));
   }, []);
 
@@ -126,12 +122,15 @@ export function BpmnWorkbench({
     [diagramId],
   );
 
+  // Advisor critique: one-click grounded findings, shown in the Problems tab.
   const handleAskAi = useCallback(async () => {
     if (!aiConnected) {
       setSettingsOpen(true);
       return;
     }
     if (!graphRef.current) return;
+    setInspectorOpen(true);
+    setActiveTab("problems");
     setAiBusy(true);
     setAiError(null);
     try {
@@ -144,54 +143,14 @@ export function BpmnWorkbench({
     }
   }, [aiConnected, diagramId]);
 
-  // Q&A: prose answer to a natural-language question, rendered in the drawer.
-  const handleAskQuestion = useCallback(
-    async (question: string) => {
-      if (!aiConnected) {
-        setSettingsOpen(true);
-        return;
-      }
-      const q = question.trim();
-      if (!q || !graphRef.current) return;
-      setInspectorOpen(true);
-      setQaQuestion(q);
-      setQaAnswer(null);
-      setAiBusy(true);
-      setAiError(null);
-      try {
-        const answer = await runAdvisorQuestion(
-          graphRef.current,
-          findingsRef.current,
-          q,
-          diagramId,
-        );
-        setQaAnswer(answer);
-      } catch (err) {
-        setAiError(err instanceof Error ? err.message : "AI request failed.");
-        setQaQuestion(null);
-      } finally {
-        setAiBusy(false);
-      }
-    },
-    [aiConnected, diagramId],
-  );
-
-  const handleClearQa = useCallback(() => {
-    setQaQuestion(null);
-    setQaAnswer(null);
-  }, []);
-
   // History: read the freshest XML for diffing.
   const getCurrentXml = useCallback(() => currentXmlRef.current ?? null, []);
 
-  // After a restore, re-import into the canvas (re-runs inspection + autosave)
-  // and update the local XML mirror.
   const handleRestored = useCallback((xml: string) => {
     currentXmlRef.current = xml;
     void canvasApiRef.current?.reloadXml(xml);
   }, []);
 
-  // Drive the canvas diff coloring from the History panel.
   const handleShowDiff = useCallback(
     (marks: { added: string[]; removed: string[]; changed: string[]; layout: string[] } | null) => {
       if (marks) canvasApiRef.current?.showDiff(marks);
@@ -200,15 +159,9 @@ export function BpmnWorkbench({
     [],
   );
 
-  // Doc-gen: generate Markdown documentation, shown in the doc panel.
-  const handleGenerateDocs = useCallback(async () => {
-    if (!aiConnected) {
-      setSettingsOpen(true);
-      return;
-    }
+  // Doc-gen: generate Markdown, shown in the doc panel and persisted server-side.
+  const generateDocs = useCallback(async () => {
     if (!graphRef.current) return;
-    setDocOpen(true);
-    setDocMarkdown(null);
     setDocError(null);
     setDocBusy(true);
     setAiBusy(true);
@@ -221,44 +174,27 @@ export function BpmnWorkbench({
       setDocBusy(false);
       setAiBusy(false);
     }
-  }, [aiConnected, diagramId]);
+  }, [diagramId]);
 
-  const handleInstruct = useCallback(
-    async (instruction: string) => {
-      if (!aiConnected) {
-        setSettingsOpen(true);
-        return;
-      }
-      if (!graphRef.current) return;
-      setInspectorOpen(true);
-      setAiMessage(null);
-      setPlan(null);
-      setPlanApplied(false);
-      setAiBusy(true);
-      setAiError(null);
-      try {
-        const result = await runDiagramEdit(
-          graphRef.current,
-          findingsRef.current,
-          instruction,
-          diagramId,
-        );
-        setAiMessage(result.summary);
-        setPlan(result);
-        if (result.ops.length > 0) {
-          // Snapshot, apply live, highlight the change (Discard reverts).
-          preEditXmlRef.current = currentXmlRef.current;
-          const changed = canvasApiRef.current?.applyEditPlan(result) ?? [];
-          canvasApiRef.current?.showDiff({ added: changed, removed: [], changed: [], layout: [] });
-        }
-      } catch (err) {
-        setAiError(err instanceof Error ? err.message : "AI request failed.");
-      } finally {
-        setAiBusy(false);
-      }
-    },
-    [aiConnected, diagramId],
-  );
+  // Open the panel; only generate if we have no doc yet (persisted or prior run).
+  const handleGenerateDocs = useCallback(() => {
+    if (!aiConnected) {
+      setSettingsOpen(true);
+      return;
+    }
+    setDocOpen(true);
+    if (!docMarkdown) void generateDocs();
+  }, [aiConnected, docMarkdown, generateDocs]);
+
+  // Apply the AI's proposed plan live (snapshot first so Discard can revert).
+  const handleProposal = useCallback((proposed: EditPlan) => {
+    setPlanApplied(false);
+    if (proposed.ops.length > 0) {
+      preEditXmlRef.current = currentXmlRef.current;
+      const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
+      canvasApiRef.current?.showDiff({ added: changed, removed: [], changed: [], layout: [] });
+    }
+  }, []);
 
   const handleApplyPlan = useCallback(() => {
     canvasApiRef.current?.clearDiff();
@@ -268,10 +204,21 @@ export function BpmnWorkbench({
   const handleDiscardPlan = useCallback(() => {
     canvasApiRef.current?.clearDiff();
     void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
-    setPlan(null);
     setPlanApplied(false);
-    setAiMessage(null);
   }, []);
+
+  // "Ask AI" from a problem: jump to Chat and seed an instruction.
+  const handleAskAiAboutFinding = useCallback((f: Finding) => {
+    setInspectorOpen(true);
+    setActiveTab("chat");
+    const ref = f.elementId ? ` (element ${f.elementId})` : "";
+    chatHandleRef.current?.ask(`Help me resolve: "${f.message}"${ref}. Rule ${f.ruleId}.`);
+  }, []);
+
+  const getChatContext = useCallback(
+    () => ({ graph: graphRef.current, findings: findingsRef.current, diagramId }),
+    [diagramId],
+  );
 
   const allFindings = advisorFindings.length > 0 ? [...findings, ...advisorFindings] : findings;
   const errorCount = allFindings.filter((f) => f.severity === "error").length;
@@ -302,7 +249,6 @@ export function BpmnWorkbench({
         />
         <CommandBar
           onAskAi={handleAskAi}
-          onAskQuestion={handleAskQuestion}
           onGenerateDocs={handleGenerateDocs}
           aiBusy={aiBusy}
           aiConnected={aiConnected}
@@ -315,6 +261,7 @@ export function BpmnWorkbench({
           busy={docBusy}
           error={docError}
           diagramName={diagramName}
+          onRegenerate={generateDocs}
         />
 
         {/* History toggle — sits just above the Inspector toggle on the right edge. */}
@@ -336,7 +283,7 @@ export function BpmnWorkbench({
           <History className={cn("size-4", historyOpen ? "text-accent" : "text-fg-muted")} />
         </button>
 
-        {/* Inspector toggle — rides the right edge of the (shrinking) canvas. */}
+        {/* Drawer toggle — rides the right edge of the (shrinking) canvas. */}
         <button
           type="button"
           onClick={() =>
@@ -346,7 +293,7 @@ export function BpmnWorkbench({
               return next;
             })
           }
-          title={inspectorOpen ? "Collapse Inspector" : "Open Inspector"}
+          title={inspectorOpen ? "Collapse" : aiConnected ? "Open Assistant" : "Open Inspector"}
           className="absolute right-0 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-[10px] border border-r-0 border-hairline bg-panel/80 px-1.5 py-3 backdrop-blur transition-colors hover:bg-elevated"
         >
           <ChevronLeft
@@ -371,38 +318,29 @@ export function BpmnWorkbench({
         </button>
       </div>
 
-      {aiConnected ? (
-        <AssistantPanel
-          open={inspectorOpen}
-          findings={allFindings}
-          aiBusy={aiBusy}
-          aiError={aiError}
-          message={aiMessage}
-          plan={plan}
-          planApplied={planApplied}
-          onSelect={handleSelectFinding}
-          onApplyFix={handleApplyFix}
-          onInstruct={handleInstruct}
-          onAskAi={handleAskAi}
-          onGenerateDocs={handleGenerateDocs}
-          onApplyPlan={handleApplyPlan}
-          onDiscardPlan={handleDiscardPlan}
-        />
-      ) : (
-        <InspectorPanel
-          open={inspectorOpen}
-          findings={allFindings}
-          focusedElementId={focus.id}
-          focusNonce={focus.nonce}
-          onSelect={handleSelectFinding}
-          onApplyFix={handleApplyFix}
-          aiBusy={aiBusy}
-          aiError={aiError}
-          qaQuestion={qaQuestion}
-          qaAnswer={qaAnswer}
-          onClearQa={handleClearQa}
-        />
-      )}
+      <AiDrawer
+        open={inspectorOpen}
+        aiConnected={aiConnected}
+        findings={allFindings}
+        errorCount={errorCount}
+        warningCount={warningCount}
+        focusedElementId={focus.id}
+        focusNonce={focus.nonce}
+        aiBusy={aiBusy}
+        chatHandleRef={chatHandleRef}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        getChatContext={getChatContext}
+        planApplied={planApplied}
+        onProposal={handleProposal}
+        onApplyPlan={handleApplyPlan}
+        onDiscardPlan={handleDiscardPlan}
+        onGenerateDocs={handleGenerateDocs}
+        onReview={handleAskAi}
+        onSelect={handleSelectFinding}
+        onApplyFix={handleApplyFix}
+        onAskAiAboutFinding={handleAskAiAboutFinding}
+      />
 
       <VersionsPanel
         open={historyOpen}

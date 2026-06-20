@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Download, FileText, Loader2, X } from "lucide-react";
+import { Check, Copy, Download, FileText, Loader2, RefreshCw, X } from "lucide-react";
+import { Streamdown } from "streamdown";
 
 interface DocPanelProps {
   open: boolean;
@@ -12,15 +13,25 @@ interface DocPanelProps {
   error?: string | null;
   /** Diagram name, used for the download filename. */
   diagramName: string;
+  /** Re-run doc generation, overwriting the persisted markdown. */
+  onRegenerate: () => void;
 }
 
 /**
- * A lightweight, full-height slide-over that shows AI-generated process
- * documentation as Markdown. Dependency-free: renders the raw Markdown in a
- * readable monospace block with copy-to-clipboard and download-as-.md. Themed
- * with the dark tokens from globals.css.
+ * A full-height slide-over that shows AI-generated process documentation,
+ * rendered as Markdown via streamdown (themed with the dark tokens from
+ * globals.css). Supports copy-to-clipboard, download-as-.md, and on-demand
+ * regeneration; the markdown itself is persisted per-diagram by the caller.
  */
-export function DocPanel({ open, onClose, markdown, busy, error, diagramName }: DocPanelProps) {
+export function DocPanel({
+  open,
+  onClose,
+  markdown,
+  busy,
+  error,
+  diagramName,
+  onRegenerate,
+}: DocPanelProps) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -65,6 +76,16 @@ export function DocPanel({ open, onClose, markdown, busy, error, diagramName }: 
           <div className="flex items-center gap-1">
             <button
               type="button"
+              onClick={onRegenerate}
+              disabled={busy}
+              title="Regenerate documentation"
+              className="flex items-center gap-1 rounded-[6px] border border-hairline px-2 py-1 text-xs text-fg-muted transition-colors hover:bg-elevated hover:text-fg disabled:opacity-40"
+            >
+              <RefreshCw className={busy ? "size-3.5 animate-spin" : "size-3.5"} />
+              {busy ? "…" : "Regenerate"}
+            </button>
+            <button
+              type="button"
               onClick={copy}
               disabled={!markdown}
               title="Copy Markdown"
@@ -107,9 +128,9 @@ export function DocPanel({ open, onClose, markdown, busy, error, diagramName }: 
           )}
           {error && !busy && <p className="text-sm text-error">{error}</p>}
           {!busy && !error && markdown && (
-            <pre className="whitespace-pre-wrap break-words font-mono text-[13px] leading-relaxed text-fg">
-              {markdown}
-            </pre>
+            <div className="prose-claril">
+              <Streamdown>{markdown}</Streamdown>
+            </div>
           )}
           {!busy && !error && !markdown && (
             <p className="text-sm text-fg-subtle">No documentation yet.</p>

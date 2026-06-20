@@ -1,0 +1,211 @@
+"use client";
+
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { Send, Wand2, FileText } from "lucide-react";
+import type { Finding } from "@claril/shared";
+import type { ProcessGraph } from "@claril/logic-inspector";
+import type { EditPlan } from "@claril/ai-advisor";
+import { ChatBubble } from "@/components/chat-bubble";
+import { ProposalCard } from "@/components/proposal-card";
+
+export interface ChatTabHandle {
+  /** Inject a message into the transcript (used by "Ask AI" from Problems). */
+  ask: (text: string) => void;
+}
+
+interface ChatContext {
+  graph: ProcessGraph | null;
+  findings: Finding[];
+  diagramId: string;
+}
+
+interface ChatTabProps {
+  handleRef: Ref<ChatTabHandle>;
+  getContext: () => ChatContext;
+  /** Live-apply a proposed plan to the canvas. */
+  onProposal: (plan: EditPlan) => void;
+  planApplied: boolean;
+  onApplyPlan: () => void;
+  onDiscardPlan: () => void;
+  onGenerateDocs: () => void;
+  onReview: () => void;
+}
+
+export function ChatTab(props: ChatTabProps) {
+  const [input, setInput] = useState("");
+  const [sessionTokens, setSessionTokens] = useState(0);
+  const seenProposals = useRef<Set<string>>(new Set());
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/ai/chat" }),
+  });
+
+  const send = (text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    const ctx = props.getContext();
+    void sendMessage(
+      { text: t },
+      { body: { graph: ctx.graph, findings: ctx.findings, diagramId: ctx.diagramId } },
+    );
+  };
+
+  useImperativeHandle(props.handleRef, () => ({ ask: (text) => send(text) }));
+
+  // Live-apply each new proposeEdit tool output exactly once.
+  useEffect(() => {
+    for (const m of messages) {
+      for (const part of m.parts) {
+        if (
+          part.type === "tool-proposeEdit" &&
+          part.state === "output-available" &&
+          !seenProposals.current.has(part.toolCallId)
+        ) {
+          seenProposals.current.add(part.toolCallId);
+          props.onProposal(part.output as EditPlan);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
+
+  // Accumulate session token usage from finish metadata.
+  useEffect(() => {
+    let total = 0;
+    for (const m of messages) {
+      const u = (m.metadata as { usage?: { input?: number; output?: number } } | undefined)?.usage;
+      if (u) total += (u.input ?? 0) + (u.output ?? 0);
+    }
+    setSessionTokens(total);
+  }, [messages]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [messages, status]);
+
+  const busy = status === "submitted" || status === "streaming";
+
+  return (
+    <div className="flex h-full flex-col">
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+        {messages.length === 0 && (
+          <p className="px-2 py-6 text-center text-sm text-fg-subtle">
+            Ask about this process, or describe a change to apply.
+          </p>
+        )}
+        {messages.map((m) => (
+          <div key={m.id} className="space-y-2">
+            {m.parts.map((part, i) => {
+              if (part.type === "text") {
+                return m.role === "user" ? (
+                  <ChatBubble key={i} role="user">
+                    {part.text}
+                  </ChatBubble>
+                ) : (
+                  <ChatBubble key={i} role="assistant" markdown={part.text} />
+                );
+              }
+              if (part.type === "tool-proposeEdit") {
+                if (part.state === "output-available") {
+                  return (
+                    <ProposalCard
+                      key={i}
+                      plan={part.output as EditPlan}
+                      applied={props.planApplied}
+                      onApply={props.onApplyPlan}
+                      onDiscard={props.onDiscardPlan}
+                    />
+                  );
+                }
+                return <PhasePill key={i} label="Drawing changes…" />;
+              }
+              return null;
+            })}
+          </div>
+        ))}
+        {status === "submitted" && <PhasePill label="Analyzing…" />}
+        {status === "error" && (
+          <p className="px-2 text-xs text-error">The AI request failed. Try again.</p>
+        )}
+      </div>
+
+      <div className="border-t border-hairline p-2">
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex flex-wrap gap-1">
+            <Chip icon={Wand2} label="Review" onClick={props.onReview} />
+            <Chip icon={FileText} label="Document" onClick={props.onGenerateDocs} />
+          </div>
+          {sessionTokens > 0 && (
+            <span className="text-[10px] text-fg-subtle" title="Tokens used this session">
+              {formatTokens(sessionTokens)} tokens
+            </span>
+          )}
+        </div>
+        <div className="flex items-end gap-1">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send(input);
+                setInput("");
+              }
+            }}
+            rows={2}
+            placeholder="Ask a question or describe a change…"
+            className="min-h-0 flex-1 resize-none rounded-[6px] border border-hairline bg-canvas px-2 py-1.5 text-sm focus:border-accent focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              send(input);
+              setInput("");
+            }}
+            disabled={busy}
+            className="flex size-8 items-center justify-center rounded-[6px] bg-accent text-white hover:bg-accent/90 disabled:opacity-40"
+          >
+            <Send className="size-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhasePill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-elevated/60 px-2 py-1 text-[11px] text-accent">
+      <span className="size-1.5 animate-pulse rounded-full bg-accent" />
+      {label}
+    </span>
+  );
+}
+
+function formatTokens(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+}
+
+function Chip({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1 rounded-full border border-hairline px-2 py-0.5 text-[11px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
+    >
+      <Icon className="size-3" />
+      {label}
+    </button>
+  );
+}

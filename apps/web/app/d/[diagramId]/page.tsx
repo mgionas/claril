@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getDiagram } from "@/lib/diagram-actions";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+import { getDiagramDoc } from "@/lib/actions";
 import { Workbench } from "@/components/workbench";
 
 export default async function DiagramPage({
@@ -23,6 +24,7 @@ export default async function DiagramPage({
 
   const orgId = await getUserOrgId(session.user.id);
   const aiConfig = orgId ? await getOrgAiConfig(orgId) : null;
+  const initialDoc = aiConfig ? await getDiagramDoc(diagram.id) : null;
 
   return (
     <Workbench
@@ -33,6 +35,7 @@ export default async function DiagramPage({
       userName={session.user.name}
       aiConnected={Boolean(aiConfig)}
       aiProvider={aiConfig?.provider}
+      initialDoc={initialDoc}
     />
   );
 }
