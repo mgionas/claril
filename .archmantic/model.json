@@ -92,7 +92,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/bpmn-canvas.tsx:19",
+          "ref": "apps/web/components/bpmn-canvas.tsx:25",
           "source": "code"
         }
       ]
@@ -124,7 +124,7 @@
       "provenance": [
         {
           "confidence": 0.6,
-          "ref": "apps/web/components/inspector-panel.tsx:10",
+          "ref": "apps/web/components/inspector-panel.tsx:15",
           "source": "code"
         }
       ]
@@ -365,6 +365,22 @@
         {
           "confidence": 0.6,
           "ref": "packages/logic-inspector/src/graph.ts:22",
+          "source": "code"
+        }
+      ]
+    },
+    {
+      "componentIds": [
+        "comp:packages/logic-inspector/src/graph.ts"
+      ],
+      "confidence": 0.6,
+      "description": "Exported function `stronglyConnectedComponents` in packages/logic-inspector/src/graph.ts",
+      "id": "cap:packages/logic-inspector/src/graph.ts#stronglyConnectedComponents",
+      "name": "Strongly Connected Components",
+      "provenance": [
+        {
+          "confidence": 0.6,
+          "ref": "packages/logic-inspector/src/graph.ts:47",
           "source": "code"
         }
       ]
@@ -1818,7 +1834,7 @@
       ]
     }
   ],
-  "generatedAt": "2026-06-20T11:12:58.579Z",
+  "generatedAt": "2026-06-20T11:33:53.845Z",
   "groups": [
     {
       "confidence": 0.85,
@@ -3282,7 +3298,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "packages/logic-inspector/src/rules/index.ts:2",
+          "ref": "packages/logic-inspector/src/rules/index.ts:7",
           "source": "code"
         }
       ],
@@ -3297,7 +3313,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "packages/logic-inspector/src/rules/index.ts:9",
+          "ref": "packages/logic-inspector/src/rules/index.ts:16",
           "source": "code"
         }
       ],
@@ -3327,7 +3343,7 @@
       "provenance": [
         {
           "confidence": 0.95,
-          "ref": "packages/logic-inspector/src/rules/structural.ts:3",
+          "ref": "packages/logic-inspector/src/rules/structural.ts:11",
           "source": "code"
         }
       ],

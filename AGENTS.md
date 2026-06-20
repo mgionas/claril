@@ -17,7 +17,7 @@ status: active · author: Giorgi Naskhidashvili
 
 **Links:** [Repository](https://github.com/mgionas/claril) · [Brand domain](https://claril.dev)
 
-35 components · 24 capabilities · 0 endpoints · 13 data entities.
+35 components · 25 capabilities · 0 endpoints · 13 data entities.
 
 **Monorepo** — 4 workspace packages: apps/web, packages/db, packages/logic-inspector, packages/shared
 
@@ -31,7 +31,7 @@ status: active · author: Giorgi Naskhidashvili
 - **apps/web/app/sign-up/** — Sign Up Page
 - **apps/web/components/** — Auth Form, Bpmn Canvas, Command Bar, Inspector Panel, Top Bar, Workbench
 - **apps/web/lib/** — Bpmn Registry To Graph, Cn, Create Diagram Version, Get Or Create User Diagram, Save Diagram Content
-- **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From
+- **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From, Strongly Connected Components
 
 ### Data model
 - **workspace** <sub>packages/db/src/schema/app.ts:13</sub>: id, organizationId, name, slug, createdAt  →text
