@@ -1,16 +1,18 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import type { ComponentType, MouseEvent } from "react";
 import {
   BoxSelect,
   Circle,
   CircleStop,
   Diamond,
+  Group,
   Hand,
   Move,
   Plus,
   Spline,
   Square,
+  Table,
 } from "lucide-react";
 
 /** Minimal structural view of the bpmn-js services we drive. */
@@ -18,12 +20,23 @@ interface ModelerServices {
   get(name: string): any;
 }
 
-const CREATE = [
+interface CreateItem {
+  type: string;
+  label: string;
+  Icon: ComponentType<{ className?: string }>;
+  /** Pools use the dedicated participant factory, not createShape({type}). */
+  participant?: boolean;
+}
+
+const CREATE: CreateItem[] = [
   { type: "bpmn:StartEvent", label: "Start event", Icon: Circle },
   { type: "bpmn:Task", label: "Task", Icon: Square },
   { type: "bpmn:ExclusiveGateway", label: "Gateway", Icon: Diamond },
   { type: "bpmn:EndEvent", label: "End event", Icon: CircleStop },
-] as const;
+  // Containers — common structural elements (different from flow nodes).
+  { type: "bpmn:Participant", label: "Pool", Icon: Table, participant: true },
+  { type: "bpmn:Group", label: "Group", Icon: Group },
+];
 
 const TOOLS = [
   { id: "handTool", label: "Hand tool — pan the canvas", Icon: Hand },
@@ -45,9 +58,12 @@ export function CanvasPalette({
   modeler: ModelerServices;
   onMore: (x: number, y: number) => void;
 }) {
-  function startCreate(event: MouseEvent, type: string) {
+  function startCreate(event: MouseEvent, item: CreateItem) {
     try {
-      const shape = modeler.get("elementFactory").createShape({ type });
+      const factory = modeler.get("elementFactory");
+      const shape = item.participant
+        ? factory.createParticipantShape()
+        : factory.createShape({ type: item.type });
       modeler.get("create").start(event.nativeEvent, shape);
     } catch {
       /* modeler not ready / mid-teardown */
@@ -64,15 +80,15 @@ export function CanvasPalette({
 
   return (
     <div className="pointer-events-auto absolute left-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-1 rounded-[10px] border border-hairline bg-panel/80 p-1 backdrop-blur">
-      {CREATE.map(({ type, label, Icon }) => (
+      {CREATE.map((item) => (
         <button
-          key={type}
+          key={item.label}
           type="button"
-          title={`Drag onto the canvas: ${label}`}
-          onMouseDown={(e) => startCreate(e, type)}
+          title={`Drag onto the canvas: ${item.label}`}
+          onMouseDown={(e) => startCreate(e, item)}
           className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
         >
-          <Icon className="size-4" />
+          <item.Icon className="size-4" />
         </button>
       ))}
 
