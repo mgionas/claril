@@ -38,6 +38,15 @@ export function ChatTab(props: ChatTabProps) {
   const [sessionTokens, setSessionTokens] = useState(0);
   const seenProposals = useRef<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-grow the composer from one line up to a cap, then scroll internally.
+  const resizeComposer = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  };
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/ai/chat" }),
@@ -51,6 +60,14 @@ export function ChatTab(props: ChatTabProps) {
       { text: t },
       { body: { graph: ctx.graph, findings: ctx.findings, diagramId: ctx.diagramId } },
     );
+  };
+
+  const submit = () => {
+    const t = input.trim();
+    if (!t || busy) return;
+    send(t);
+    setInput("");
+    requestAnimationFrame(resizeComposer);
   };
 
   useImperativeHandle(props.handleRef, () => ({ ask: (text) => send(text) }));
@@ -132,7 +149,7 @@ export function ChatTab(props: ChatTabProps) {
         )}
       </div>
 
-      <div className="border-t border-hairline p-2">
+      <div className="border-t border-hairline p-3">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
             <Chip icon={Wand2} label="Review" onClick={props.onReview} />
@@ -144,31 +161,32 @@ export function ChatTab(props: ChatTabProps) {
             </span>
           )}
         </div>
-        <div className="flex items-end gap-1">
+        <div className="relative rounded-[12px] border border-hairline bg-canvas transition-colors focus-within:border-accent">
           <textarea
+            ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            rows={1}
+            onChange={(e) => {
+              setInput(e.target.value);
+              resizeComposer();
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                send(input);
-                setInput("");
+                submit();
               }
             }}
-            rows={2}
             placeholder="Ask a question or describe a change…"
-            className="min-h-0 flex-1 resize-none rounded-[6px] border border-hairline bg-canvas px-2 py-1.5 text-sm focus:border-accent focus:outline-none"
+            className="block max-h-40 w-full resize-none rounded-[12px] bg-transparent py-2.5 pl-3 pr-11 text-sm leading-relaxed placeholder:text-fg-subtle focus:outline-none"
           />
           <button
             type="button"
-            onClick={() => {
-              send(input);
-              setInput("");
-            }}
-            disabled={busy}
-            className="flex size-8 items-center justify-center rounded-[6px] bg-accent text-white hover:bg-accent/90 disabled:opacity-40"
+            onClick={submit}
+            disabled={busy || input.trim().length === 0}
+            title="Send"
+            className="absolute bottom-1.5 right-1.5 flex size-7 items-center justify-center rounded-[8px] bg-accent text-white transition-colors hover:bg-accent/90 disabled:opacity-30 disabled:hover:bg-accent"
           >
-            <Send className="size-4" />
+            <Send className="size-3.5" />
           </button>
         </div>
       </div>
