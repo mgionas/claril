@@ -68,6 +68,8 @@ export function BpmnWorkbench({
 
   // Which proposal (by toolCallId) is the one currently awaiting review.
   const [pendingProposalId, setPendingProposalId] = useState<string | null>(null);
+  // How each resolved proposal ended up (keyed by toolCallId).
+  const [resolutions, setResolutions] = useState<Record<string, "approved" | "rolledback">>({});
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const graphRef = useRef<ProcessGraph | null>(null);
@@ -227,19 +229,21 @@ export function BpmnWorkbench({
     setPendingProposalId(toolCallId); // this proposal is now the one awaiting review
   }, []);
 
-  const handleApplyPlan = useCallback(() => {
+  const handleApplyPlan = useCallback((toolCallId: string) => {
     canvasApiRef.current?.clearAiEdit();
+    setResolutions((r) => ({ ...r, [toolCallId]: "approved" }));
     setPendingProposalId(null); // resolved
     forceSnapshot("ai", "AI edit"); // change already applied to the model; snapshot it
   }, [forceSnapshot]);
 
-  const handleDiscardPlan = useCallback(() => {
+  const handleDiscardPlan = useCallback((toolCallId: string) => {
     canvasApiRef.current?.clearAiEdit();
     void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
+    setResolutions((r) => ({ ...r, [toolCallId]: "rolledback" }));
     setPendingProposalId(null);
   }, []);
 
-  const handleKeepRefining = useCallback(() => {
+  const handleKeepRefining = useCallback((_toolCallId: string) => {
     setInspectorOpen(true);
     setActiveTab("chat");
     chatHandleRef.current?.focusComposer();
@@ -352,6 +356,7 @@ export function BpmnWorkbench({
         getChatContext={getChatContext}
         initialChatMessages={initialChatMessages}
         pendingProposalId={pendingProposalId}
+        resolutions={resolutions}
         onProposal={handleProposal}
         onApplyPlan={handleApplyPlan}
         onDiscardPlan={handleDiscardPlan}

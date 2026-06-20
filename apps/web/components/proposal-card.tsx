@@ -52,14 +52,14 @@ const SECTIONS = [
 
 export function ProposalCard({
   plan,
-  pending,
+  status,
   busy,
   onApply,
   onDiscard,
   onKeepRefining,
 }: {
   plan: EditPlan;
-  pending: boolean;
+  status: "pending" | "approved" | "rolledback";
   busy?: boolean;
   onApply: () => void;
   onDiscard: () => void;
@@ -97,7 +97,7 @@ export function ProposalCard({
         </div>
       )}
       {!empty && (
-        pending ? (
+        status === "pending" ? (
           <div className="space-y-2">
             <p className="text-[11px] text-fg-subtle">Applied to canvas — review:</p>
             <div className="flex flex-wrap gap-2">
@@ -128,6 +128,11 @@ export function ProposalCard({
               </button>
             </div>
           </div>
+        ) : status === "rolledback" ? (
+          <p className="flex items-center gap-1 text-[11px] text-fg-subtle">
+            <RotateCcw className="size-3" />
+            Rolled back
+          </p>
         ) : (
           <p className="flex items-center gap-1 text-[11px] text-fg-subtle">
             <Check className="size-3" />

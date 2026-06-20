@@ -31,9 +31,10 @@ interface ChatTabProps {
   /** Live-apply a proposed plan to the canvas. */
   onProposal: (plan: EditPlan, toolCallId: string) => void;
   pendingProposalId: string | null;
-  onApplyPlan: () => void;
-  onDiscardPlan: () => void;
-  onKeepRefining: () => void;
+  resolutions: Record<string, "approved" | "rolledback">;
+  onApplyPlan: (toolCallId: string) => void;
+  onDiscardPlan: (toolCallId: string) => void;
+  onKeepRefining: (toolCallId: string) => void;
   onGenerateDocs: () => void;
   onReview: () => void;
   /** Select + fly to an element on the canvas (from a chat element chip). */
@@ -198,11 +199,15 @@ export function ChatTab(props: ChatTabProps) {
                     <ProposalCard
                       key={i}
                       plan={part.output as EditPlan}
-                      pending={part.toolCallId === props.pendingProposalId}
+                      status={
+                        part.toolCallId === props.pendingProposalId
+                          ? "pending"
+                          : props.resolutions[part.toolCallId] ?? "approved"
+                      }
                       busy={busy}
-                      onApply={props.onApplyPlan}
-                      onDiscard={props.onDiscardPlan}
-                      onKeepRefining={props.onKeepRefining}
+                      onApply={() => props.onApplyPlan(part.toolCallId)}
+                      onDiscard={() => props.onDiscardPlan(part.toolCallId)}
+                      onKeepRefining={() => props.onKeepRefining(part.toolCallId)}
                     />
                   );
                 }

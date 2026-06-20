@@ -26,10 +26,11 @@ export interface AiDrawerProps {
   getChatContext: () => { graph: ProcessGraph | null; findings: Finding[]; diagramId: string };
   initialChatMessages?: { id: string; role: string; parts: unknown }[];
   pendingProposalId: string | null;
+  resolutions: Record<string, "approved" | "rolledback">;
   onProposal: (plan: EditPlan, toolCallId: string) => void;
-  onApplyPlan: () => void;
-  onDiscardPlan: () => void;
-  onKeepRefining: () => void;
+  onApplyPlan: (toolCallId: string) => void;
+  onDiscardPlan: (toolCallId: string) => void;
+  onKeepRefining: (toolCallId: string) => void;
   onGenerateDocs: () => void;
   onReview: () => void;
   // problems wiring
@@ -91,6 +92,7 @@ export function AiDrawer(props: AiDrawerProps) {
                 getContext={props.getChatContext}
                 initialMessages={props.initialChatMessages}
                 pendingProposalId={props.pendingProposalId}
+                resolutions={props.resolutions}
                 onProposal={props.onProposal}
                 onApplyPlan={props.onApplyPlan}
                 onDiscardPlan={props.onDiscardPlan}
