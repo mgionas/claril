@@ -58,6 +58,28 @@ describe("validateEditPlan", () => {
     );
     expect(errors).toEqual([]);
   });
+
+  it("flags an associate to an unknown ref", () => {
+    const errors = validateEditPlan(
+      { summary: "x", ops: [{ kind: "associate", fromRef: "Task_1", toRef: "Ghost_99" }] },
+      graph,
+    );
+    expect(errors.some((e) => /Ghost_99/.test(e))).toBe(true);
+  });
+
+  it("accepts an addArtifact + associate against an existing element", () => {
+    const errors = validateEditPlan(
+      {
+        summary: "add a data store and link it",
+        ops: [
+          { kind: "addArtifact", tempId: "a1", artifact: "dataStore", name: "Customer DB" },
+          { kind: "associate", fromRef: "Task_1", toRef: "a1" },
+        ],
+      },
+      graph,
+    );
+    expect(errors).toEqual([]);
+  });
 });
 
 describe("EditPlanSchema", () => {
@@ -70,6 +92,17 @@ describe("EditPlanSchema", () => {
 
     const bad = EditPlanSchema.safeParse({ summary: "x", ops: [{ kind: "frobnicate" }] });
     expect(bad.success).toBe(false);
+  });
+
+  it("accepts addArtifact + associate ops", () => {
+    const parsed = EditPlanSchema.safeParse({
+      summary: "add a data store and link it",
+      ops: [
+        { kind: "addArtifact", tempId: "a1", artifact: "dataStore", name: "Customer DB" },
+        { kind: "associate", fromRef: "Task_1", toRef: "a1" },
+      ],
+    });
+    expect(parsed.success).toBe(true);
   });
 
   it("accepts a moveToContainer op", () => {

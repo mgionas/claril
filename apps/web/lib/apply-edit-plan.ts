@@ -27,6 +27,12 @@ const BPMN_TYPE: Record<string, string> = {
   subProcess: "bpmn:SubProcess",
 };
 
+const ARTIFACT_BPMN: Record<string, string> = {
+  dataObject: "bpmn:DataObjectReference",
+  dataStore: "bpmn:DataStoreReference",
+  textAnnotation: "bpmn:TextAnnotation",
+};
+
 const EVENT_DEF: Record<string, string> = {
   timer: "bpmn:TimerEventDefinition",
   message: "bpmn:MessageEventDefinition",
@@ -114,6 +120,19 @@ export function applyEditPlan(
             : null;
       if (!ref) continue;
       const el = resolve(ref);
+      if (el && typeof el.x === "number") return el;
+    }
+    return null;
+  };
+
+  // The element an artifact is associated with, if it's already placed — used
+  // to position the new artifact beneath its anchor (else a default offset).
+  const findArtifactAnchor = (tempId: string): any => {
+    for (const o of plan.ops) {
+      if (o.kind !== "associate") continue;
+      const other = o.fromRef === tempId ? o.toRef : o.toRef === tempId ? o.fromRef : null;
+      if (!other) continue;
+      const el = resolve(other);
       if (el && typeof el.x === "number") return el;
     }
     return null;
@@ -307,6 +326,29 @@ export function applyEditPlan(
         }
         temp.set(op.tempId, placed);
         changed.add(placed.id);
+        return;
+      }
+      case "addArtifact": {
+        const shape = elementFactory.createShape({ type: ARTIFACT_BPMN[op.artifact] });
+        const anchor = findArtifactAnchor(op.tempId);
+        const parent = asFlowNodeContainer(anchor?.parent ?? root);
+        const position =
+          anchor && typeof anchor.x === "number"
+            ? { x: anchor.x + (anchor.width ?? 0) / 2, y: anchor.y + (anchor.height ?? 0) + 90 }
+            : { x: 300, y: 320 };
+        const placed = modeling.createShape(shape, position, parent);
+        if (op.artifact === "textAnnotation" && op.text) modeling.updateProperties(placed, { text: op.text });
+        else if (op.name) modeling.updateProperties(placed, { name: op.name });
+        temp.set(op.tempId, placed);
+        changed.add(placed.id);
+        return;
+      }
+      case "associate": {
+        const from = resolve(op.fromRef);
+        const to = resolve(op.toRef);
+        if (!from || !to) return;
+        const conn = modeling.connect(from, to);
+        if (conn) changed.add(conn.id);
         return;
       }
       case "connect": {

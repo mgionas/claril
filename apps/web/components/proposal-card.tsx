@@ -19,6 +19,8 @@ export function groupOps(ops: Op[]): OpGroups {
       case "addPool": g.added.push(`Pool "${op.name}"`); break;
       case "addLane": g.added.push(`Lane "${op.name}"`); break;
       case "addNode": g.added.push(`${op.type}${op.name ? ` "${op.name}"` : ""}`); break;
+      case "addArtifact": g.added.push(`${op.artifact}${op.name ? ` "${op.name}"` : ""}`); break;
+      case "associate": g.connected.push("association"); break;
       case "connect": {
         const extra = `${op.condition ? ` if ${op.condition}` : ""}${op.isDefault ? " (default)" : ""}`;
         g.connected.push(`${op.flow} flow${op.label ? ` "${op.label}"` : ""}${extra}`);

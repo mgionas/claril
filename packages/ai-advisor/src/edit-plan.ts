@@ -45,6 +45,18 @@ const AddNode = z.object({
     .enum(["loop", "multiInstanceParallel", "multiInstanceSequential", "compensation"])
     .optional(),
 });
+const AddArtifact = z.object({
+  kind: z.literal("addArtifact"),
+  tempId: z.string(),
+  artifact: z.enum(["dataObject", "dataStore", "textAnnotation"]),
+  name: z.string().optional(),
+  text: z.string().optional(),
+});
+const Associate = z.object({
+  kind: z.literal("associate"),
+  fromRef: z.string(),
+  toRef: z.string(),
+});
 const Connect = z.object({
   kind: z.literal("connect"),
   fromRef: z.string(),
@@ -92,7 +104,9 @@ export const OpSchema = z.discriminatedUnion("kind", [
   AddPool,
   AddLane,
   AddNode,
+  AddArtifact,
   Connect,
+  Associate,
   SetFlow,
   MoveToContainer,
   Reconnect,
@@ -112,13 +126,15 @@ const ORDER: Record<Op["kind"], number> = {
   addPool: 0,
   addLane: 1,
   addNode: 2,
-  connect: 3,
-  setFlow: 4,
-  moveToContainer: 5,
-  reconnect: 6,
-  setMarker: 7,
-  updateElement: 8,
-  deleteElement: 9,
+  addArtifact: 3,
+  connect: 4,
+  associate: 5,
+  setFlow: 6,
+  moveToContainer: 7,
+  reconnect: 8,
+  setMarker: 9,
+  updateElement: 10,
+  deleteElement: 11,
 };
 
 /** Stable sort into a dependency-safe execution order. */
@@ -133,7 +149,12 @@ export function orderOps(ops: Op[]): Op[] {
 export function collectPlanRefs(plan: EditPlan): { defined: Set<string> } {
   const defined = new Set<string>();
   for (const op of plan.ops) {
-    if (op.kind === "addPool" || op.kind === "addLane" || op.kind === "addNode") {
+    if (
+      op.kind === "addPool" ||
+      op.kind === "addLane" ||
+      op.kind === "addNode" ||
+      op.kind === "addArtifact"
+    ) {
       defined.add(op.tempId);
     }
   }
@@ -154,7 +175,13 @@ export function validateEditPlan(plan: EditPlan, graph: ProcessGraph): string[] 
 
   const tempIds = new Set<string>();
   for (const op of plan.ops) {
-    if (op.kind === "addPool" || op.kind === "addLane" || op.kind === "addNode") tempIds.add(op.tempId);
+    if (
+      op.kind === "addPool" ||
+      op.kind === "addLane" ||
+      op.kind === "addNode" ||
+      op.kind === "addArtifact"
+    )
+      tempIds.add(op.tempId);
   }
 
   const existing = new Set<string>([
@@ -186,6 +213,10 @@ export function validateEditPlan(plan: EditPlan, graph: ProcessGraph): string[] 
         ref("connect.toRef", op.toRef, known(op.toRef));
         connectedTemps.add(op.fromRef);
         connectedTemps.add(op.toRef);
+        break;
+      case "associate":
+        ref("associate.fromRef", op.fromRef, known(op.fromRef));
+        ref("associate.toRef", op.toRef, known(op.toRef));
         break;
       case "addLane":
         ref("addLane.poolRef", op.poolRef, knownContainer(op.poolRef));
