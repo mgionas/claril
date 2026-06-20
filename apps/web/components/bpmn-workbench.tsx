@@ -6,6 +6,9 @@ import { ChevronLeft, History } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import { runAdvisor, runDocGen, saveDiagramContent } from "@/lib/actions";
+import { autosnapshotVersion } from "@/lib/version-actions";
+import { createVersionCoalescer, type VersionCoalescer } from "@/lib/version-coalescer";
+import type { VersionSource } from "@/lib/actions";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
@@ -72,11 +75,37 @@ export function BpmnWorkbench({
   // Latest serialized XML from the canvas — read by the History diff + edit undo.
   const currentXmlRef = useRef<string>(initialXml);
   const preEditXmlRef = useRef<string>(initialXml);
+  const coalescerRef = useRef<VersionCoalescer | null>(null);
 
   // Surface AI work in the drawer automatically.
   useEffect(() => {
     if (aiBusy || aiError) setInspectorOpen(true);
   }, [aiBusy, aiError]);
+
+  // Best-effort snapshot of the freshest canvas XML (never blocks the UI).
+  const forceSnapshot = useCallback(
+    (source: VersionSource, label?: string) => {
+      const xml = currentXmlRef.current;
+      if (!xml) return;
+      void autosnapshotVersion(diagramId, xml, source, label).catch(() => {});
+    },
+    [diagramId],
+  );
+
+  // Lazily build the ambient-edit coalescer (10s idle / 2min cap).
+  if (!coalescerRef.current) {
+    coalescerRef.current = createVersionCoalescer(() => forceSnapshot("auto"), {
+      idleMs: 10_000,
+      capMs: 120_000,
+    });
+  }
+
+  // Cancel any pending auto-snapshot on unmount.
+  useEffect(() => {
+    return () => {
+      coalescerRef.current?.cancel();
+    };
+  }, []);
 
   const handleReady = useCallback((api: CanvasApi) => {
     canvasApiRef.current = api;
@@ -111,6 +140,7 @@ export function BpmnWorkbench({
   const handleXmlChange = useCallback(
     (xml: string) => {
       currentXmlRef.current = xml;
+      coalescerRef.current?.onChange();
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -199,7 +229,8 @@ export function BpmnWorkbench({
   const handleApplyPlan = useCallback(() => {
     canvasApiRef.current?.clearDiff();
     setPlanApplied(true); // change already on the model; autosave already fired
-  }, []);
+    forceSnapshot("ai", "AI edit");
+  }, [forceSnapshot]);
 
   const handleDiscardPlan = useCallback(() => {
     canvasApiRef.current?.clearDiff();
