@@ -14,6 +14,11 @@ interface DiElement {
   source?: { id: string } | null;
   target?: { id: string } | null;
   parent?: { type?: string; businessObject?: { name?: string } } | null;
+  // Diagram bounds (present on shapes) — used for geometric lane membership.
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
   labelTarget?: unknown;
 }
 
@@ -31,6 +36,23 @@ const CONTAINER_TYPES = new Set([
   "label",
 ]);
 
+interface LaneShape {
+  id: string;
+  name?: string;
+  pool?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  area: number;
+}
+
+const hasBounds = (el: DiElement): boolean =>
+  typeof el.x === "number" &&
+  typeof el.y === "number" &&
+  typeof el.width === "number" &&
+  typeof el.height === "number";
+
 /**
  * Convert a bpmn-js elementRegistry into the framework-free ProcessGraph the
  * logic inspector understands. Keeps bpmn-js out of the analysis engine.
@@ -38,19 +60,24 @@ const CONTAINER_TYPES = new Set([
  * Captures swimlane/pool structure and message flows (not just sequence flows)
  * so downstream grounding can give the AI a faithful picture of the whole
  * diagram — pools, lanes, who-does-what, and cross-pool messaging.
+ *
+ * Lane membership is resolved BOTH semantically (`flowNodeRef`) and
+ * GEOMETRICALLY (which lane's bounds contain the node) — many diagrams express
+ * lane membership only visually, with empty `flowNodeRef`, so geometry is the
+ * reliable signal.
  */
 export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph {
   const nodes: BpmnNode[] = [];
   const flows: SequenceFlow[] = [];
   const messageFlows: SequenceFlow[] = [];
-  const lanes: LaneInfo[] = [];
   const pools: PoolInfo[] = [];
 
   const all = registry.getAll();
 
-  // First pass: collect pools, lanes (+ their node membership) and message flows.
-  const laneByNode = new Map<string, string>(); // nodeId -> lane name
-  const poolByNode = new Map<string, string>(); // nodeId -> pool name
+  // First pass: pools, lane shapes (with bounds), semantic flowNodeRef map, and
+  // message flows.
+  const laneShapes: LaneShape[] = [];
+  const laneIdByNode = new Map<string, string>(); // nodeId -> lane id (from flowNodeRef)
   for (const el of all) {
     const type = el.type;
     if (!type) continue;
@@ -60,16 +87,21 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
       continue;
     }
     if (type === "bpmn:Lane") {
-      const name = el.businessObject?.name;
-      const nodeIds = (el.businessObject?.flowNodeRef ?? [])
-        .map((r) => r?.id)
-        .filter((id): id is string => Boolean(id));
-      const pool =
-        el.parent?.type === "bpmn:Participant" ? el.parent.businessObject?.name : undefined;
-      lanes.push({ id: el.id, name, pool, nodeIds });
-      for (const id of nodeIds) {
-        if (name) laneByNode.set(id, name);
-        if (pool) poolByNode.set(id, pool);
+      if (hasBounds(el)) {
+        laneShapes.push({
+          id: el.id,
+          name: el.businessObject?.name,
+          pool:
+            el.parent?.type === "bpmn:Participant" ? el.parent.businessObject?.name : undefined,
+          x: el.x!,
+          y: el.y!,
+          width: el.width!,
+          height: el.height!,
+          area: el.width! * el.height!,
+        });
+      }
+      for (const r of el.businessObject?.flowNodeRef ?? []) {
+        if (r?.id) laneIdByNode.set(r.id, el.id);
       }
       continue;
     }
@@ -86,8 +118,24 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
     }
   }
 
-  // If there's exactly one pool, every node belongs to it (lanes optional).
+  // Smallest lane whose bounds contain the element's centre (deepest lane wins
+  // for nested lanes). Used when flowNodeRef doesn't name the node.
+  const laneByGeometry = (el: DiElement): LaneShape | undefined => {
+    if (!hasBounds(el)) return undefined;
+    const cx = el.x! + el.width! / 2;
+    const cy = el.y! + el.height! / 2;
+    let best: LaneShape | undefined;
+    for (const L of laneShapes) {
+      if (cx >= L.x && cx <= L.x + L.width && cy >= L.y && cy <= L.y + L.height) {
+        if (!best || L.area < best.area) best = L;
+      }
+    }
+    return best;
+  };
+
+  const laneById = new Map(laneShapes.map((L) => [L.id, L]));
   const solePool = pools.length === 1 ? pools[0]?.name : undefined;
+  const laneMembers = new Map<string, string[]>(); // lane id -> node ids
 
   // Second pass: flow nodes and sequence flows.
   for (const el of all) {
@@ -108,6 +156,14 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
 
     if (CONTAINER_TYPES.has(type) || type === "bpmn:MessageFlow") continue;
 
+    // Resolve the node's lane: semantic flowNodeRef first, else geometry.
+    const lane = laneById.get(laneIdByNode.get(el.id) ?? "") ?? laneByGeometry(el);
+    if (lane) {
+      const list = laneMembers.get(lane.id) ?? [];
+      list.push(el.id);
+      laneMembers.set(lane.id, list);
+    }
+
     // "bpmn:StartEvent" -> "startEvent", "bpmn:ExclusiveGateway" -> "exclusiveGateway"
     const kind = type.slice("bpmn:".length);
     const nodeType = kind.charAt(0).toLowerCase() + kind.slice(1);
@@ -115,10 +171,17 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
       id: el.id,
       type: nodeType,
       name: el.businessObject?.name,
-      lane: laneByNode.get(el.id),
-      pool: poolByNode.get(el.id) ?? solePool,
+      lane: lane?.name,
+      pool: lane?.pool ?? solePool,
     });
   }
+
+  const lanes: LaneInfo[] = laneShapes.map((L) => ({
+    id: L.id,
+    name: L.name,
+    pool: L.pool,
+    nodeIds: laneMembers.get(L.id) ?? [],
+  }));
 
   const graph: ProcessGraph = { nodes, flows };
   if (lanes.length > 0) graph.lanes = lanes;
