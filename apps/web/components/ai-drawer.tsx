@@ -89,7 +89,6 @@ export function AiDrawer(props: AiDrawerProps) {
               <ChatTab
                 handleRef={props.chatHandleRef}
                 getContext={props.getChatContext}
-                diagramId={props.getChatContext().diagramId}
                 initialMessages={props.initialChatMessages}
                 pendingProposalId={props.pendingProposalId}
                 onProposal={props.onProposal}

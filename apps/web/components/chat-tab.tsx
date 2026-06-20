@@ -27,7 +27,6 @@ interface ChatContext {
 interface ChatTabProps {
   handleRef: Ref<ChatTabHandle>;
   getContext: () => ChatContext;
-  diagramId: string;
   initialMessages?: { id: string; role: string; parts: unknown }[];
   /** Live-apply a proposed plan to the canvas. */
   onProposal: (plan: EditPlan, toolCallId: string) => void;
@@ -60,9 +59,18 @@ export function ChatTab(props: ChatTabProps) {
   });
 
   const persistedIds = useRef<Set<string>>(new Set());
-  // Seed with hydrated ids so we never re-insert them.
+  // Seed with hydrated ids so we never re-insert them, and seed seenProposals
+  // with hydrated proposeEdit tool calls so they aren't re-applied on reload.
   useEffect(() => {
-    for (const m of props.initialMessages ?? []) persistedIds.current.add(m.id);
+    for (const m of props.initialMessages ?? []) {
+      persistedIds.current.add(m.id);
+      const parts = (m.parts ?? []) as Array<{ type?: string; toolCallId?: string }>;
+      for (const part of parts) {
+        if (part.type === "tool-proposeEdit" && part.toolCallId) {
+          seenProposals.current.add(part.toolCallId);
+        }
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
