@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Workspace packages ship raw TypeScript (main -> src/*.ts), so Next must
   // transpile them.
-  transpilePackages: ["@claril/shared", "@claril/logic-inspector"],
+  transpilePackages: ["@claril/shared", "@claril/logic-inspector", "@claril/db"],
 };
 
 export default nextConfig;

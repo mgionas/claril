@@ -17,22 +17,25 @@ status: active · author: Giorgi Naskhidashvili
 
 **Links:** [Repository](https://github.com/mgionas/claril) · [Brand domain](https://claril.dev)
 
-9 components · 9 capabilities · 0 endpoints · 0 data entities.
+21 components · 18 capabilities · 0 endpoints · 0 data entities.
 
-**Monorepo** — 2 workspace packages: packages/logic-inspector, packages/shared
+**Monorepo** — 3 workspace packages: apps/web, packages/logic-inspector, packages/shared
 
-**Component roles:** 9 module
+**Component roles:** 9 module · 5 ui · 3 service · 2 config · 1 layout · 1 page
 
-**Domains:** Logic inspector (8) · Misc (1)
+**Domains:** Web (12) · Logic inspector (8) · Misc (1)
 
 ### What it does (capabilities)
+- **apps/web/app/** — Home, Root Layout
+- **apps/web/components/** — Bpmn Canvas, Command Bar, Inspector Panel, Top Bar, Workbench
+- **apps/web/lib/** — Bpmn Registry To Graph, Cn
 - **packages/logic-inspector/src/** — Incoming, Inspect, Is End, Is Gateway, Is Start, Is Task, Node Map, Outgoing, Reachable From
 
-### Primary process: Graph flow
-Graph → Types
+### Primary process: Home process
+Page → @/components
 
-**Stack:** build: Turborepo · language: TypeScript · testing: Vitest
-_+ 1 other libraries (see the web Overview)._
+**Stack:** build: Turborepo · framework: Next.js · language: TypeScript · testing: Vitest · ui: bpmn-js/lucide/React/React DOM/Tailwind CSS
+_+ 4 other libraries (see the web Overview)._
 
 _Full detail: `archmantic view` (diagrams + trust) or the Archmantic MCP server (`get_context`, `get_component`, `get_api_surface`, …)._
 <!-- archmantic:end -->
