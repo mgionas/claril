@@ -1,6 +1,7 @@
 import { generateObject } from "ai";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
+import { BPMN_BEST_PRACTICES } from "@claril/logic-inspector";
 import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
 import type { AssetContext } from "./grounding";
@@ -22,7 +23,10 @@ Rules:
 - Use flow:"sequence" for connections inside one process/pool; use flow:"message" for connections BETWEEN different pools (participants).
 - Put a node inside a pool/lane with containerRef (a pool/lane tempId or an existing element id) when the instruction implies swimlanes.
 - Prefer the smallest set of ops that satisfies the instruction. Do not restructure unrelated parts of the model.
-- "summary" is a one-line human description of the change.`;
+- When your change would create an implicit split (a node with multiple outgoing flows) or an implicit merge (a node with multiple incoming flows), insert an explicit gateway instead — never wire multiple flows straight into/out of a task.
+- "summary" is a one-line human description of the change.
+
+${BPMN_BEST_PRACTICES}`;
 
 /** Pure: assemble the user-facing prompt (grounding + instruction). Testable. */
 export function buildPlannerPrompt(input: PlanEditsInput): string {

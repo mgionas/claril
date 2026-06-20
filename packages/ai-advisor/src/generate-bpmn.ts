@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import { BPMN_BEST_PRACTICES } from "@claril/logic-inspector";
 import { createModel } from "./provider";
 import type { LLMProviderConfig } from "./types";
 
@@ -11,7 +12,9 @@ Output rules — follow exactly:
 - Give every element a stable id and a human-readable name drawn from the description. Use sequenceFlow names for the labelled outgoing branches of gateways.
 - CONNECTIVITY IS MANDATORY. On every flow node you MUST list its connected flows as explicit child elements: an <outgoing>FLOW_ID</outgoing> for each sequenceFlow leaving the node and an <incoming>FLOW_ID</incoming> for each sequenceFlow entering it. The layout engine derives the arrows and node positions from these <incoming>/<outgoing> references — a sequenceFlow's sourceRef/targetRef alone is NOT enough and will render as disconnected, arrow-less boxes. Every sequenceFlow id MUST appear as an <outgoing> on its source node and as an <incoming> on its target node.
 - Emit SEMANTIC BPMN only. Diagram interchange (BPMNDiagram / BPMNShape / coordinates) is OPTIONAL — omit it; layout is added downstream. Do not invent coordinates.
-- Keep it well-formed: matching tags, valid id references (incoming/outgoing, sourceRef/targetRef) that resolve to elements that exist.`;
+- Keep it well-formed: matching tags, valid id references (incoming/outgoing, sourceRef/targetRef) that resolve to elements that exist.
+
+${BPMN_BEST_PRACTICES}`;
 
 /**
  * Generate semantic BPMN 2.0 XML from a natural-language process description.
