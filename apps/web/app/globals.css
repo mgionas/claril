@@ -30,10 +30,10 @@
 html,
 body {
   height: 100%;
+  background-color: var(--color-canvas);
 }
 
 body {
-  background-color: var(--color-canvas);
   color: var(--color-fg);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -51,12 +51,13 @@ body {
   display: none !important;
 }
 
-/* shapes */
-.djs-element .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+/* shapes — include .djs-dragger so drag/drop previews aren't white */
+.djs-element .djs-visual > :where(rect, circle, ellipse, polygon, path),
+.djs-dragger .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   stroke: #3f3f46 !important;
   fill: #18181b !important;
 }
-/* connections */
+/* connections (override the shape fill above for edges) */
 .djs-connection .djs-visual > path {
   stroke: #71717a !important;
   fill: none !important;
@@ -70,6 +71,23 @@ body {
 .djs-visual text {
   fill: #fafafa !important;
   font-family: ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* drag preview + selection box stay on-theme (no white flashes) */
+.djs-dragger {
+  opacity: 0.9;
+}
+.djs-lasso-overlay {
+  fill: color-mix(in srgb, var(--color-accent) 12%, transparent) !important;
+  stroke: var(--color-accent) !important;
+}
+.djs-search-overlay,
+.djs-popup,
+.djs-popup-body,
+.djs-popup-header {
+  background-color: rgba(24, 24, 27, 0.95) !important;
+  color: var(--color-fg) !important;
+  border-color: var(--color-hairline) !important;
 }
 
 /* selection + hover */

@@ -41,6 +41,10 @@ export default function BpmnCanvas({
 
     const modeler = new BpmnModeler({ container });
     modelerRef.current = modeler;
+    // React StrictMode (dev) mounts effects twice: mount → cleanup → mount.
+    // The first modeler is destroyed while its async importXML is still in
+    // flight; this flag stops us from touching a destroyed instance.
+    let disposed = false;
 
     const renderFindings = (findings: Finding[]) => {
       const overlays = modeler.get("overlays") as unknown as {
@@ -117,6 +121,7 @@ export default function BpmnCanvas({
       try {
         const xml = initialXml && initialXml.trim().length > 0 ? initialXml : defaultDiagram;
         await modeler.importXML(xml);
+        if (disposed) return;
         const canvas = modeler.get("canvas") as unknown as {
           zoom: (mode: string, center?: string) => void;
         };
@@ -124,11 +129,12 @@ export default function BpmnCanvas({
         runInspection();
         modeler.on("commandStack.changed", onChanged);
       } catch (err) {
-        console.error("Failed to import diagram", err);
+        if (!disposed) console.error("Failed to import diagram", err);
       }
     })();
 
     return () => {
+      disposed = true;
       modeler.destroy();
       modelerRef.current = null;
       markedRef.current = [];
