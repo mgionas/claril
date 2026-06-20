@@ -47,32 +47,37 @@ push Inspector drawer, connect handles, finding overlays + "View problem" → dr
 - [x] P2 ai-advisor: `LLMProvider` (Vercel AI SDK), BYOK, advisor grounded on findings; 3-tier UX
 - [x] Production deploy on Vercel
 
-**Open gaps inside P0–P2 (close before/alongside P3)**
-- [ ] **G1 — Self-host**: `Dockerfile` (standalone) + `docker-compose.yml` (web + postgres) — P0 outcome
-- [ ] **G2 — CLI / MCP lint mode**: standalone `claril lint <file.bpmn>` + MCP server exposing the inspector — P1 wedge, releasable on its own
-- [ ] **G3 — Built-in Asset Catalog (foundation)**: asset types + assets + element→asset binding; feed metadata to the advisor — P2 grounding
-- [ ] **G4 — doc-gen + Q&A** advisor modes (advisor critique exists; generation/Q&A pending)
-
-**App-usability gap (lands with P3)**
-- [ ] **G5 — Multi-diagram navigation**: projects → diagrams list, create/rename/delete, route per diagram (today the app opens a single default workbench)
+**P0–P2 gaps — all closed**
+- [x] **G1 — Self-host**: `Dockerfile` (standalone, 193MB) + `docker-compose.yml` (web + migrate + postgres) + `docs/self-hosting.md` (W5)
+- [x] **G2 — CLI / MCP lint mode**: `@claril/bpmn-parse` (headless) + `claril lint`/`claril mcp` with CI exit codes + `lint_bpmn` MCP tool (W2)
+- [x] **G3 — Built-in Asset Catalog**: org-scoped `asset_type`/`asset`/`asset_link`/`element_asset_binding` + custom-field engine + `/catalog` admin + in-canvas element→asset binding + advisor grounding (W3 + binding follow-up)
+- [x] **G4 — doc-gen + Q&A** advisor modes: `generateProcessDoc` + `answerQuestion`, command-bar Q&A + Docs panel (W6)
+- [x] **G5 — Multi-diagram navigation**: projects → diagrams dashboard, per-diagram `/d/[id]` route, authorized CRUD (W1)
 
 > The logic-inspector was built early because it's pure TS, framework-free, and the
-> product's core IP. The next push is to (a) make the moat independently shippable
-> (G2), (b) make the app usable across many diagrams (G5), and (c) start the
-> differentiation layer (G3). See "Next plan" below.
+> product's core IP. With G1–G5 closed and deployed, the moat is independently
+> shippable (CLI/MCP), the app is usable across many diagrams, and the catalog
+> differentiation layer is live. Next: P3 depth (versioning, more notations).
 
 ## Next plan — workstreams
 
 Mapped to the agent team so they can run in parallel where independent.
 
-| ID | Workstream | Agent | Depends on |
-|----|-----------|-------|-----------|
-| **W1** | Multi-diagram navigation + project/diagram CRUD (G5) | `ui-engineer` + `backend-engineer` | — |
-| **W2** | CLI + MCP lint server over the inspector (G2) | `backend-engineer` (+ `inspector-engineer` for API surface) | — |
-| **W3** | Asset Catalog foundation: schema, CRUD, element binding (G3) | `db-architect` → `catalog-engineer` | — |
-| **W4** | Versioning: named versions, list, restore, visual diff (P3) | `db-architect` + `canvas-engineer` | W1 |
-| **W5** | Self-host: Dockerfile + docker-compose (G1) | `backend-engineer` | — |
-| **W6** | Advisor doc-gen + Q&A modes (G4) | `ai-advisor-engineer` | — |
-| **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | W1 |
+| ID | Workstream | Agent | Status |
+|----|-----------|-------|--------|
+| **W1** | Multi-diagram navigation + project/diagram CRUD (G5) | `ui-engineer` | ✅ shipped |
+| **W2** | CLI + MCP lint server over the inspector (G2) | `backend-engineer` | ✅ shipped |
+| **W3** | Asset Catalog foundation: schema, CRUD, element binding (G3) | `catalog-engineer` | ✅ shipped (+ canvas binding) |
+| **W4** | Versioning: named versions, list, restore, visual diff (P3) | `db-architect` + `canvas-engineer` | 🔄 in progress |
+| **W5** | Self-host: Dockerfile + docker-compose (G1) | `backend-engineer` | ✅ shipped |
+| **W6** | Advisor doc-gen + Q&A modes (G4) | `ai-advisor-engineer` | ✅ shipped |
+| **W7** | Sequence + C4 editors (P3) | `canvas-engineer` | 🔄 in progress |
+| **W8** | Provider connect: guided AI-setup wizard (steps/animation/instructions) + Vercel AI Gateway + BYOK + optional Google OAuth→Vertex | `ai-advisor-engineer` + `ui-engineer` | queued |
 
-W1, W2, W3, W5, W6 have no cross-dependencies and can start immediately and concurrently.
+Consumer chat subscriptions (ChatGPT/Claude/Gemini) cannot power third-party API
+inference (separate billing, no sanctioned OAuth) — W8 uses AI Gateway / BYOK /
+Vertex OAuth instead.
+
+### Remaining W3 tails (follow-ups)
+- [ ] Asset-link management UI + impact/usage panel (actions exist: `createAssetLink`, `getAssetUsage`)
+- [ ] Reference-field picker (engine supports `reference`; editor treats it as text)
