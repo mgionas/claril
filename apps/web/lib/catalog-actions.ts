@@ -12,6 +12,8 @@ import {
   type FieldDef,
 } from "@claril/db";
 import { requireActiveOrg } from "@/lib/context";
+import { requireUserId } from "@/lib/session";
+import { assertDiagramAccess } from "@/lib/tenancy";
 
 /**
  * Asset Catalog server actions (org-scoped CRUD + bindings + grounding query).
@@ -433,11 +435,17 @@ export interface BoundAsset {
 
 /**
  * All assets bound to elements of a diagram, with their type. Used by the
- * advisor grounding layer and as the basis for in-canvas binding UI later.
- * Strictly org-scoped via the binding's denormalized org id.
+ * advisor grounding layer and the in-canvas binding UI. Gated on the DIAGRAM's
+ * own scope (not the active org): personal diagrams have no Asset Catalog, so
+ * this returns `[]` rather than erroring — the canvas/advisor call it on every
+ * diagram load, including personal ones.
  */
 export async function getDiagramBoundAssets(diagramId: string): Promise<BoundAsset[]> {
-  const { orgId } = await requireOrg();
+  const userId = await requireUserId();
+  const access = await assertDiagramAccess(userId, diagramId);
+  if (access.kind !== "org") return []; // personal scope: no catalog
+  const orgId = await diagramOrgId(diagramId);
+  if (!orgId) return [];
   const rows = await db
     .select({
       elementId: schema.elementAssetBinding.elementId,
