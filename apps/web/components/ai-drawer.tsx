@@ -68,9 +68,12 @@ export interface AiDrawerProps {
  */
 export function AiDrawer(props: AiDrawerProps) {
   const showChat = props.aiConnected;
-  const showComments = Boolean(props.isOrg);
+  // Comments are available on every diagram (org teams collaborate; solo users
+  // annotate their own personal diagrams). `isOrg` only governs mentions/bell
+  // (resolved server-side), not whether the tab shows.
+  const showComments = true;
   // Tabs are shown whenever there is more than one surface (Chat and/or Comments
-  // beyond Problems). Personal + no-AI degrades to the bare Problems list.
+  // beyond Problems).
   const tabbed = showChat || showComments;
   const tabCount = (showChat ? 1 : 0) + (showComments ? 1 : 0) + 1; // +1 = Problems
 

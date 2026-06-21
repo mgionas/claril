@@ -279,7 +279,8 @@ export function CommentThreadView({
         ))}
       </div>
 
-      <div className="border-t border-hairline p-3">
+      <div className="border-t-2 border-hairline bg-elevated/40 p-3">
+        <p className="mb-1.5 px-0.5 text-[11px] font-medium text-fg-muted">Reply</p>
         <CommentComposer
           candidates={candidates}
           submitting={busy}

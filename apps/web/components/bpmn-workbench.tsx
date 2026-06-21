@@ -81,7 +81,7 @@ export function BpmnWorkbench({
   const isOrg = diagramScope === "org";
   const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
   const [activeTab, setActiveTab] = useState<DrawerTab>(
-    initialThreadId && isOrg ? "comments" : aiConnected ? "chat" : "problems",
+    initialThreadId ? "comments" : aiConnected ? "chat" : "problems",
   );
   // First selected canvas element (drives the Comments tab anchor; W16, Task 6).
   const [selectedElement, setSelectedElement] = useState<{ id: string; name: string } | null>(null);
@@ -219,7 +219,7 @@ export function BpmnWorkbench({
       currentXmlRef.current = xml;
       coalescerRef.current?.onChange();
       // Element set may have changed (add/remove/rename) — refresh comment anchors.
-      if (isOrg) refreshLiveElements();
+      refreshLiveElements();
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -228,7 +228,7 @@ export function BpmnWorkbench({
           .catch(() => setSaveState("error"));
       }, 800);
     },
-    [diagramId, isOrg, refreshLiveElements],
+    [diagramId, refreshLiveElements],
   );
 
   // Advisor critique: one-click grounded findings, shown in the Problems tab.
@@ -397,7 +397,7 @@ export function BpmnWorkbench({
           findings={allFindings}
           onShowProblems={handleShowProblems}
           onSelectionChange={setSelectedElement}
-          onCommentElement={isOrg ? handleCommentElement : undefined}
+          onCommentElement={handleCommentElement}
         />
         <TopBar
           diagramId={diagramId}
