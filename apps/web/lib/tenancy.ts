@@ -14,6 +14,26 @@ export interface ActiveTenancy {
   workspaceId: string;
 }
 
+/** The XOR parent of a diagram. */
+export type DiagramParent =
+  | { kind: "org"; projectId: string }
+  | { kind: "personal"; personalProjectId: string };
+
+/** Pure: resolve a diagram's single parent, or throw if not exactly one is set. */
+export function diagramParent(d: {
+  projectId: string | null;
+  personalProjectId: string | null;
+}): DiagramParent {
+  const hasOrg = Boolean(d.projectId);
+  const hasPersonal = Boolean(d.personalProjectId);
+  if (hasOrg === hasPersonal) {
+    throw new Error("Diagram must have exactly one parent (project XOR personal_project)");
+  }
+  return hasOrg
+    ? { kind: "org", projectId: d.projectId as string }
+    : { kind: "personal", personalProjectId: d.personalProjectId as string };
+}
+
 /**
  * Ensure the user has a personal Org → Workspace, creating them on first use.
  * Idempotent. Bootstraps the tenancy chain down to the workspace level so the
@@ -112,21 +132,51 @@ export async function assertProjectAccess(userId: string, projectId: string): Pr
   return rows[0].workspaceId;
 }
 
-/**
- * Assert the user may access the given diagram (via project → workspace).
- * Returns the diagram's projectId. Throws if not authorized.
- */
-export async function assertDiagramAccess(userId: string, diagramId: string): Promise<string> {
+/** Assert the user owns the given personal project. Throws if not. */
+export async function assertPersonalProjectAccess(
+  userId: string,
+  personalProjectId: string,
+): Promise<void> {
   const rows = await db
-    .select({ projectId: schema.diagram.projectId })
-    .from(schema.diagram)
-    .innerJoin(schema.project, eq(schema.project.id, schema.diagram.projectId))
-    .innerJoin(
-      schema.workspaceMember,
-      eq(schema.workspaceMember.workspaceId, schema.project.workspaceId),
+    .select({ id: schema.personalProject.id })
+    .from(schema.personalProject)
+    .where(
+      and(
+        eq(schema.personalProject.id, personalProjectId),
+        eq(schema.personalProject.ownerUserId, userId),
+      ),
     )
-    .where(and(eq(schema.diagram.id, diagramId), eq(schema.workspaceMember.userId, userId)))
     .limit(1);
   if (!rows[0]) throw new Error("Forbidden");
-  return rows[0].projectId;
+}
+
+export type DiagramAccess =
+  | { kind: "org"; projectId: string; workspaceId: string }
+  | { kind: "personal"; personalProjectId: string };
+
+/**
+ * Assert the user may access the diagram and return its parent context. Org
+ * diagrams resolve via project → workspace → workspaceMember; personal diagrams
+ * via sole ownership.
+ */
+export async function assertDiagramAccess(
+  userId: string,
+  diagramId: string,
+): Promise<DiagramAccess> {
+  const rows = await db
+    .select({
+      projectId: schema.diagram.projectId,
+      personalProjectId: schema.diagram.personalProjectId,
+    })
+    .from(schema.diagram)
+    .where(eq(schema.diagram.id, diagramId))
+    .limit(1);
+  if (!rows[0]) throw new Error("Not found");
+  const parent = diagramParent(rows[0]);
+  if (parent.kind === "personal") {
+    await assertPersonalProjectAccess(userId, parent.personalProjectId);
+    return { kind: "personal", personalProjectId: parent.personalProjectId };
+  }
+  const workspaceId = await assertProjectAccess(userId, parent.projectId);
+  return { kind: "org", projectId: parent.projectId, workspaceId };
 }

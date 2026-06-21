@@ -61,6 +61,7 @@ export async function listProjects(): Promise<ProjectWithDiagrams[]> {
 
   const byProject = new Map<string, DiagramSummary[]>();
   for (const d of diagrams) {
+    if (!d.projectId) continue; // personal diagrams aren't listed in the org dashboard
     if (!projectIds.includes(d.projectId)) continue;
     const list = byProject.get(d.projectId) ?? [];
     list.push({ id: d.id, name: d.name, type: d.type, updatedAt: d.updatedAt.toISOString() });
