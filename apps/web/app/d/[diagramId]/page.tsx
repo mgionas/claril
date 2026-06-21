@@ -39,6 +39,7 @@ export default async function DiagramPage({
       userName={session.user.name}
       aiConnected={Boolean(aiConfig)}
       aiProvider={aiConfig?.provider}
+      diagramScope={ctx.kind}
       initialDoc={initialDoc}
       initialChatMessages={initialChatMessages}
     />

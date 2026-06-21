@@ -38,6 +38,8 @@ interface BpmnWorkbenchProps {
   userName: string;
   aiConnected: boolean;
   aiProvider?: string;
+  /** Which AI scope this diagram resolves against — drives the settings dialog. */
+  diagramScope?: "personal" | "org";
   /** Persisted AI documentation markdown, loaded server-side (null if none). */
   initialDoc?: string | null;
   /** Persisted chat transcript, loaded server-side (hydrates the chat). */
@@ -56,6 +58,7 @@ export function BpmnWorkbench({
   userName,
   aiConnected,
   aiProvider,
+  diagramScope,
   initialDoc,
   initialChatMessages,
 }: BpmnWorkbenchProps) {
@@ -445,6 +448,7 @@ export function BpmnWorkbench({
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         initialProvider={aiProvider}
+        scope={diagramScope}
       />
     </main>
   );

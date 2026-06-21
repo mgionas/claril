@@ -12,6 +12,8 @@ interface WorkbenchProps {
   userName: string;
   aiConnected: boolean;
   aiProvider?: string;
+  /** Which AI scope this diagram resolves against — drives the settings dialog. */
+  diagramScope?: "personal" | "org";
   /** Persisted AI documentation markdown (BPMN only); null if none. */
   initialDoc?: string | null;
   /** Persisted chat transcript (BPMN only); hydrates the chat. */
@@ -33,6 +35,7 @@ export function Workbench({
   userName,
   aiConnected,
   aiProvider,
+  diagramScope,
   initialDoc,
   initialChatMessages,
 }: WorkbenchProps) {
@@ -45,6 +48,7 @@ export function Workbench({
         userName={userName}
         aiConnected={aiConnected}
         aiProvider={aiProvider}
+        diagramScope={diagramScope}
         initialDoc={initialDoc}
         initialChatMessages={initialChatMessages}
       />

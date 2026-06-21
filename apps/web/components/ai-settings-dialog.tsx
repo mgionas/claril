@@ -17,9 +17,16 @@ interface AiSettingsDialogProps {
   onClose: () => void;
   /** Provider whose card should start expanded (when not yet connected). */
   initialProvider?: string;
+  /** Which connections this dialog manages — mirrors the open diagram's context. */
+  scope?: "personal" | "org";
 }
 
-export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsDialogProps) {
+export function AiSettingsDialog({
+  open,
+  onClose,
+  initialProvider,
+  scope = "org",
+}: AiSettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
@@ -29,14 +36,18 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
         <DialogHeader className="text-left">
           <DialogTitle className="text-base font-medium">AI providers</DialogTitle>
           <DialogDescription className="text-sm text-fg-muted">
-            Connect one or more providers — keys are stored encrypted, per organization. Pick which
-            model your org uses by default. Claril works fully without AI.
+            {scope === "org"
+              ? "Connect one or more providers — keys are stored encrypted, per organization. Pick which model your org uses by default. Claril works fully without AI."
+              : "Connect your own providers — keys are stored encrypted for your account, used for your personal diagrams. Claril works fully without AI."}
           </DialogDescription>
         </DialogHeader>
 
         {open && (
           <div className="-mr-2 mt-4 min-h-0 flex-1 overflow-y-auto pr-2">
-            <AiConnectionsManager initialProvider={initialProvider as AiProvider | undefined} />
+            <AiConnectionsManager
+              scope={scope}
+              initialProvider={initialProvider as AiProvider | undefined}
+            />
           </div>
         )}
 
