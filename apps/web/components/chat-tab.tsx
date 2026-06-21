@@ -186,9 +186,12 @@ export function ChatTab(props: ChatTabProps) {
     <div className="flex h-full flex-col">
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
         {messages.length === 0 && (
-          <p className="px-2 py-6 text-center text-sm text-fg-subtle">
-            Ask about this process, or describe a change to apply.
-          </p>
+          <div className="px-2 py-8 text-center">
+            <p className="text-sm font-medium text-fg">How can I help with this diagram?</p>
+            <p className="mt-1 text-sm text-fg-subtle">
+              Ask a question, request a review, or describe a change to apply.
+            </p>
+          </div>
         )}
         {messages.map((m) => (
           <div key={m.id} className="space-y-2">
