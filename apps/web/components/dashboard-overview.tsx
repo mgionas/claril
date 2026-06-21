@@ -12,6 +12,7 @@ import {
 import { Pie, PieChart, Bar, BarChart, XAxis, YAxis, Cell } from "recharts";
 import type { DashboardStats } from "@/lib/dashboard-stats-core";
 import type { DiagramKind } from "@/lib/default-diagram";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -77,6 +78,13 @@ export function DashboardOverview({ stats, userName, aiConnected }: DashboardOve
   const isOrg = stats.scope === "org";
   const { bpmn, sequence, c4 } = stats.diagramsByType;
 
+  // Derive which optional panels render so each grid's column count matches its
+  // item count (otherwise fixed 3-col grids leave empty/oddly-wrapped slots).
+  const showMembers = isOrg && stats.memberCount !== undefined;
+  const showUsage = isOrg && stats.usage !== undefined;
+  const showUsageChart = showUsage && (stats.usage?.byModel.length ?? 0) > 0;
+  const chartCount = 1 + (showUsage ? 1 : 0) + (showUsageChart ? 1 : 0);
+
   return (
     <div className="flex flex-col gap-7">
       {/* Header */}
@@ -107,32 +115,35 @@ export function DashboardOverview({ stats, userName, aiConnected }: DashboardOve
         <WholeEmptyState />
       ) : (
         <>
-          {/* Stat cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              label="Projects"
-              value={numberFmt.format(stats.projectCount)}
-            />
+          {/* Stat cards — grid columns match the card count so there's no empty slot */}
+          <div
+            className={cn(
+              "grid gap-4 sm:grid-cols-2",
+              showMembers && "lg:grid-cols-3",
+            )}
+          >
+            <StatCard label="Projects" value={numberFmt.format(stats.projectCount)} />
             <StatCard
               label="Diagrams"
               value={numberFmt.format(stats.diagramCount)}
               sub={`${bpmn} BPMN · ${sequence} Sequence · ${c4} C4`}
             />
-            {isOrg && stats.memberCount !== undefined && (
-              <StatCard
-                label="Members"
-                value={numberFmt.format(stats.memberCount)}
-              />
+            {showMembers && (
+              <StatCard label="Members" value={numberFmt.format(stats.memberCount!)} />
             )}
           </div>
 
-          {/* Charts + usage */}
-          <div className="grid gap-4 lg:grid-cols-3">
-            <TypeDonut bpmn={bpmn} sequence={sequence} c4={c4} />
-            {isOrg && stats.usage && <UsageCard usage={stats.usage} />}
-            {isOrg && stats.usage && stats.usage.byModel.length > 0 && (
-              <UsageByModelChart byModel={stats.usage.byModel} />
+          {/* Charts + usage — grid columns match the number of panels shown */}
+          <div
+            className={cn(
+              "grid gap-4",
+              chartCount === 2 && "lg:grid-cols-2",
+              chartCount >= 3 && "lg:grid-cols-3",
             )}
+          >
+            <TypeDonut bpmn={bpmn} sequence={sequence} c4={c4} />
+            {showUsage && <UsageCard usage={stats.usage!} />}
+            {showUsageChart && <UsageByModelChart byModel={stats.usage!.byModel} />}
           </div>
 
           {/* Recent diagrams */}
