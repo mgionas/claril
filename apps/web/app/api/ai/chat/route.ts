@@ -32,7 +32,7 @@ const BodySchema = z.object({
   diagramId: z.string().optional(),
   override: z
     .object({
-      provider: z.enum(["anthropic", "openai", "google", "mistral", "ollama"]).optional(),
+      provider: z.enum(["anthropic", "openai", "google", "mistral", "ollama", "openrouter"]).optional(),
       model: z.string().optional(),
     })
     .optional(),
