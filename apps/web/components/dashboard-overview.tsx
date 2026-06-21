@@ -195,7 +195,7 @@ function TypeDonut({ bpmn, sequence, c4 }: { bpmn: number; sequence: number; c4:
         {data.length === 0 ? (
           <p className="py-10 text-sm text-fg-subtle">No data yet</p>
         ) : (
-          <ChartContainer config={config} className="mx-auto aspect-square max-h-[200px]">
+          <ChartContainer config={config} className="mx-auto h-[200px] w-full max-w-[260px]">
             <PieChart>
               <ChartTooltip cursor={false} content={<ChartTooltipContent nameKey="type" hideLabel />} />
               <Pie
@@ -274,7 +274,7 @@ function UsageByModelChart({ byModel }: { byModel: NonNullable<DashboardStats["u
         <CardTitle className="text-sm font-medium">Tokens by model</CardTitle>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={config} className="aspect-video max-h-[200px] w-full">
+        <ChartContainer config={config} className="h-[200px] w-full">
           <BarChart accessibilityLayer data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
             <XAxis type="number" dataKey="totalTokens" hide />
             <YAxis
