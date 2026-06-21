@@ -21,7 +21,7 @@ import type { DiffMarks } from "@/lib/bpmn-diff";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
-import { AiDrawer } from "@/components/ai-drawer";
+import { AiDrawer, type DrawerTab } from "@/components/ai-drawer";
 import type { ChatTabHandle } from "@/components/chat-tab";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
@@ -36,10 +36,16 @@ interface BpmnWorkbenchProps {
   diagramName: string;
   initialXml: string;
   userName: string;
+  /** Current viewer's user id — threads through to the Comments tab (W16). */
+  currentUserId: string;
   aiConnected: boolean;
   aiProvider?: string;
   /** Which AI scope this diagram resolves against — drives the settings dialog. */
   diagramScope?: "personal" | "org";
+  /** Whether the viewer is editor+ on this diagram (lets them resolve any thread). */
+  canResolveComments?: boolean;
+  /** Deep-link: open this comment thread on load (from `?thread=`). */
+  initialThreadId?: string;
   /** Persisted AI documentation markdown, loaded server-side (null if none). */
   initialDoc?: string | null;
   /** Persisted chat transcript, loaded server-side (hydrates the chat). */
@@ -56,9 +62,12 @@ export function BpmnWorkbench({
   diagramName,
   initialXml,
   userName,
+  currentUserId,
   aiConnected,
   aiProvider,
   diagramScope,
+  canResolveComments,
+  initialThreadId,
   initialDoc,
   initialChatMessages,
 }: BpmnWorkbenchProps) {
@@ -69,10 +78,15 @@ export function BpmnWorkbench({
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [inspectorOpen, setInspectorOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "problems">("chat");
+  const isOrg = diagramScope === "org";
+  const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
+  const [activeTab, setActiveTab] = useState<DrawerTab>(
+    initialThreadId && isOrg ? "comments" : aiConnected ? "chat" : "problems",
+  );
   // First selected canvas element (drives the Comments tab anchor; W16, Task 6).
   const [selectedElement, setSelectedElement] = useState<{ id: string; name: string } | null>(null);
+  // Live element id/label set from the canvas registry (anchors comment threads).
+  const [liveElements, setLiveElements] = useState<{ id: string; name: string }[]>([]);
   // Doc-gen (Markdown), shown in its own slide-over; seeded from persisted doc.
   const [docOpen, setDocOpen] = useState(false);
   const [docMarkdown, setDocMarkdown] = useState<string | null>(initialDoc ?? null);
@@ -152,9 +166,18 @@ export function BpmnWorkbench({
     };
   }, []);
 
-  const handleReady = useCallback((api: CanvasApi) => {
-    canvasApiRef.current = api;
+  // Pull the current id/label set from the canvas registry (for the Comments tab).
+  const refreshLiveElements = useCallback(() => {
+    setLiveElements(canvasApiRef.current?.getElements() ?? []);
   }, []);
+
+  const handleReady = useCallback(
+    (api: CanvasApi) => {
+      canvasApiRef.current = api;
+      refreshLiveElements();
+    },
+    [refreshLiveElements],
+  );
 
   const handleApplyFix = useCallback((fix: QuickFix) => {
     canvasApiRef.current?.applyFix(fix);
@@ -186,6 +209,8 @@ export function BpmnWorkbench({
     (xml: string) => {
       currentXmlRef.current = xml;
       coalescerRef.current?.onChange();
+      // Element set may have changed (add/remove/rename) — refresh comment anchors.
+      if (isOrg) refreshLiveElements();
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -194,7 +219,7 @@ export function BpmnWorkbench({
           .catch(() => setSaveState("error"));
       }, 800);
     },
-    [diagramId],
+    [diagramId, isOrg, refreshLiveElements],
   );
 
   // Advisor critique: one-click grounded findings, shown in the Problems tab.
@@ -323,6 +348,17 @@ export function BpmnWorkbench({
   const errorCount = allFindings.filter((f) => f.severity === "error").length;
   const warningCount = allFindings.filter((f) => f.severity === "warning").length;
 
+  // Comment anchors derived from the live canvas registry (W16).
+  const liveElementIds = liveElements.map((e) => e.id);
+  const elementNames: Record<string, string> = {};
+  for (const e of liveElements) if (e.name) elementNames[e.id] = e.name;
+  const handleFocusElement = useCallback((id: string) => {
+    canvasApiRef.current?.focusElement(id);
+  }, []);
+  const handleCommentedElementsChange = useCallback((ids: string[]) => {
+    canvasApiRef.current?.setCommentedElements(ids);
+  }, []);
+
   return (
     <main
       className="flex h-screen w-screen overflow-hidden bg-canvas text-fg"
@@ -437,6 +473,16 @@ export function BpmnWorkbench({
         chatHandleRef={chatHandleRef}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        isOrg={isOrg}
+        currentUserId={currentUserId}
+        diagramId={diagramId}
+        selectedElement={selectedElement}
+        liveElementIds={liveElementIds}
+        elementNames={elementNames}
+        canResolveComments={canResolveComments}
+        initialThreadId={initialThreadId}
+        onFocusElement={handleFocusElement}
+        onCommentedElementsChange={handleCommentedElementsChange}
         getChatContext={getChatContext}
         initialChatMessages={initialChatMessages}
         pendingProposalId={pendingProposalId}

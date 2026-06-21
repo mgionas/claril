@@ -26,6 +26,8 @@ interface CommentsTabProps {
   canResolveAny: boolean;
   selectedElement: { id: string; name: string } | null;
   liveElementIds: string[];
+  /** Map of element id -> label, sourced from the canvas registry (for thread chips). */
+  elementNames?: Record<string, string>;
   initialThreadId?: string;
   onFocusElement: (elementId: string) => void;
   onCommentedElementsChange: (ids: string[]) => void;
@@ -42,6 +44,7 @@ export function CommentsTab({
   canResolveAny,
   selectedElement,
   liveElementIds,
+  elementNames,
   initialThreadId,
   onFocusElement,
   onCommentedElementsChange,
@@ -242,6 +245,7 @@ export function CommentsTab({
                 key={t.id}
                 thread={t}
                 selectedElement={selectedElement}
+                elementNames={elementNames}
                 onOpen={() => setOpenThreadId(t.id)}
               />
             ))}
@@ -255,6 +259,7 @@ export function CommentsTab({
                 key={t.id}
                 thread={t}
                 selectedElement={selectedElement}
+                elementNames={elementNames}
                 unanchored
                 onOpen={() => setOpenThreadId(t.id)}
               />
@@ -279,6 +284,7 @@ export function CommentsTab({
                     key={t.id}
                     thread={t}
                     selectedElement={selectedElement}
+                    elementNames={elementNames}
                     secondary
                     onOpen={() => setOpenThreadId(t.id)}
                   />
@@ -323,12 +329,14 @@ function Section({
 function ThreadRow({
   thread,
   selectedElement,
+  elementNames,
   secondary,
   unanchored,
   onOpen,
 }: {
   thread: ThreadView;
   selectedElement: { id: string; name: string } | null;
+  elementNames?: Record<string, string>;
   secondary?: boolean;
   unanchored?: boolean;
   onOpen: () => void;
@@ -337,12 +345,14 @@ function ThreadRow({
   const last = thread.comments[thread.comments.length - 1];
   const replies = Math.max(0, thread.comments.length - 1);
 
-  // We only have element ids here; the precise label arrives from the canvas
-  // (Task 6). Use the selected element's name when it matches, else a generic chip.
+  // Prefer the live canvas label for the anchored element; fall back to the
+  // selected element's name when it matches, else a generic chip.
   const elementLabel =
-    thread.elementId && selectedElement && selectedElement.id === thread.elementId
-      ? selectedElement.name || "Element"
-      : "Element";
+    (thread.elementId && elementNames?.[thread.elementId]) ||
+    (thread.elementId && selectedElement && selectedElement.id === thread.elementId
+      ? selectedElement.name
+      : "") ||
+    "Element";
 
   return (
     <button

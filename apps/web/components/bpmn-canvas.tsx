@@ -52,6 +52,8 @@ export interface CanvasApi {
   clearCommentMarkers: () => void;
   /** Ids of all flow elements currently present in the model (for live-set diffing). */
   getElementIds: () => string[];
+  /** Id + label of all elements currently present in the model (for comment chips). */
+  getElements: () => { id: string; name: string }[];
   /** Select an element and bring it into view (no-op if missing). */
   focusElement: (id: string) => void;
 }
@@ -363,6 +365,17 @@ export default function BpmnCanvas({
       }
     };
 
+    const getElements = (): { id: string; name: string }[] => {
+      try {
+        const registry = modeler.get("elementRegistry") as unknown as {
+          getAll: () => { id: string; businessObject?: { name?: string } }[];
+        };
+        return registry.getAll().map((e) => ({ id: e.id, name: e.businessObject?.name ?? "" }));
+      } catch {
+        return [];
+      }
+    };
+
     const focusElement = (id: string) => {
       try {
         const registry = modeler.get("elementRegistry") as unknown as {
@@ -518,6 +531,7 @@ export default function BpmnCanvas({
           setCommentedElements,
           clearCommentMarkers: clearCommentMarks,
           getElementIds,
+          getElements,
           focusElement,
         });
       } catch (err) {
