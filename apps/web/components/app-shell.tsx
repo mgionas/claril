@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Boxes,
   ChevronRight,
   LayoutDashboard,
   Library,
@@ -72,9 +71,9 @@ export interface AppShellProps {
 
 /**
  * Shared shell for Claril's authenticated pages: a collapsible frosted sidebar
- * (wordmark + scope switcher, primary nav, a collapsible Settings group, and a
- * user menu) alongside an inset content area with a sticky header. Reused by the
- * dashboard, the Asset Catalog, and Settings.
+ * (a sidebar-07 team-switcher header for context switching, primary nav, a
+ * collapsible Settings group, and a user menu) alongside an inset content area
+ * with a sticky header. Reused by the dashboard, the Asset Catalog, and Settings.
  */
 export function AppShell({
   children,
@@ -150,21 +149,7 @@ function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-1 py-1 transition-opacity hover:opacity-80"
-          aria-label="Claril home"
-        >
-          <span className="grid size-6 shrink-0 place-items-center rounded-[6px] bg-accent/15 text-accent">
-            <Boxes className="size-3.5" />
-          </span>
-          <span className="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-            Claril
-          </span>
-        </Link>
-        <div className="w-full group-data-[collapsible=icon]:hidden">
-          <ContextSwitcher />
-        </div>
+        <ContextSwitcher />
       </SidebarHeader>
 
       <SidebarContent>

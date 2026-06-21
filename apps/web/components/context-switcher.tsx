@@ -2,7 +2,14 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Check, ChevronsUpDown, Loader2, Plus, User } from "lucide-react";
+import {
+  Building2,
+  Check,
+  ChevronsUpDown,
+  Loader2,
+  Plus,
+  UserRound,
+} from "lucide-react";
 import { authClient, useSession } from "@/lib/auth-client";
 import { createOrgWithWorkspace } from "@/lib/org-actions";
 import { Button } from "@/components/ui/button";
@@ -22,6 +29,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 const inputClass =
   "w-full rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent";
@@ -42,6 +55,7 @@ function errorMessage(err: unknown): string {
  */
 export function ContextSwitcher() {
   const router = useRouter();
+  const { isMobile } = useSidebar();
   const { data: orgs } = authClient.useListOrganizations();
   const { data: session } = useSession();
   const activeOrgId = session?.session?.activeOrganizationId ?? null;
@@ -72,52 +86,84 @@ export function ContextSwitcher() {
     });
   }
 
+  // Active-context label: Personal space vs the active org name.
+  const label = isPersonal ? "Personal" : activeOrg!.name;
+  const subtitle = isPersonal ? "Personal space" : "Organization";
+
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex h-8 max-w-[12rem] shrink-0 items-center gap-1.5 rounded-[6px] border border-hairline bg-elevated/60 px-2 text-sm text-fg outline-none transition-colors hover:bg-elevated focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-60"
-          aria-label="Switch context"
-          disabled={switching}
-        >
-          {switching ? (
-            <Loader2 className="size-3.5 shrink-0 animate-spin text-fg-subtle" />
-          ) : isPersonal ? (
-            <User className="size-3.5 shrink-0 text-fg-subtle" />
-          ) : (
-            <Building2 className="size-3.5 shrink-0 text-fg-subtle" />
-          )}
-          <span className="truncate font-medium">
-            {isPersonal ? "Personal" : activeOrg!.name}
-          </span>
-          <ChevronsUpDown className="size-3.5 shrink-0 text-fg-subtle" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-60">
-          <DropdownMenuLabel className="text-xs font-normal text-fg-subtle">
-            Switch context
-          </DropdownMenuLabel>
-          <DropdownMenuItem onSelect={switchToPersonal}>
-            <User />
-            <span className="flex-1 truncate">Personal</span>
-            {isPersonal && <Check className="size-4 text-accent" />}
-          </DropdownMenuItem>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                tooltip={label}
+                aria-label="Switch context"
+                disabled={switching}
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  {switching ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : isPersonal ? (
+                    <UserRound className="size-4" />
+                  ) : (
+                    <Building2 className="size-4" />
+                  )}
+                </span>
+                <span className="flex min-w-0 flex-col text-left leading-tight">
+                  <span className="truncate text-sm font-semibold">{label}</span>
+                  <span className="truncate text-xs text-sidebar-foreground/60">
+                    {subtitle}
+                  </span>
+                </span>
+                <ChevronsUpDown className="ml-auto size-4" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              side={isMobile ? "bottom" : "right"}
+              sideOffset={4}
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+            >
+              <DropdownMenuLabel className="text-xs font-normal text-fg-subtle">
+                Contexts
+              </DropdownMenuLabel>
+              <DropdownMenuItem className="gap-2 p-2" onSelect={switchToPersonal}>
+                <span className="flex size-6 items-center justify-center rounded-md border border-hairline bg-elevated">
+                  <UserRound className="size-3.5 shrink-0" />
+                </span>
+                <span className="flex-1 truncate">Personal</span>
+                {isPersonal && <Check className="size-4 text-accent" />}
+              </DropdownMenuItem>
 
-          {orgs && orgs.length > 0 && <DropdownMenuSeparator />}
-          {orgs?.map((org) => (
-            <DropdownMenuItem key={org.id} onSelect={() => switchToOrg(org.id)}>
-              <Building2 />
-              <span className="flex-1 truncate">{org.name}</span>
-              {org.id === activeOrgId && <Check className="size-4 text-accent" />}
-            </DropdownMenuItem>
-          ))}
+              {orgs && orgs.length > 0 && <DropdownMenuSeparator />}
+              {orgs?.map((org) => (
+                <DropdownMenuItem
+                  key={org.id}
+                  className="gap-2 p-2"
+                  onSelect={() => switchToOrg(org.id)}
+                >
+                  <span className="flex size-6 items-center justify-center rounded-md border border-hairline bg-elevated">
+                    <Building2 className="size-3.5 shrink-0" />
+                  </span>
+                  <span className="flex-1 truncate">{org.name}</span>
+                  {org.id === activeOrgId && <Check className="size-4 text-accent" />}
+                </DropdownMenuItem>
+              ))}
 
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setCreateOpen(true)}>
-            <Plus />
-            Create organization
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2 p-2" onSelect={() => setCreateOpen(true)}>
+                <span className="flex size-6 items-center justify-center rounded-md border border-hairline bg-transparent">
+                  <Plus className="size-3.5 shrink-0" />
+                </span>
+                <span className="text-fg-muted">Create organization</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
 
       <CreateOrgDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
