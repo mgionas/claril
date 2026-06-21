@@ -235,6 +235,59 @@ export function applyEditPlan(
     }
   }
 
+  // After all ops: grow every pool so its content fits. autoPlace.append and
+  // the fallback placement can drop nodes at/past a pool's edge (overflow); a
+  // pool must never be smaller than the elements it contains. We only ever
+  // EXPAND (never shrink), so this can't clip existing content.
+  fitPoolsToContent();
+
+  function fitPoolsToContent() {
+    const PAD = 40;
+    const all = (elementRegistry.getAll?.() ?? []) as any[];
+    const isDescendant = (el: any, ancestor: any): boolean => {
+      let cur = el.parent;
+      while (cur) {
+        if (cur === ancestor) return true;
+        cur = cur.parent;
+      }
+      return false;
+    };
+    const participants = all.filter(
+      (e) => e.businessObject?.$type === "bpmn:Participant" && typeof e.width === "number",
+    );
+    for (const p of participants) {
+      const kids = all.filter(
+        (e) =>
+          e !== p &&
+          typeof e.x === "number" &&
+          typeof e.width === "number" &&
+          e.businessObject?.$type !== "bpmn:Participant" &&
+          e.businessObject?.$type !== "bpmn:Lane" &&
+          e.waypoints == null && // shapes only, not connections
+          isDescendant(e, p),
+      );
+      if (kids.length === 0) continue;
+      const minX = Math.min(...kids.map((k) => k.x));
+      const minY = Math.min(...kids.map((k) => k.y));
+      const maxX = Math.max(...kids.map((k) => k.x + k.width));
+      const maxY = Math.max(...kids.map((k) => k.y + k.height));
+      // Expand-only: keep the current edges unless content pushes past them.
+      const nx = Math.min(p.x, minX - PAD);
+      const ny = Math.min(p.y, minY - PAD);
+      const right = Math.max(p.x + p.width, maxX + PAD);
+      const bottom = Math.max(p.y + p.height, maxY + PAD);
+      const next = { x: nx, y: ny, width: right - nx, height: bottom - ny };
+      if (next.x === p.x && next.y === p.y && next.width === p.width && next.height === p.height) {
+        continue;
+      }
+      try {
+        modeling.resizeShape(p, next);
+      } catch {
+        /* best-effort: a pool that won't resize just keeps its size */
+      }
+    }
+  }
+
   function applyOne(op: Op) {
     switch (op.kind) {
       case "addPool": {
