@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ChevronRight,
+  FolderKanban,
   LayoutDashboard,
   Library,
   LogOut,
@@ -117,6 +118,7 @@ interface NavLeaf {
 
 const MAIN_NAV: NavLeaf[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Catalog", href: "/catalog", icon: Library, orgOnly: true },
 ];
 
