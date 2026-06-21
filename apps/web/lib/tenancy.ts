@@ -9,11 +9,6 @@ import { db, schema } from "@claril/db";
  * selection is deferred.
  */
 
-export interface ActiveTenancy {
-  organizationId: string;
-  workspaceId: string;
-}
-
 /** The XOR parent of a diagram. */
 export type DiagramParent =
   | { kind: "org"; projectId: string }
@@ -32,69 +27,6 @@ export function diagramParent(d: {
   return hasOrg
     ? { kind: "org", projectId: d.projectId as string }
     : { kind: "personal", personalProjectId: d.personalProjectId as string };
-}
-
-/**
- * Ensure the user has a personal Org → Workspace, creating them on first use.
- * Idempotent. Bootstraps the tenancy chain down to the workspace level so the
- * dashboard can list/create projects itself.
- */
-export async function ensureUserWorkspace(userId: string): Promise<ActiveTenancy> {
-  const memberships = await db
-    .select({ organizationId: schema.member.organizationId })
-    .from(schema.member)
-    .where(eq(schema.member.userId, userId))
-    .limit(1);
-
-  if (memberships.length === 0) {
-    const organizationId = randomUUID();
-    const workspaceId = randomUUID();
-    await db.transaction(async (tx) => {
-      await tx.insert(schema.organization).values({
-        id: organizationId,
-        name: "Personal",
-        slug: `org-${randomUUID().slice(0, 8)}`,
-      });
-      await tx
-        .insert(schema.member)
-        .values({ id: randomUUID(), organizationId, userId, role: "owner" });
-      await tx.insert(schema.workspace).values({
-        id: workspaceId,
-        organizationId,
-        name: "My Workspace",
-        slug: "default",
-      });
-      await tx
-        .insert(schema.workspaceMember)
-        .values({ id: randomUUID(), workspaceId, userId, role: "admin" });
-    });
-    return { organizationId, workspaceId };
-  }
-
-  const organizationId = memberships[0].organizationId;
-  const workspaces = await db
-    .select({ id: schema.workspace.id })
-    .from(schema.workspace)
-    .where(eq(schema.workspace.organizationId, organizationId))
-    .limit(1);
-
-  if (workspaces[0]) {
-    return { organizationId, workspaceId: workspaces[0].id };
-  }
-
-  const workspaceId = randomUUID();
-  await db.transaction(async (tx) => {
-    await tx.insert(schema.workspace).values({
-      id: workspaceId,
-      organizationId,
-      name: "My Workspace",
-      slug: "default",
-    });
-    await tx
-      .insert(schema.workspaceMember)
-      .values({ id: randomUUID(), workspaceId, userId, role: "admin" });
-  });
-  return { organizationId, workspaceId };
 }
 
 /**
