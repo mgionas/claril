@@ -114,11 +114,15 @@ interface NavLeaf {
   icon: typeof LayoutDashboard;
   /** Org-only surfaces are hidden in the personal scope. */
   orgOnly?: boolean;
+  /** Personal-only surfaces are hidden in the org scope. */
+  personalOnly?: boolean;
 }
 
 const MAIN_NAV: NavLeaf[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Projects", href: "/projects", icon: FolderKanban },
+  // Org projects live under per-workspace routes (`/w/[id]`); the flat
+  // `/projects` listing is personal-scope only.
+  { label: "Projects", href: "/projects", icon: FolderKanban, personalOnly: true },
   { label: "Catalog", href: "/catalog", icon: Library, orgOnly: true },
 ];
 
@@ -145,7 +149,10 @@ function AppSidebar({
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
-  const mainNav = MAIN_NAV.filter((item) => !item.orgOnly || !isPersonal);
+  const mainNav = MAIN_NAV.filter(
+    (item) =>
+      (!item.orgOnly || !isPersonal) && (!item.personalOnly || isPersonal),
+  );
   const settingsNav = SETTINGS_NAV.filter((item) => !item.orgOnly || !isPersonal);
 
   return (

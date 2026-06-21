@@ -73,17 +73,36 @@ interface ProjectsListProps {
   aiConnected: boolean;
   /** The active scope; routes CRUD to personal vs org server actions. */
   context: ProjectsContext;
+  /**
+   * The workspace hosting these projects (org scope only). Required for org
+   * project creation, which is scoped to a concrete workspace.
+   */
+  workspaceId?: string;
+  /** When true (e.g. workspace viewers), all create/rename/delete affordances are hidden. */
+  readOnly?: boolean;
 }
 
-/** The project-level mutations, resolved per active scope. */
-function projectActions(context: ProjectsContext) {
+/**
+ * The project-level mutations, resolved per active scope. Org creation is scoped
+ * to `workspaceId` (the per-workspace page passes the real id).
+ */
+function projectActions(context: ProjectsContext, workspaceId?: string) {
   return context === "personal"
     ? {
         create: createPersonalProject,
         rename: renamePersonalProject,
         remove: deletePersonalProject,
       }
-    : { create: createProject, rename: renameProject, remove: deleteProject };
+    : {
+        create: (name: string): Promise<{ id: string }> => {
+          if (!workspaceId) {
+            throw new Error("Create projects from your workspace page.");
+          }
+          return createProject(workspaceId, name);
+        },
+        rename: renameProject,
+        remove: deleteProject,
+      };
 }
 
 const inputClass =
@@ -120,7 +139,13 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function ProjectsList({ projects, aiConnected, context }: ProjectsListProps) {
+export function ProjectsList({
+  projects,
+  aiConnected,
+  context,
+  workspaceId,
+  readOnly = false,
+}: ProjectsListProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const isPersonal = context === "personal";
 
@@ -136,20 +161,27 @@ export function ProjectsList({ projects, aiConnected, context }: ProjectsListPro
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
           <p className="mt-1 text-sm text-fg-muted">
             {projects.length === 0
-              ? "Browse and manage your diagrams across projects."
+              ? readOnly
+                ? "No projects in this workspace yet."
+                : "Browse and manage your diagrams across projects."
               : `${projects.length} ${
                   projects.length === 1 ? "project" : "projects"
                 } · ${diagramCount} ${diagramCount === 1 ? "diagram" : "diagrams"}`}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <FolderPlus className="size-4" />
-          New project
-        </Button>
+        {!readOnly && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <FolderPlus className="size-4" />
+            New project
+          </Button>
+        )}
       </div>
 
       {projects.length === 0 ? (
-        <EmptyState onCreate={() => setCreateOpen(true)} isPersonal={isPersonal} />
+        <EmptyState
+          onCreate={readOnly ? undefined : () => setCreateOpen(true)}
+          isPersonal={isPersonal}
+        />
       ) : (
         <div className="overflow-hidden rounded-[10px] border border-hairline bg-panel/40">
           {projects.map((project) => (
@@ -158,12 +190,21 @@ export function ProjectsList({ projects, aiConnected, context }: ProjectsListPro
               project={project}
               aiConnected={aiConnected}
               context={context}
+              workspaceId={workspaceId}
+              readOnly={readOnly}
             />
           ))}
         </div>
       )}
 
-      <NewProjectDialog open={createOpen} onOpenChange={setCreateOpen} context={context} />
+      {!readOnly && (
+        <NewProjectDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          context={context}
+          workspaceId={workspaceId}
+        />
+      )}
     </>
   );
 }
@@ -172,10 +213,12 @@ function NewProjectDialog({
   open,
   onOpenChange,
   context,
+  workspaceId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   context: ProjectsContext;
+  workspaceId?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -189,7 +232,7 @@ function NewProjectDialog({
     setError(null);
     startTransition(async () => {
       try {
-        await projectActions(context).create(trimmed);
+        await projectActions(context, workspaceId).create(trimmed);
         setName("");
         onOpenChange(false);
         router.refresh();
@@ -258,7 +301,13 @@ function NewProjectDialog({
   );
 }
 
-function EmptyState({ onCreate, isPersonal }: { onCreate: () => void; isPersonal: boolean }) {
+function EmptyState({
+  onCreate,
+  isPersonal,
+}: {
+  onCreate?: () => void;
+  isPersonal: boolean;
+}) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-hairline bg-panel/40 px-6 py-20 text-center">
       <span className="grid size-12 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
@@ -268,12 +317,16 @@ function EmptyState({ onCreate, isPersonal }: { onCreate: () => void; isPersonal
         {isPersonal ? "No personal projects yet" : "No projects yet"}
       </p>
       <p className="mt-1 max-w-xs text-sm text-fg-muted">
-        Create your first project to start designing BPMN, sequence, and C4 diagrams.
+        {onCreate
+          ? "Create your first project to start designing BPMN, sequence, and C4 diagrams."
+          : "An editor can add projects to start designing diagrams here."}
       </p>
-      <Button className="mt-5" onClick={onCreate}>
-        <FolderPlus className="size-4" />
-        New project
-      </Button>
+      {onCreate && (
+        <Button className="mt-5" onClick={onCreate}>
+          <FolderPlus className="size-4" />
+          New project
+        </Button>
+      )}
     </div>
   );
 }
@@ -282,13 +335,17 @@ function ProjectFolder({
   project,
   aiConnected,
   context,
+  workspaceId,
+  readOnly = false,
 }: {
   project: ProjectWithDiagrams;
   aiConnected: boolean;
   context: ProjectsContext;
+  workspaceId?: string;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
-  const actions = projectActions(context);
+  const actions = projectActions(context, workspaceId);
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -380,46 +437,48 @@ function ProjectFolder({
           </CollapsibleTrigger>
         )}
 
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-fg-muted"
-            onClick={() => setNewDiagramOpen(true)}
-            disabled={pending}
-          >
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">New diagram</span>
-          </Button>
-
-          <NewDiagramDialog
-            projectId={project.id}
-            open={newDiagramOpen}
-            onOpenChange={setNewDiagramOpen}
-            aiConnected={aiConnected}
-            context={context}
-          />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle outline-none transition-colors hover:bg-elevated hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-50"
-              aria-label="Project actions"
+        {!readOnly && (
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-fg-muted"
+              onClick={() => setNewDiagramOpen(true)}
               disabled={pending}
             >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onSelect={() => setRenaming(true)}>
-                <Pencil />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
-                <Trash2 />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">New diagram</span>
+            </Button>
+
+            <NewDiagramDialog
+              projectId={project.id}
+              open={newDiagramOpen}
+              onOpenChange={setNewDiagramOpen}
+              aiConnected={aiConnected}
+              context={context}
+            />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle outline-none transition-colors hover:bg-elevated hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-50"
+                aria-label="Project actions"
+                disabled={pending}
+              >
+                <MoreHorizontal className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onSelect={() => setRenaming(true)}>
+                  <Pencil />
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
+                  <Trash2 />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       {renameError && (
@@ -431,14 +490,18 @@ function ProjectFolder({
       <CollapsibleContent>
         <div className="border-t border-hairline bg-bg/30 pl-7">
           {count === 0 ? (
-            <button
-              type="button"
-              onClick={() => setNewDiagramOpen(true)}
-              className="flex w-full items-center gap-2 px-4 py-3.5 text-left text-sm text-fg-subtle transition-colors hover:text-fg"
-            >
-              <Plus className="size-4" />
-              No diagrams yet — create your first.
-            </button>
+            readOnly ? (
+              <p className="px-4 py-3.5 text-sm text-fg-subtle">No diagrams yet.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setNewDiagramOpen(true)}
+                className="flex w-full items-center gap-2 px-4 py-3.5 text-left text-sm text-fg-subtle transition-colors hover:text-fg"
+              >
+                <Plus className="size-4" />
+                No diagrams yet — create your first.
+              </button>
+            )
           ) : (
             <Table>
               <TableHeader>
@@ -457,6 +520,7 @@ function ProjectFolder({
                     name={d.name}
                     kind={d.type}
                     updatedAt={d.updatedAt}
+                    readOnly={readOnly}
                   />
                 ))}
               </TableBody>
@@ -487,11 +551,13 @@ function DiagramRow({
   name,
   kind,
   updatedAt,
+  readOnly = false,
 }: {
   id: string;
   name: string;
   kind: DiagramKind;
   updatedAt: string;
+  readOnly?: boolean;
 }) {
   const KindIcon = KIND_ICON[kind] ?? FileText;
   const router = useRouter();
@@ -599,14 +665,18 @@ function DiagramRow({
                 <SquareArrowOutUpRight />
                 Open
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setRenaming(true)}>
-                <Pencil />
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
-                <Trash2 />
-                Delete
-              </DropdownMenuItem>
+              {!readOnly && (
+                <>
+                  <DropdownMenuItem onSelect={() => setRenaming(true)}>
+                    <Pencil />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
+                    <Trash2 />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>

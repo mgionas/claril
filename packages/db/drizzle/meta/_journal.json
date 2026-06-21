@@ -71,6 +71,13 @@
       "when": 1782040918673,
       "tag": "0009_fixed_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782052551697,
+      "tag": "0010_pretty_solo",
+      "breakpoints": true
     }
   ]
 }
