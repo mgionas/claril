@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <NextTopLoader
           color="#4d8dff"
           height={3}
-          showSpinner
+          showSpinner={false}
           shadow="0 0 10px #4d8dff,0 0 5px #4d8dff"
         />
         {children}
