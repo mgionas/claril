@@ -7,6 +7,7 @@ import {
   ChevronRight,
   FolderKanban,
   LayoutDashboard,
+  LayoutGrid,
   Library,
   LogOut,
   Settings,
@@ -120,6 +121,9 @@ interface NavLeaf {
 
 const MAIN_NAV: NavLeaf[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  // Org workspaces live on their own route; per-workspace project pages are
+  // under `/w/[id]`.
+  { label: "Workspaces", href: "/workspaces", icon: LayoutGrid, orgOnly: true },
   // Org projects live under per-workspace routes (`/w/[id]`); the flat
   // `/projects` listing is personal-scope only.
   { label: "Projects", href: "/projects", icon: FolderKanban, personalOnly: true },

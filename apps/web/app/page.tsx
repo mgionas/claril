@@ -1,15 +1,11 @@
 import { headers } from "next/headers";
-import { and, eq } from "drizzle-orm";
-import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { getAiConfig } from "@/lib/ai";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import type { DashboardStats } from "@/lib/dashboard-stats-core";
-import { listWorkspaces } from "@/lib/workspace-actions";
 import { AppShell } from "@/components/app-shell";
 import { DashboardOverview } from "@/components/dashboard-overview";
-import { WorkspacesGrid } from "@/components/workspaces-grid";
 import { Landing } from "@/components/marketing/landing";
 
 export default async function Home() {
@@ -35,32 +31,8 @@ export default async function Home() {
       recent: [],
     };
 
-  // Org scope: the dashboard root is the Workspaces grid (per-workspace project
-  // pages live under `/w/[id]`). Personal scope keeps the diagram overview.
-  if (ctx?.kind === "org") {
-    const workspaces = await listWorkspaces();
-    // Only org owners/admins may create workspaces (mirrors `createWorkspace`'s
-    // guard, which resolves the role from the `member` table for the active org).
-    const orgRole = (
-      await db
-        .select({ role: schema.member.role })
-        .from(schema.member)
-        .where(
-          and(
-            eq(schema.member.organizationId, ctx.orgId),
-            eq(schema.member.userId, session.user.id),
-          ),
-        )
-        .limit(1)
-    )[0]?.role;
-    const canCreate = orgRole === "owner" || orgRole === "admin";
-    return (
-      <AppShell userName={session.user.name} userEmail={session.user.email} title="Workspaces">
-        <WorkspacesGrid workspaces={workspaces} canCreate={canCreate} />
-      </AppShell>
-    );
-  }
-
+  // Both scopes render the stats overview at the root. Org workspaces live under
+  // their own `/workspaces` route (per-workspace project pages under `/w/[id]`).
   return (
     <AppShell userName={session.user.name} userEmail={session.user.email} title="Dashboard">
       <DashboardOverview
