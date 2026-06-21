@@ -16,6 +16,7 @@ import {
 import { signOut, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { ContextSwitcher } from "@/components/context-switcher";
+import { NotificationBell } from "@/components/notification-bell";
 import {
   Collapsible,
   CollapsibleContent,
@@ -86,6 +87,11 @@ export function AppShell({
   contentClassName,
   title,
 }: AppShellProps) {
+  // Org context drives the notification bell: mentions only originate on org
+  // diagrams, so the bell is hidden in the personal scope.
+  const { data: session } = useSession();
+  const isPersonal = !session?.session?.activeOrganizationId;
+
   return (
     <SidebarProvider>
       <AppSidebar userName={userName} userEmail={userEmail} />
@@ -95,7 +101,10 @@ export function AppShell({
           {title && (
             <span className="truncate text-sm font-semibold tracking-tight">{title}</span>
           )}
-          {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
+          <div className="ml-auto flex items-center gap-2">
+            {actions}
+            {!isPersonal && <NotificationBell />}
+          </div>
         </header>
         {fullBleed ? (
           <main className="flex-1">{children}</main>

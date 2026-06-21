@@ -46,6 +46,16 @@ export interface CanvasApi {
   markAiEdit: (ids: string[]) => void;
   /** Remove all AI-edit marking. */
   clearAiEdit: () => void;
+  /** Mark elements that have ≥1 open comment thread (amber). Replaces prior set. */
+  setCommentedElements: (ids: string[]) => void;
+  /** Remove all comment marking. */
+  clearCommentMarkers: () => void;
+  /** Ids of all flow elements currently present in the model (for live-set diffing). */
+  getElementIds: () => string[];
+  /** Id + label of all elements currently present in the model (for comment chips). */
+  getElements: () => { id: string; name: string }[];
+  /** Select an element and bring it into view (no-op if missing). */
+  focusElement: (id: string) => void;
 }
 
 const DIFF_MARKERS = [
@@ -75,6 +85,8 @@ interface BpmnCanvasProps {
   findings?: Finding[];
   /** Open the Inspector drawer and select the element's finding. */
   onShowProblems?: (elementId: string) => void;
+  /** Emits the first selected element ({id,name}) or null when nothing is selected. */
+  onSelectionChange?: (selected: { id: string; name: string } | null) => void;
 }
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
@@ -90,6 +102,7 @@ export default function BpmnCanvas({
   onReady,
   findings,
   onShowProblems,
+  onSelectionChange,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
@@ -97,7 +110,12 @@ export default function BpmnCanvas({
   const findingOverlaysRef = useRef<string[]>([]);
   const diffMarkedRef = useRef<string[]>([]);
   const aiEditMarkedRef = useRef<string[]>([]);
+  const commentMarkedRef = useRef<string[]>([]);
   const assetOverlaysRef = useRef<string[]>([]);
+  // Latest selection callback, kept in a ref so the modeler effect (which owns
+  // the selection.changed subscription) needn't re-run when the prop changes.
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
   const connectHandleRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -301,9 +319,87 @@ export default function BpmnCanvas({
       aiEditMarkedRef.current = [...marked];
     };
 
+    const clearCommentMarks = () => {
+      const canvas = modeler.get("canvas") as unknown as {
+        removeMarker: (id: string, cls: string) => void;
+      };
+      for (const id of commentMarkedRef.current) {
+        try {
+          canvas.removeMarker(id, "claril-comment");
+        } catch {
+          /* element may be gone */
+        }
+      }
+      commentMarkedRef.current = [];
+    };
+
+    const setCommentedElements = (ids: string[]) => {
+      clearCommentMarks();
+      const canvas = modeler.get("canvas") as unknown as {
+        addMarker: (id: string, cls: string) => void;
+      };
+      const registry = modeler.get("elementRegistry") as unknown as {
+        get: (id: string) => unknown;
+      };
+      const marked = new Set<string>();
+      for (const id of ids) {
+        if (!registry.get(id)) continue; // skip ids missing from the model
+        try {
+          canvas.addMarker(id, "claril-comment");
+          marked.add(id);
+        } catch {
+          /* ignore */
+        }
+      }
+      commentMarkedRef.current = [...marked];
+    };
+
+    const getElementIds = (): string[] => {
+      try {
+        const registry = modeler.get("elementRegistry") as unknown as {
+          getAll: () => { id: string }[];
+        };
+        return registry.getAll().map((e) => e.id);
+      } catch {
+        return [];
+      }
+    };
+
+    const getElements = (): { id: string; name: string }[] => {
+      try {
+        const registry = modeler.get("elementRegistry") as unknown as {
+          getAll: () => { id: string; businessObject?: { name?: string } }[];
+        };
+        return registry.getAll().map((e) => ({ id: e.id, name: e.businessObject?.name ?? "" }));
+      } catch {
+        return [];
+      }
+    };
+
+    const focusElement = (id: string) => {
+      try {
+        const registry = modeler.get("elementRegistry") as unknown as {
+          get: (id: string) => unknown;
+        };
+        const element = registry.get(id);
+        if (!element) return;
+        const canvas = modeler.get("canvas") as unknown as {
+          scrollToElement: (el: unknown) => void;
+        };
+        const selection = modeler.get("selection") as unknown as {
+          select: (el: unknown) => void;
+        };
+        selection.select(element);
+        canvas.scrollToElement(element);
+      } catch {
+        /* ignore */
+      }
+    };
+
     const reloadXml = async (xml: string) => {
       clearDiffMarks();
       clearAiEditMarks();
+      clearCommentMarks();
       await modeler.importXML(xml);
       if (disposed) return;
       const canvas = modeler.get("canvas") as unknown as {
@@ -406,6 +502,18 @@ export default function BpmnCanvas({
         modeler.on("selection.changed", (e: { newSelection?: unknown[] }) => {
           const sel = e.newSelection;
           showConnectHandle(sel && sel.length === 1 ? sel[0] : null);
+
+          // Emit the first selected element ({id,name}) for the comments surface.
+          const cb = onSelectionChangeRef.current;
+          if (cb) {
+            const first = sel && sel.length > 0 ? (sel[0] as any) : null;
+            // Skip the root/process element (best-effort: roots have no parent).
+            if (first && first.id && first.parent) {
+              cb({ id: first.id as string, name: (first.businessObject?.name as string) ?? "" });
+            } else {
+              cb(null);
+            }
+          }
         });
 
         setReady(true);
@@ -420,6 +528,11 @@ export default function BpmnCanvas({
             modelerRef.current ? applyEditPlan(modelerRef.current, plan).changedIds : [],
           markAiEdit,
           clearAiEdit: clearAiEditMarks,
+          setCommentedElements,
+          clearCommentMarkers: clearCommentMarks,
+          getElementIds,
+          getElements,
+          focusElement,
         });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);
@@ -445,6 +558,7 @@ export default function BpmnCanvas({
       markedRef.current = [];
       diffMarkedRef.current = [];
       aiEditMarkedRef.current = [];
+      commentMarkedRef.current = [];
     };
   }, [initialXml, onFindingsChange, onGraphChange, onXmlChange, onReady]);
 

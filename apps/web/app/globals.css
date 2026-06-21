@@ -22,6 +22,7 @@
   --color-info: #60a5fa;
   --color-success: #34d399;
   --color-ai-edit: #a78bfa;
+  --color-comment: #f59e0b;
 }
 
 /* ------------------------------------------------------------------
@@ -446,6 +447,16 @@ body {
 .djs-connection.claril-ai-edit .djs-visual > path {
   stroke: var(--color-ai-edit) !important;
   stroke-width: 2px !important;
+}
+
+/* ---- comment marker (elements with ≥1 open comment thread; W16).
+   Distinct amber/gold glow so it never reads as a version diff or AI edit. */
+.djs-element.claril-comment .djs-visual > :where(rect, circle, ellipse, polygon, path) {
+  stroke: var(--color-comment) !important;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--color-comment) 70%, transparent));
+}
+.djs-connection.claril-comment .djs-visual > path {
+  stroke: var(--color-comment) !important;
 }
 
 /* ---- minimap (pinned bottom-right, clear of the Inspector) ---- */

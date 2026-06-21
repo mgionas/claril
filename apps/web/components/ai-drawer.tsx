@@ -9,7 +9,10 @@ import type { AiOverride } from "@/lib/ai";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProblemsTab } from "@/components/problems-tab";
 import { ChatTab, type ChatTabHandle } from "@/components/chat-tab";
+import { CommentsTab } from "@/components/comments-tab";
 import { cn } from "@/lib/utils";
+
+export type DrawerTab = "chat" | "comments" | "problems";
 
 export interface AiDrawerProps {
   open: boolean;
@@ -22,8 +25,19 @@ export interface AiDrawerProps {
   aiBusy?: boolean;
   // chat wiring
   chatHandleRef: Ref<ChatTabHandle>;
-  activeTab: "chat" | "problems";
-  onTabChange: (tab: "chat" | "problems") => void;
+  activeTab: DrawerTab;
+  onTabChange: (tab: DrawerTab) => void;
+  // comments wiring (org diagrams only)
+  isOrg?: boolean;
+  currentUserId: string;
+  diagramId: string;
+  selectedElement: { id: string; name: string } | null;
+  liveElementIds: string[];
+  elementNames?: Record<string, string>;
+  canResolveComments?: boolean;
+  initialThreadId?: string;
+  onFocusElement: (elementId: string) => void;
+  onCommentedElementsChange: (ids: string[]) => void;
   getChatContext: () => {
     graph: ProcessGraph | null;
     findings: Finding[];
@@ -51,6 +65,26 @@ export interface AiDrawerProps {
  * Problems list (the former Inspector). Toggled from the workbench tab.
  */
 export function AiDrawer(props: AiDrawerProps) {
+  const showChat = props.aiConnected;
+  const showComments = Boolean(props.isOrg);
+  // Tabs are shown whenever there is more than one surface (Chat and/or Comments
+  // beyond Problems). Personal + no-AI degrades to the bare Problems list.
+  const tabbed = showChat || showComments;
+  const tabCount = (showChat ? 1 : 0) + (showComments ? 1 : 0) + 1; // +1 = Problems
+
+  const problemsTab = (
+    <ProblemsTab
+      findings={props.findings}
+      focusedElementId={props.focusedElementId}
+      focusNonce={props.focusNonce}
+      aiConnected={props.aiConnected}
+      aiBusy={props.aiBusy}
+      onSelect={props.onSelect}
+      onApplyFix={props.onApplyFix}
+      onAskAi={props.aiConnected ? props.onAskAiAboutFinding : undefined}
+    />
+  );
+
   return (
     <aside
       className={cn(
@@ -64,14 +98,18 @@ export function AiDrawer(props: AiDrawerProps) {
           <span className="text-sm font-medium">{props.aiConnected ? "Assistant" : "Inspector"}</span>
         </div>
 
-        {props.aiConnected ? (
+        {tabbed ? (
           <Tabs
             value={props.activeTab}
-            onValueChange={(v) => props.onTabChange(v as "chat" | "problems")}
+            onValueChange={(v) => props.onTabChange(v as DrawerTab)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <TabsList className="mx-3 mt-2 grid grid-cols-2">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsList
+              className="mx-3 mt-2 grid"
+              style={{ gridTemplateColumns: `repeat(${tabCount}, minmax(0, 1fr))` }}
+            >
+              {showChat && <TabsTrigger value="chat">Chat</TabsTrigger>}
+              {showComments && <TabsTrigger value="comments">Comments</TabsTrigger>}
               <TabsTrigger value="problems">
                 Problems
                 {(props.errorCount > 0 || props.warningCount > 0) && (
@@ -92,47 +130,46 @@ export function AiDrawer(props: AiDrawerProps) {
                 )}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="chat" className="mt-2 min-h-0 flex-1">
-              <ChatTab
-                handleRef={props.chatHandleRef}
-                getContext={props.getChatContext}
-                initialMessages={props.initialChatMessages}
-                pendingProposalId={props.pendingProposalId}
-                resolutions={props.resolutions}
-                onProposal={props.onProposal}
-                onApplyPlan={props.onApplyPlan}
-                onDiscardPlan={props.onDiscardPlan}
-                onKeepRefining={props.onKeepRefining}
-                onGenerateDocs={props.onGenerateDocs}
-                onReview={props.onReview}
-                onSelectElement={props.onSelect ?? (() => {})}
-              />
-            </TabsContent>
+            {showChat && (
+              <TabsContent value="chat" className="mt-2 min-h-0 flex-1">
+                <ChatTab
+                  handleRef={props.chatHandleRef}
+                  getContext={props.getChatContext}
+                  initialMessages={props.initialChatMessages}
+                  pendingProposalId={props.pendingProposalId}
+                  resolutions={props.resolutions}
+                  onProposal={props.onProposal}
+                  onApplyPlan={props.onApplyPlan}
+                  onDiscardPlan={props.onDiscardPlan}
+                  onKeepRefining={props.onKeepRefining}
+                  onGenerateDocs={props.onGenerateDocs}
+                  onReview={props.onReview}
+                  onSelectElement={props.onSelect ?? (() => {})}
+                />
+              </TabsContent>
+            )}
+            {showComments && (
+              <TabsContent value="comments" className="mt-2 min-h-0 flex-1">
+                <CommentsTab
+                  diagramId={props.diagramId}
+                  currentUserId={props.currentUserId}
+                  canComment
+                  canResolveAny={Boolean(props.canResolveComments)}
+                  selectedElement={props.selectedElement}
+                  liveElementIds={props.liveElementIds}
+                  elementNames={props.elementNames}
+                  initialThreadId={props.initialThreadId}
+                  onFocusElement={props.onFocusElement}
+                  onCommentedElementsChange={props.onCommentedElementsChange}
+                />
+              </TabsContent>
+            )}
             <TabsContent value="problems" className="mt-2 min-h-0 flex-1 overflow-y-auto">
-              <ProblemsTab
-                findings={props.findings}
-                focusedElementId={props.focusedElementId}
-                focusNonce={props.focusNonce}
-                aiConnected
-                aiBusy={props.aiBusy}
-                onSelect={props.onSelect}
-                onApplyFix={props.onApplyFix}
-                onAskAi={props.onAskAiAboutFinding}
-              />
+              {problemsTab}
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <ProblemsTab
-              findings={props.findings}
-              focusedElementId={props.focusedElementId}
-              focusNonce={props.focusNonce}
-              aiConnected={false}
-              aiBusy={props.aiBusy}
-              onSelect={props.onSelect}
-              onApplyFix={props.onApplyFix}
-            />
-          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">{problemsTab}</div>
         )}
       </div>
     </aside>

@@ -10,10 +10,16 @@ interface WorkbenchProps {
   kind: DiagramKind;
   initialContent: string;
   userName: string;
+  /** Current viewer's user id — threads through to the Comments tab (W16). */
+  currentUserId: string;
   aiConnected: boolean;
   aiProvider?: string;
   /** Which AI scope this diagram resolves against — drives the settings dialog. */
   diagramScope?: "personal" | "org";
+  /** Whether the viewer is editor+ on this diagram (lets them resolve any thread). */
+  canResolveComments?: boolean;
+  /** Deep-link: open this comment thread on load (from `?thread=`). */
+  initialThreadId?: string;
   /** Persisted AI documentation markdown (BPMN only); null if none. */
   initialDoc?: string | null;
   /** Persisted chat transcript (BPMN only); hydrates the chat. */
@@ -33,9 +39,12 @@ export function Workbench({
   kind,
   initialContent,
   userName,
+  currentUserId,
   aiConnected,
   aiProvider,
   diagramScope,
+  canResolveComments,
+  initialThreadId,
   initialDoc,
   initialChatMessages,
 }: WorkbenchProps) {
@@ -46,9 +55,12 @@ export function Workbench({
         diagramName={diagramName}
         initialXml={initialContent}
         userName={userName}
+        currentUserId={currentUserId}
         aiConnected={aiConnected}
         aiProvider={aiProvider}
         diagramScope={diagramScope}
+        canResolveComments={canResolveComments}
+        initialThreadId={initialThreadId}
         initialDoc={initialDoc}
         initialChatMessages={initialChatMessages}
       />

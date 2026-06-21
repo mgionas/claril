@@ -372,3 +372,73 @@ export type UserAiConnection = typeof userAiConnection.$inferSelect;
 export type NewUserAiConnection = typeof userAiConnection.$inferInsert;
 export type UserAiDefault = typeof userAiDefault.$inferSelect;
 export type NewUserAiDefault = typeof userAiDefault.$inferInsert;
+
+/* ---- Collaboration: comments & notifications (W16) ---- */
+
+export const threadStatus = pgEnum("thread_status", ["open", "resolved"]);
+export const notificationType = pgEnum("notification_type", ["mention", "reply", "resolved"]);
+
+/** A comment thread anchored to a diagram element (elementId) or the whole diagram (elementId null). */
+export const commentThread = pgTable(
+  "comment_thread",
+  {
+    id: text("id").primaryKey(),
+    diagramId: text("diagram_id")
+      .notNull()
+      .references(() => diagram.id, { onDelete: "cascade" }),
+    elementId: text("element_id"), // null = diagram-level
+    status: threadStatus("status").notNull().default("open"),
+    resolvedBy: text("resolved_by").references(() => user.id, { onDelete: "set null" }),
+    resolvedAt: timestamp("resolved_at"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("comment_thread_diagram_idx").on(t.diagramId, t.status)],
+);
+
+export const comment = pgTable(
+  "comment",
+  {
+    id: text("id").primaryKey(),
+    threadId: text("thread_id")
+      .notNull()
+      .references(() => commentThread.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    mentionedUserIds: jsonb("mentioned_user_ids").notNull().default([]), // string[]
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    editedAt: timestamp("edited_at"),
+  },
+  (t) => [index("comment_thread_idx").on(t.threadId, t.createdAt)],
+);
+
+export const notification = pgTable(
+  "notification",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }), // recipient
+    type: notificationType("type").notNull(),
+    diagramId: text("diagram_id")
+      .notNull()
+      .references(() => diagram.id, { onDelete: "cascade" }),
+    threadId: text("thread_id").references(() => commentThread.id, { onDelete: "cascade" }),
+    commentId: text("comment_id").references(() => comment.id, { onDelete: "cascade" }),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    readAt: timestamp("read_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("notification_user_idx").on(t.userId, t.readAt, t.createdAt)],
+);
+
+export type CommentThread = typeof commentThread.$inferSelect;
+export type Comment = typeof comment.$inferSelect;
+export type Notification = typeof notification.$inferSelect;
