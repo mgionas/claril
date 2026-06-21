@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const GITHUB_URL = "https://github.com/";
+import { SITE } from "@/lib/site";
 
 export function FinalCta() {
   return (
@@ -25,7 +24,7 @@ export function FinalCta() {
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
+            <a href={SITE.githubUrl} target="_blank" rel="noreferrer noopener">
               <Star className="size-4" /> Star on GitHub
             </a>
           </Button>

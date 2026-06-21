@@ -7,10 +7,7 @@ import { Sparkles } from "lucide-react";
  */
 export function CanvasPreview() {
   return (
-    <div
-      aria-hidden
-      className="relative isolate w-full overflow-hidden rounded-[10px] border border-hairline bg-panel/60 backdrop-blur-xl"
-    >
+    <div className="relative isolate w-full overflow-hidden rounded-[10px] border border-hairline bg-panel/60 backdrop-blur-xl">
       {/* dot grid, matching the real canvas */}
       <div
         className="absolute inset-0 -z-10"
@@ -36,7 +33,12 @@ export function CanvasPreview() {
       <div className="grid gap-px sm:grid-cols-[1fr_15rem]">
         {/* diagram */}
         <div className="relative min-h-[16rem] p-5">
-          <svg viewBox="0 0 420 240" className="h-full w-full" role="img" aria-label="Diagram preview">
+          <svg
+            viewBox="0 0 420 240"
+            className="h-full w-full"
+            role="img"
+            aria-label="Diagram preview showing a detected deadlock"
+          >
             {/* flows */}
             <g fill="none" stroke="#71717a" strokeWidth="1.5">
               <path d="M70 60 H130" />

@@ -19,6 +19,11 @@ export default async function Home() {
   const aiConnected = orgId ? Boolean(await getOrgAiConfig(orgId)) : false;
 
   return (
-    <Dashboard userName={session.user.name} projects={projects} aiConnected={aiConnected} />
+    <Dashboard
+      userName={session.user.name}
+      userEmail={session.user.email}
+      projects={projects}
+      aiConnected={aiConnected}
+    />
   );
 }

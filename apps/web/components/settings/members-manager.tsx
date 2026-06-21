@@ -29,7 +29,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function MembersManager({ view }: { view: MembersView }) {
   const router = useRouter();
-  const { canManage, orgId } = view;
+  const { canManage, orgId, viewerRole } = view;
+  // Only owners may grant the owner role; mirror the row-edit filtering.
+  const inviteRoles = viewerRole === "owner" ? ROLES : ROLES.filter((r) => r !== "owner");
   const [status, setStatus] = useState<Status>(null);
   // Tracks which row-level action is in flight, keyed by a stable id.
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -65,7 +67,13 @@ export function MembersManager({ view }: { view: MembersView }) {
         role: inviteRole,
         organizationId: orgId,
       });
-      if (report(res, `Invitation sent to ${email}.`)) setInviteEmail("");
+      if (
+        report(
+          res,
+          `Invitation created for ${email} — it'll appear under Pending invitations.`,
+        )
+      )
+        setInviteEmail("");
     } catch {
       setStatus({ kind: "error", message: "Could not send the invitation." });
     } finally {
@@ -163,7 +171,7 @@ export function MembersManager({ view }: { view: MembersView }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLES.map((r) => (
+                    {inviteRoles.map((r) => (
                       <SelectItem key={r} value={r} className="capitalize">
                         {r}
                       </SelectItem>

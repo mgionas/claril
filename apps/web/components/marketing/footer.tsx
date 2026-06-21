@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { SITE } from "@/lib/site";
 import { Wordmark } from "./wordmark";
-
-const GITHUB_URL = "https://github.com/";
 
 const columns: { heading: string; links: { label: string; href: string; external?: boolean }[] }[] =
   [
@@ -19,9 +18,11 @@ const columns: { heading: string; links: { label: string; href: string; external
       heading: "Resources",
       links: [
         { label: "Docs", href: "/docs" },
+        { label: "Getting started", href: "/docs/getting-started" },
         { label: "Self-hosting", href: "/docs/self-hosting" },
         { label: "CLI & MCP", href: "/docs/cli" },
-        { label: "GitHub", href: GITHUB_URL, external: true },
+        { label: "AI providers", href: "/docs/ai-providers" },
+        { label: "GitHub", href: SITE.githubUrl, external: true },
       ],
     },
     {

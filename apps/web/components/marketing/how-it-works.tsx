@@ -33,13 +33,12 @@ export function HowItWorks() {
         </div>
 
         <ol className="mt-12 grid gap-6 sm:grid-cols-3">
-          {steps.map(({ icon: Icon, title, description }, i) => (
+          {steps.map(({ icon: Icon, title, description }) => (
             <li
               key={title}
               className="relative rounded-[10px] border border-hairline bg-panel/40 p-6 backdrop-blur"
             >
-              <span className="font-mono text-xs text-fg-subtle">0{i + 1}</span>
-              <span className="mt-4 inline-flex size-9 items-center justify-center rounded-md border border-hairline bg-elevated text-accent">
+              <span className="inline-flex size-9 items-center justify-center rounded-md border border-hairline bg-elevated text-accent">
                 <Icon className="size-4.5" aria-hidden />
               </span>
               <h3 className="mt-4 text-base font-semibold text-fg">{title}</h3>

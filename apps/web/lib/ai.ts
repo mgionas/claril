@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { DEFAULT_MODELS, type AiProvider, type LLMProviderConfig } from "@claril/ai-advisor";
 import { decryptSecret } from "@/lib/crypto";
@@ -9,6 +9,8 @@ export async function getUserOrgId(userId: string): Promise<string | null> {
     .select({ organizationId: schema.member.organizationId })
     .from(schema.member)
     .where(eq(schema.member.userId, userId))
+    // Stable choice for users in multiple orgs: earliest membership wins.
+    .orderBy(asc(schema.member.createdAt))
     .limit(1);
   return rows[0]?.organizationId ?? null;
 }

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SITE } from "@/lib/site";
 import { CanvasPreview } from "./canvas-preview";
-
-const GITHUB_URL = "https://github.com/";
 
 export function Hero() {
   return (
@@ -17,7 +16,7 @@ export function Hero() {
       <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pt-28">
         <div className="mx-auto max-w-3xl text-center">
           <a
-            href={GITHUB_URL}
+            href={SITE.githubUrl}
             target="_blank"
             rel="noreferrer noopener"
             className="animate-rise inline-flex items-center gap-2 rounded-full border border-hairline bg-panel/60 px-3 py-1 text-xs text-fg-muted backdrop-blur transition-colors hover:text-fg"
@@ -55,7 +54,7 @@ export function Hero() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-              <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
+              <a href={SITE.githubUrl} target="_blank" rel="noreferrer noopener">
                 <Star className="size-4" /> Star on GitHub
               </a>
             </Button>

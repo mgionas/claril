@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SITE } from "@/lib/site";
 import { Wordmark } from "./wordmark";
-
-const GITHUB_URL = "https://github.com/";
 
 export function MarketingNav() {
   return (
@@ -25,7 +24,7 @@ export function MarketingNav() {
           <NavLink href="#how-it-works">How it works</NavLink>
           <NavLink href="#open-source">Open source</NavLink>
           <NavLink href="/docs">Docs</NavLink>
-          <NavLink href={GITHUB_URL} external>
+          <NavLink href={SITE.githubUrl} external>
             GitHub
             <ArrowUpRight className="size-3.5" aria-hidden />
           </NavLink>

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const GITHUB_URL = "https://github.com/";
+import { SITE } from "@/lib/site";
 
 const points = [
   {
@@ -41,7 +40,7 @@ export function OpenSourceBand() {
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" variant="outline">
-                <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
+                <a href={SITE.githubUrl} target="_blank" rel="noreferrer noopener">
                   View on GitHub <ArrowUpRight className="size-4" />
                 </a>
               </Button>

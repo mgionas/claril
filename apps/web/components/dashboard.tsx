@@ -46,6 +46,7 @@ import {
 
 interface DashboardProps {
   userName: string;
+  userEmail?: string;
   projects: ProjectWithDiagrams[];
   /** Whether an AI provider is configured — gates the "Generate with AI" mode. */
   aiConnected: boolean;
@@ -66,6 +67,12 @@ const KIND_LABEL: Record<DiagramKind, string> = {
   c4: "C4",
 };
 
+function errorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string" && err) return err;
+  return "Something went wrong. Please try again.";
+}
+
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
   const diff = Date.now() - then;
@@ -79,7 +86,7 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function Dashboard({ userName, projects, aiConnected }: DashboardProps) {
+export function Dashboard({ userName, userEmail, projects, aiConnected }: DashboardProps) {
   const [createOpen, setCreateOpen] = useState(false);
 
   const diagramCount = useMemo(
@@ -91,6 +98,7 @@ export function Dashboard({ userName, projects, aiConnected }: DashboardProps) {
     <AppShell
       active="dashboard"
       userName={userName}
+      userEmail={userEmail}
       actions={
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <FolderPlus className="size-4" />
@@ -136,16 +144,22 @@ function NewProjectDialog({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   function submit(e: FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) return;
+    setError(null);
     startTransition(async () => {
-      await createProject(trimmed);
-      setName("");
-      onOpenChange(false);
-      router.refresh();
+      try {
+        await createProject(trimmed);
+        setName("");
+        onOpenChange(false);
+        router.refresh();
+      } catch (err) {
+        setError(errorMessage(err));
+      }
     });
   }
 
@@ -154,7 +168,10 @@ function NewProjectDialog({
       open={open}
       onOpenChange={(o) => {
         if (pending) return;
-        if (!o) setName("");
+        if (!o) {
+          setName("");
+          setError(null);
+        }
         onOpenChange(o);
       }}
     >
@@ -180,6 +197,11 @@ function NewProjectDialog({
               onChange={(e) => setName(e.target.value)}
             />
           </div>
+          {error && (
+            <p role="alert" className="text-xs text-destructive">
+              {error}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"
@@ -232,6 +254,8 @@ function ProjectCard({
   const [name, setName] = useState(project.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [newDiagramOpen, setNewDiagramOpen] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function commitRename(e: FormEvent) {
     e.preventDefault();
@@ -239,20 +263,33 @@ function ProjectCard({
     if (!next || next === project.name) {
       setRenaming(false);
       setName(project.name);
+      setRenameError(null);
       return;
     }
+    setRenameError(null);
     startTransition(async () => {
-      await renameProject(project.id, next);
-      setRenaming(false);
-      router.refresh();
+      try {
+        await renameProject(project.id, next);
+        setRenaming(false);
+        router.refresh();
+      } catch (err) {
+        setRenameError(errorMessage(err));
+        setName(project.name);
+        setRenaming(false);
+      }
     });
   }
 
   function handleDelete() {
+    setDeleteError(null);
     startTransition(async () => {
-      await deleteProject(project.id);
-      setConfirmDelete(false);
-      router.refresh();
+      try {
+        await deleteProject(project.id);
+        setConfirmDelete(false);
+        router.refresh();
+      } catch (err) {
+        setDeleteError(errorMessage(err));
+      }
     });
   }
 
@@ -342,6 +379,15 @@ function ProjectCard({
         </DropdownMenu>
       </div>
 
+      {renameError && (
+        <p
+          role="alert"
+          className="border-t border-hairline px-3 py-2 text-xs text-destructive"
+        >
+          {renameError}
+        </p>
+      )}
+
       {open && (
         <div className="border-t border-hairline">
           {project.diagrams.length === 0 ? (
@@ -371,11 +417,15 @@ function ProjectCard({
 
       <ConfirmDialog
         open={confirmDelete}
-        onOpenChange={setConfirmDelete}
+        onOpenChange={(o) => {
+          setConfirmDelete(o);
+          if (!o) setDeleteError(null);
+        }}
         title={`Delete “${project.name}”?`}
         description={`This permanently deletes the project and its ${project.diagrams.length} diagram(s). This cannot be undone.`}
         confirmLabel="Delete project"
         pending={pending}
+        error={deleteError}
         onConfirm={handleDelete}
       />
     </section>
@@ -399,6 +449,8 @@ function DiagramRow({
   const [renaming, setRenaming] = useState(false);
   const [value, setValue] = useState(name);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function commit(e: FormEvent) {
     e.preventDefault();
@@ -406,30 +458,44 @@ function DiagramRow({
     if (!next || next === name) {
       setRenaming(false);
       setValue(name);
+      setRenameError(null);
       return;
     }
+    setRenameError(null);
     startTransition(async () => {
-      await renameDiagram(id, next);
-      setRenaming(false);
-      router.refresh();
+      try {
+        await renameDiagram(id, next);
+        setRenaming(false);
+        router.refresh();
+      } catch (err) {
+        setRenameError(errorMessage(err));
+        setValue(name);
+        setRenaming(false);
+      }
     });
   }
 
   function handleDelete() {
+    setDeleteError(null);
     startTransition(async () => {
-      await deleteDiagram(id);
-      setConfirmDelete(false);
-      router.refresh();
+      try {
+        await deleteDiagram(id);
+        setConfirmDelete(false);
+        router.refresh();
+      } catch (err) {
+        setDeleteError(errorMessage(err));
+      }
     });
   }
 
   return (
     <li
       className={cn(
-        "group flex items-center gap-3 border-b border-hairline px-3 py-2 transition-colors last:border-b-0 hover:bg-elevated/40",
+        "group border-b border-hairline px-3 py-2 transition-colors last:border-b-0 hover:bg-elevated/40",
         pending && "opacity-60",
       )}
     >
+      <div className="flex items-center gap-3">
       <span className="grid size-7 shrink-0 place-items-center rounded-[6px] bg-elevated text-fg-subtle">
         <KindIcon className="size-3.5" />
       </span>
@@ -480,14 +546,25 @@ function DiagramRow({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
+
+      {renameError && (
+        <p role="alert" className="mt-1 pl-10 text-xs text-destructive">
+          {renameError}
+        </p>
+      )}
 
       <ConfirmDialog
         open={confirmDelete}
-        onOpenChange={setConfirmDelete}
+        onOpenChange={(o) => {
+          setConfirmDelete(o);
+          if (!o) setDeleteError(null);
+        }}
         title={`Delete “${name}”?`}
         description="This permanently deletes the diagram. This cannot be undone."
         confirmLabel="Delete diagram"
         pending={pending}
+        error={deleteError}
         onConfirm={handleDelete}
       />
     </li>
@@ -501,6 +578,7 @@ function ConfirmDialog({
   description,
   confirmLabel,
   pending,
+  error,
   onConfirm,
 }: {
   open: boolean;
@@ -509,6 +587,7 @@ function ConfirmDialog({
   description: string;
   confirmLabel: string;
   pending: boolean;
+  error?: string | null;
   onConfirm: () => void;
 }) {
   return (
@@ -518,6 +597,11 @@ function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="text-fg-muted">{description}</DialogDescription>
         </DialogHeader>
+        {error && (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        )}
         <DialogFooter>
           <Button
             type="button"
