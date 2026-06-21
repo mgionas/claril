@@ -71,6 +71,8 @@ export function BpmnWorkbench({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "problems">("chat");
+  // First selected canvas element (drives the Comments tab anchor; W16, Task 6).
+  const [selectedElement, setSelectedElement] = useState<{ id: string; name: string } | null>(null);
   // Doc-gen (Markdown), shown in its own slide-over; seeded from persisted doc.
   const [docOpen, setDocOpen] = useState(false);
   const [docMarkdown, setDocMarkdown] = useState<string | null>(initialDoc ?? null);
@@ -322,7 +324,12 @@ export function BpmnWorkbench({
   const warningCount = allFindings.filter((f) => f.severity === "warning").length;
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden bg-canvas text-fg">
+    <main
+      className="flex h-screen w-screen overflow-hidden bg-canvas text-fg"
+      // Selection is held for the Comments tab (W16, Task 6); surfaced here so the
+      // state is observed until the tab consumes it.
+      data-selected-element={selectedElement?.id ?? undefined}
+    >
       <div className="relative min-w-0 flex-1">
         <BpmnCanvas
           diagramId={diagramId}
@@ -335,6 +342,7 @@ export function BpmnWorkbench({
           onReady={handleReady}
           findings={allFindings}
           onShowProblems={handleShowProblems}
+          onSelectionChange={setSelectedElement}
         />
         <TopBar
           diagramId={diagramId}
