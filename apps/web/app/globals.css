@@ -100,6 +100,59 @@
   }
 }
 
+/* ---- Marketing landing motion (CSS only, reduced-motion aware) ---- */
+@keyframes marketingRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marketingPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.3;
+  }
+}
+
+@keyframes marketingDash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animate-rise {
+  animation: marketingRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.marketing-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: marketingPulse 2.4s ease-in-out infinite;
+}
+
+.marketing-flow {
+  stroke-dasharray: 6 6;
+  animation: marketingDash 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .marketing-pulse,
+  .marketing-flow {
+    animation: none !important;
+  }
+}
+
 html,
 body {
   height: 100%;
