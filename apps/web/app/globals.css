@@ -364,6 +364,7 @@ body {
    bpmn-js ships a light-themed popup; restyle the whole surface to the Claril
    design system: dark frosted panel, hairline borders, accent selection. */
 .djs-popup {
+  min-width: 320px !important;
   border-radius: 10px !important;
   box-shadow:
     0 12px 32px -8px rgba(0, 0, 0, 0.6),
@@ -400,8 +401,9 @@ body {
 .djs-popup-search input:focus,
 .djs-popup-search-input:focus {
   outline: none !important;
-  border-color: var(--color-accent) !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent) !important;
+  /* Neutral focus emphasis — no blue glow on open. */
+  border-color: var(--color-fg-subtle) !important;
+  box-shadow: none !important;
 }
 .djs-popup-search-icon {
   color: var(--color-fg-subtle) !important;
@@ -441,9 +443,6 @@ body {
 .djs-popup .entry.selected {
   background-color: var(--color-elevated) !important;
   color: var(--color-fg) !important;
-}
-.djs-popup .entry.selected {
-  box-shadow: inset 2px 0 0 var(--color-accent);
 }
 .djs-popup .entry.disabled {
   color: var(--color-fg-subtle) !important;
@@ -486,6 +485,41 @@ body {
 .djs-popup-breadcrumbs-item:hover,
 .djs-popup-breadcrumbs-item--current {
   color: var(--color-fg) !important;
+}
+
+/* Rename / direct-editing box: bpmn-js sets a white bg + dark text inline, which
+   is invisible on the dark canvas. Force the Claril dark surface. */
+.djs-direct-editing-parent {
+  background: var(--color-panel) !important;
+  border: 1px solid var(--color-accent) !important;
+  border-radius: 5px !important;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6) !important;
+}
+.djs-direct-editing-content {
+  background: transparent !important;
+  color: var(--color-fg) !important;
+  caret-color: var(--color-accent) !important;
+}
+
+/* Validation error tooltip ("flow elements must be children of pools…"):
+   bpmn-js ships a near-white red box; mute it to a dark error surface. */
+.djs-tooltip-error {
+  width: auto !important;
+  max-width: 220px !important;
+  padding: 8px 10px !important;
+  background: rgba(24, 24, 27, 0.97) !important;
+  border: 1px solid color-mix(in srgb, var(--color-error) 55%, var(--color-hairline)) !important;
+  border-left: 2px solid var(--color-error) !important;
+  border-radius: 8px !important;
+  color: var(--color-fg) !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6) !important;
+  opacity: 1 !important;
+}
+.djs-tooltip-error:hover {
+  opacity: 1 !important;
 }
 
 /* ---- logic-inspector finding overlays + markers ---- */
