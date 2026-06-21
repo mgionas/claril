@@ -3,7 +3,8 @@
  * → Version. `organization` (the Org tier) and `user` come from Better Auth
  * (see ./auth). Asset Catalog tables are added in a later phase.
  */
-import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { organization, user } from "./auth";
 
 export const diagramType = pgEnum("diagram_type", ["bpmn", "sequence", "c4"]);
@@ -71,13 +72,35 @@ export const projectMember = pgTable(
   (t) => [uniqueIndex("project_member_unique").on(t.projectId, t.userId)],
 );
 
+/**
+ * Personal subsystem: a user-owned project container, separate from the org
+ * (Organization → Workspace → Project) chain. Flat: personal_project → diagram.
+ * Personal has no Asset Catalog / unified knowledge (org-only).
+ */
+export const personalProject = pgTable(
+  "personal_project",
+  {
+    id: text("id").primaryKey(),
+    ownerUserId: text("owner_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("personal_project_owner_idx").on(t.ownerUserId)],
+);
+
 export const diagram = pgTable(
   "diagram",
   {
     id: text("id").primaryKey(),
-    projectId: text("project_id")
-      .notNull()
-      .references(() => project.id, { onDelete: "cascade" }),
+    // Exactly one parent is set (CHECK below): an org project OR a personal project.
+    projectId: text("project_id").references(() => project.id, { onDelete: "cascade" }),
+    personalProjectId: text("personal_project_id").references(() => personalProject.id, {
+      onDelete: "cascade",
+    }),
     type: diagramType("type").notNull().default("bpmn"),
     name: text("name").notNull(),
     // BPMN XML (source of truth) / Mermaid / C4 DSL depending on type.
@@ -88,7 +111,14 @@ export const diagram = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (t) => [index("diagram_project_idx").on(t.projectId)],
+  (t) => [
+    index("diagram_project_idx").on(t.projectId),
+    index("diagram_personal_project_idx").on(t.personalProjectId),
+    check(
+      "diagram_parent_xor",
+      sql`(${t.projectId} IS NULL) <> (${t.personalProjectId} IS NULL)`,
+    ),
+  ],
 );
 
 export const version = pgTable(
@@ -302,3 +332,43 @@ export type AiConnection = typeof aiConnection.$inferSelect;
 export type NewAiConnection = typeof aiConnection.$inferInsert;
 export type AiOrgDefault = typeof aiOrgDefault.$inferSelect;
 export type NewAiOrgDefault = typeof aiOrgDefault.$inferInsert;
+
+/* ---- Personal (user-scoped) AI (BYOK) ---- */
+
+/** Personal (user-scoped) BYOK AI connection — mirrors ai_connection, keyed by user. */
+export const userAiConnection = pgTable(
+  "user_ai_connection",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    encryptedKey: text("encrypted_key"),
+    baseUrl: text("base_url"),
+    defaultModel: text("default_model"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("user_ai_connection_user_idx").on(t.userId),
+    uniqueIndex("user_ai_connection_user_provider_unique").on(t.userId, t.provider),
+  ],
+);
+
+/** The user's personal default-model pointer — mirrors ai_org_default. */
+export const userAiDefault = pgTable("user_ai_default", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  model: text("model").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type PersonalProject = typeof personalProject.$inferSelect;
+export type NewPersonalProject = typeof personalProject.$inferInsert;
+export type UserAiConnection = typeof userAiConnection.$inferSelect;
+export type NewUserAiConnection = typeof userAiConnection.$inferInsert;
+export type UserAiDefault = typeof userAiDefault.$inferSelect;
+export type NewUserAiDefault = typeof userAiDefault.$inferInsert;

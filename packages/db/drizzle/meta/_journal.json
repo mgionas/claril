@@ -64,6 +64,13 @@
       "when": 1781986191495,
       "tag": "0008_cold_mimic",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782040918673,
+      "tag": "0009_fixed_cammi",
+      "breakpoints": true
     }
   ]
 }
