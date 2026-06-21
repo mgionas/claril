@@ -8,7 +8,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+import { diagramContext, getAiConfig, getUserAiConfig } from "@/lib/ai";
 import {
   createModel,
   planEdits,
@@ -55,8 +55,7 @@ When the user asks you to CHANGE the model (add/remove/connect/rename steps, fix
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return new Response("Unauthorized", { status: 401 });
-
-  const orgId = await getUserOrgId(session.user.id);
+  const userId = session.user.id;
 
   const parsed = BodySchema.safeParse(await req.json());
   if (!parsed.success) return new Response("Bad request", { status: 400 });
@@ -68,12 +67,21 @@ export async function POST(req: Request) {
     override?: { provider?: AiProvider; model?: string };
   };
 
-  const config = orgId ? await getOrgAiConfig(orgId, override) : null;
-  if (!orgId || !config) return new Response("No AI provider configured.", { status: 400 });
+  // Resolve AI from the OPEN diagram's context: org diagram → org AI + catalog
+  // grounding; personal diagram (or no diagram) → personal AI, no catalog.
+  let orgId: string | undefined;
+  const config = diagramId
+    ? await (async () => {
+        const dc = await diagramContext(userId, diagramId);
+        orgId = dc.orgId;
+        return getAiConfig(dc.ctx, override);
+      })()
+    : await getUserAiConfig(userId, override);
+  if (!config) return new Response("No AI provider configured.", { status: 400 });
 
-  const assetContext = diagramId
-    ? await buildDiagramAssetContext(orgId, diagramId)
-    : undefined;
+  // Catalog/asset grounding only for org diagrams — never personal.
+  const assetContext =
+    diagramId && orgId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
   const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
   const synopsis = await getOrRefreshSynopsis(diagramId, graph, config.model ?? "unknown");
   const grounding = stripLoneSurrogates(
@@ -108,6 +116,7 @@ export async function POST(req: Request) {
       }),
     },
     onFinish: ({ usage }) => {
+      if (!orgId) return; // personal calls have no org to attribute usage to
       void recordAiUsage({
         organizationId: orgId,
         projectId,

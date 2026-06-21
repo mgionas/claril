@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { getDiagram } from "@/lib/diagram-actions";
-import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+import { diagramContext, getAiConfig } from "@/lib/ai";
 import { getDiagramDoc } from "@/lib/actions";
 import { getChatMessages } from "@/lib/chat-actions";
 import { Workbench } from "@/components/workbench";
@@ -23,8 +23,10 @@ export default async function DiagramPage({
     notFound();
   }
 
-  const orgId = await getUserOrgId(session.user.id);
-  const aiConfig = orgId ? await getOrgAiConfig(orgId) : null;
+  // AI for an open diagram reflects THAT diagram's context: an org diagram uses
+  // its org's AI, a personal diagram uses the user's personal AI.
+  const { ctx } = await diagramContext(session.user.id, diagram.id);
+  const aiConfig = await getAiConfig(ctx);
   const initialDoc = aiConfig ? await getDiagramDoc(diagram.id) : null;
   const initialChatMessages = await getChatMessages(diagram.id);
 

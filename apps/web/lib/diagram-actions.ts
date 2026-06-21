@@ -10,8 +10,9 @@ import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default
 import {
   assertDiagramAccess,
   assertProjectAccess,
-  ensureUserWorkspace,
+  ensureWorkspaceForOrg,
 } from "@/lib/tenancy";
+import { requireActiveOrg } from "@/lib/context";
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -36,8 +37,8 @@ export interface ProjectWithDiagrams {
 
 /** List the active workspace's projects, each with its diagrams. */
 export async function listProjects(): Promise<ProjectWithDiagrams[]> {
-  const userId = await requireUserId();
-  const { workspaceId } = await ensureUserWorkspace(userId);
+  const { userId, orgId } = await requireActiveOrg();
+  const workspaceId = await ensureWorkspaceForOrg(userId, orgId);
 
   const projects = await db
     .select()
@@ -80,8 +81,8 @@ export async function listProjects(): Promise<ProjectWithDiagrams[]> {
 /* ---- Project CRUD ---- */
 
 export async function createProject(name: string): Promise<{ id: string }> {
-  const userId = await requireUserId();
-  const { workspaceId } = await ensureUserWorkspace(userId);
+  const { userId, orgId } = await requireActiveOrg();
+  const workspaceId = await ensureWorkspaceForOrg(userId, orgId);
   const trimmed = name.trim() || "Untitled project";
   const id = randomUUID();
   await db.transaction(async (tx) => {

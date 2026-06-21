@@ -1,7 +1,6 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   db,
@@ -12,7 +11,7 @@ import {
   type AssetType,
   type FieldDef,
 } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireActiveOrg } from "@/lib/context";
 
 /**
  * Asset Catalog server actions (org-scoped CRUD + bindings + grounding query).
@@ -29,26 +28,22 @@ interface OrgContext {
   role: string;
 }
 
-/** Resolve the caller and their active org membership, or throw. */
+/**
+ * Resolve the caller's ACTIVE org + their role in it, or throw. Personal context
+ * has no catalog, so `requireActiveOrg` throwing "No active organization." is the
+ * correct backstop (the catalog page gates personal context separately).
+ */
 async function requireOrg(): Promise<OrgContext> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  const userId = session.user.id;
-
-  // Prefer the session's active org; fall back to first membership (V1).
-  const activeOrgId = session.session.activeOrganizationId ?? null;
-
-  const memberships = await db
-    .select({ orgId: schema.member.organizationId, role: schema.member.role })
-    .from(schema.member)
-    .where(eq(schema.member.userId, userId));
-
-  if (memberships.length === 0) throw new Error("No organization.");
-
-  const chosen =
-    (activeOrgId && memberships.find((m) => m.orgId === activeOrgId)) || memberships[0];
-
-  return { userId, orgId: chosen.orgId, role: chosen.role };
+  const { userId, orgId } = await requireActiveOrg();
+  const membership = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, orgId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0];
+  if (!membership) throw new Error("No organization.");
+  return { userId, orgId, role: membership.role };
 }
 
 function requireManage(ctx: OrgContext): void {

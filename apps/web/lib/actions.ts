@@ -18,13 +18,17 @@ import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
 import { layoutProcess } from "bpmn-auto-layout";
 import { auth } from "@/lib/auth";
 import {
+  diagramContext,
+  getAiConfig,
   getOrgAiConfig,
   getUserOrgId,
   listOrgConnections,
   repointDefault,
+  type AiContext,
   type AiOverride,
   type ConnectionView,
 } from "@/lib/ai";
+import { getActiveContext } from "@/lib/context";
 import { assertDiagramAccess } from "@/lib/tenancy";
 import { encryptSecret } from "@/lib/crypto";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
@@ -299,29 +303,23 @@ export async function runAdvisor(
   diagramId?: string,
   override?: AiOverride,
 ): Promise<Finding[]> {
-  const userId = await requireUserId();
-  const orgId = await getUserOrgId(userId);
-  const config = orgId ? await getOrgAiConfig(orgId, override) : null;
-  if (!config || !orgId) throw new Error("No AI provider configured.");
-
-  const assetContext = diagramId
-    ? await buildDiagramAssetContext(orgId, diagramId)
-    : undefined;
-  const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
+  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId, override);
 
   const { value, usage } = await adviseWithUsage(
     { graph, findings, question, assetContext },
     config,
   );
-  await recordAiUsage({
-    organizationId: orgId,
-    projectId,
-    diagramId,
-    kind: "advisor",
-    provider: config.provider,
-    model: config.model ?? "unknown",
-    usage,
-  });
+  if (orgId) {
+    await recordAiUsage({
+      organizationId: orgId,
+      projectId,
+      diagramId,
+      kind: "advisor",
+      provider: config.provider,
+      model: config.model ?? "unknown",
+      usage,
+    });
+  }
   return value;
 }
 
@@ -333,14 +331,25 @@ export async function runAdvisor(
  */
 async function resolveAiContext(diagramId?: string, override?: AiOverride) {
   const userId = await requireUserId();
-  const orgId = await getUserOrgId(userId);
-  const config = orgId ? await getOrgAiConfig(orgId, override) : null;
-  if (!config || !orgId) throw new Error("No AI provider configured.");
-  const assetContext = diagramId
-    ? await buildDiagramAssetContext(orgId, diagramId)
-    : undefined;
+  let ctx: AiContext;
+  let orgId: string | undefined;
+  if (diagramId) {
+    const dc = await diagramContext(userId, diagramId);
+    ctx = dc.ctx;
+    orgId = dc.orgId;
+  } else {
+    const active = await getActiveContext();
+    if (!active) throw new Error("No AI provider configured.");
+    ctx = active;
+    orgId = active.kind === "org" ? active.orgId : undefined;
+  }
+  const config = await getAiConfig(ctx, override);
+  if (!config) throw new Error("No AI provider configured.");
+  // Catalog/asset grounding only exists for org diagrams — never personal.
+  const assetContext =
+    diagramId && orgId ? await buildDiagramAssetContext(orgId, diagramId) : undefined;
   const projectId = diagramId ? await projectIdForDiagram(diagramId) : null;
-  return { config, assetContext, orgId, projectId };
+  return { config, assetContext, orgId: orgId ?? null, projectId };
 }
 
 /**
@@ -359,15 +368,17 @@ export async function runDocGen(
     { graph, findings, assetContext },
     config,
   );
-  await recordAiUsage({
-    organizationId: orgId,
-    projectId,
-    diagramId,
-    kind: "docgen",
-    provider: config.provider,
-    model: config.model ?? "unknown",
-    usage,
-  });
+  if (orgId) {
+    await recordAiUsage({
+      organizationId: orgId,
+      projectId,
+      diagramId,
+      kind: "docgen",
+      provider: config.provider,
+      model: config.model ?? "unknown",
+      usage,
+    });
+  }
   if (diagramId) await upsertDiagramDoc(diagramId, value, config.model ?? null);
   return value;
 }
@@ -425,15 +436,17 @@ export async function runDiagramEdit(
     { graph, findings, instruction, assetContext },
     config,
   );
-  await recordAiUsage({
-    organizationId: orgId,
-    projectId,
-    diagramId,
-    kind: "plan",
-    provider: config.provider,
-    model: config.model ?? "unknown",
-    usage,
-  });
+  if (orgId) {
+    await recordAiUsage({
+      organizationId: orgId,
+      projectId,
+      diagramId,
+      kind: "plan",
+      provider: config.provider,
+      model: config.model ?? "unknown",
+      usage,
+    });
+  }
   return plan;
 }
 
@@ -485,15 +498,17 @@ export async function generateDiagramFromPrompt(
   const { config, orgId } = await resolveAiContext(undefined, override);
 
   const { value: raw, usage } = await generateBpmnXmlWithUsage(prompt, config);
-  await recordAiUsage({
-    organizationId: orgId,
-    projectId: null,
-    diagramId: null,
-    kind: "generate",
-    provider: config.provider,
-    model: config.model ?? "unknown",
-    usage,
-  });
+  if (orgId) {
+    await recordAiUsage({
+      organizationId: orgId,
+      projectId: null,
+      diagramId: null,
+      kind: "generate",
+      provider: config.provider,
+      model: config.model ?? "unknown",
+      usage,
+    });
+  }
   const semantic = stripCodeFences(raw);
   if (!semantic) {
     throw new Error("The AI returned an empty diagram. Try a more detailed description.");
