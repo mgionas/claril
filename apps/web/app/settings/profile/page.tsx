@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
 
 /**
  * Account profile — edit display name and avatar URL; email is read-only
@@ -12,12 +13,15 @@ export default async function ProfileSettingsPage() {
   if (!session?.user) redirect("/sign-in");
 
   return (
-    <ProfileForm
-      initial={{
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image ?? "",
-      }}
-    />
+    <div className="max-w-2xl">
+      <ProfileForm
+        initial={{
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image ?? "",
+        }}
+      />
+      <ChangePasswordForm />
+    </div>
   );
 }
