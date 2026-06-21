@@ -53,17 +53,21 @@ export function ContextSwitcher() {
   const isPersonal = !activeOrg;
 
   function switchToOrg(organizationId: string) {
-    if (organizationId === activeOrgId) return;
+    if (organizationId === activeOrgId || switching) return;
     startSwitch(async () => {
-      await authClient.organization.setActive({ organizationId });
+      // better-auth client methods resolve to { data, error } (they don't throw);
+      // only refresh on success so a failed switch doesn't show the wrong scope.
+      const { error } = await authClient.organization.setActive({ organizationId });
+      if (error) return;
       router.refresh();
     });
   }
 
   function switchToPersonal() {
-    if (isPersonal) return;
+    if (isPersonal || switching) return;
     startSwitch(async () => {
-      await authClient.organization.setActive({ organizationId: null });
+      const { error } = await authClient.organization.setActive({ organizationId: null });
+      if (error) return;
       router.refresh();
     });
   }
@@ -140,7 +144,13 @@ function CreateOrgDialog({
     startTransition(async () => {
       try {
         const { id } = await createOrgWithWorkspace(trimmed);
-        await authClient.organization.setActive({ organizationId: id });
+        const { error: activeErr } = await authClient.organization.setActive({ organizationId: id });
+        if (activeErr) {
+          setError("Organization created, but switching to it failed. Pick it from the menu.");
+          onOpenChange(false);
+          router.refresh();
+          return;
+        }
         setName("");
         onOpenChange(false);
         router.refresh();
