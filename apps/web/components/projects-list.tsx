@@ -7,12 +7,15 @@ import {
   Boxes,
   ChevronRight,
   FileText,
+  Folder,
+  FolderOpen,
   FolderPlus,
   GitBranch,
   Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
+  SquareArrowOutUpRight,
   Trash2,
   Workflow,
 } from "lucide-react";
@@ -31,9 +34,14 @@ import {
   renamePersonalProject,
 } from "@/lib/personal-actions";
 import { cn } from "@/lib/utils";
-import { AppShell } from "@/components/app-shell";
 import { NewDiagramDialog } from "@/components/new-diagram-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -48,21 +56,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-export type DashboardContext = "personal" | "org";
+export type ProjectsContext = "personal" | "org";
 
-interface DashboardProps {
-  userName: string;
-  userEmail?: string;
+interface ProjectsListProps {
   projects: ProjectWithDiagrams[];
   /** Whether an AI provider is configured — gates the "Generate with AI" mode. */
   aiConnected: boolean;
   /** The active scope; routes CRUD to personal vs org server actions. */
-  context: DashboardContext;
+  context: ProjectsContext;
 }
 
 /** The project-level mutations, resolved per active scope. */
-function projectActions(context: DashboardContext) {
+function projectActions(context: ProjectsContext) {
   return context === "personal"
     ? {
         create: createPersonalProject,
@@ -106,13 +120,7 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function Dashboard({
-  userName,
-  userEmail,
-  projects,
-  aiConnected,
-  context,
-}: DashboardProps) {
+export function ProjectsList({ projects, aiConnected, context }: ProjectsListProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const isPersonal = context === "personal";
 
@@ -122,17 +130,7 @@ export function Dashboard({
   );
 
   return (
-    <AppShell
-      active="dashboard"
-      userName={userName}
-      userEmail={userEmail}
-      actions={
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <FolderPlus className="size-4" />
-          New project
-        </Button>
-      }
-    >
+    <>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
@@ -144,14 +142,18 @@ export function Dashboard({
                 } · ${diagramCount} ${diagramCount === 1 ? "diagram" : "diagrams"}`}
           </p>
         </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <FolderPlus className="size-4" />
+          New project
+        </Button>
       </div>
 
       {projects.length === 0 ? (
         <EmptyState onCreate={() => setCreateOpen(true)} isPersonal={isPersonal} />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="overflow-hidden rounded-[10px] border border-hairline bg-panel/40">
           {projects.map((project) => (
-            <ProjectCard
+            <ProjectFolder
               key={project.id}
               project={project}
               aiConnected={aiConnected}
@@ -162,7 +164,7 @@ export function Dashboard({
       )}
 
       <NewProjectDialog open={createOpen} onOpenChange={setCreateOpen} context={context} />
-    </AppShell>
+    </>
   );
 }
 
@@ -173,7 +175,7 @@ function NewProjectDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  context: DashboardContext;
+  context: ProjectsContext;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -276,25 +278,27 @@ function EmptyState({ onCreate, isPersonal }: { onCreate: () => void; isPersonal
   );
 }
 
-function ProjectCard({
+function ProjectFolder({
   project,
   aiConnected,
   context,
 }: {
   project: ProjectWithDiagrams;
   aiConnected: boolean;
-  context: DashboardContext;
+  context: ProjectsContext;
 }) {
   const router = useRouter();
   const actions = projectActions(context);
   const [pending, startTransition] = useTransition();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(project.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [newDiagramOpen, setNewDiagramOpen] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const count = project.diagrams.length;
 
   function commitRename(e: FormEvent) {
     e.preventDefault();
@@ -333,25 +337,18 @@ function ProjectCard({
   }
 
   return (
-    <section
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
       className={cn(
-        "rounded-[10px] border border-hairline bg-panel/60 transition-colors",
+        "group border-b border-hairline transition-colors last:border-b-0",
         pending && "opacity-60",
       )}
     >
-      <div className="flex items-center gap-1 px-3 py-2.5">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle transition-colors hover:bg-elevated hover:text-fg"
-          aria-label={open ? "Collapse project" : "Expand project"}
-          aria-expanded={open}
-        >
-          <ChevronRight className={cn("size-4 transition-transform", open && "rotate-90")} />
-        </button>
-
+      <div className="relative flex items-center gap-2 pr-2 transition-colors hover:bg-elevated/40">
         {renaming ? (
-          <form onSubmit={commitRename} className="flex flex-1 items-center">
+          <form onSubmit={commitRename} className="flex flex-1 items-center gap-2 py-2 pl-3">
+            <Folder className="size-4 shrink-0 text-fg-subtle" />
             <input
               autoFocus
               className={cn(inputClass, "py-1")}
@@ -367,93 +364,106 @@ function ProjectCard({
             />
           </form>
         ) : (
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            className="flex flex-1 items-center gap-2 truncate text-left"
+          <CollapsibleTrigger
+            className="flex min-w-0 flex-1 items-center gap-2.5 py-2.5 pl-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            aria-label={`${open ? "Collapse" : "Expand"} ${project.name}`}
           >
-            <span className="truncate text-sm font-medium">{project.name}</span>
-            <span className="shrink-0 rounded-full bg-elevated px-1.5 py-0.5 text-[11px] tabular-nums text-fg-subtle">
-              {project.diagrams.length}
+            <ChevronRight className="size-4 shrink-0 text-fg-subtle transition-transform duration-150 group-data-[state=open]:rotate-90" />
+            <span className="shrink-0 text-fg-muted">
+              <Folder className="size-4 group-data-[state=open]:hidden" />
+              <FolderOpen className="hidden size-4 group-data-[state=open]:block" />
             </span>
-          </button>
+            <span className="truncate text-sm font-medium text-fg">{project.name}</span>
+            <span className="shrink-0 text-xs text-fg-subtle">
+              {count} {count === 1 ? "diagram" : "diagrams"}
+            </span>
+          </CollapsibleTrigger>
         )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-fg-muted"
-          onClick={() => setNewDiagramOpen(true)}
-          disabled={pending}
-        >
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">New diagram</span>
-        </Button>
-
-        <NewDiagramDialog
-          projectId={project.id}
-          open={newDiagramOpen}
-          onOpenChange={setNewDiagramOpen}
-          aiConnected={aiConnected}
-          context={context}
-        />
-
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle outline-none transition-colors hover:bg-elevated hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-50"
-            aria-label="Project actions"
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-fg-muted"
+            onClick={() => setNewDiagramOpen(true)}
             disabled={pending}
           >
-            <MoreHorizontal className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onSelect={() => setRenaming(true)}>
-              <Pencil />
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
-              <Trash2 />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <Plus className="size-4" />
+            <span className="hidden sm:inline">New diagram</span>
+          </Button>
+
+          <NewDiagramDialog
+            projectId={project.id}
+            open={newDiagramOpen}
+            onOpenChange={setNewDiagramOpen}
+            aiConnected={aiConnected}
+            context={context}
+          />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle outline-none transition-colors hover:bg-elevated hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-50"
+              aria-label="Project actions"
+              disabled={pending}
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onSelect={() => setRenaming(true)}>
+                <Pencil />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
+                <Trash2 />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {renameError && (
-        <p
-          role="alert"
-          className="border-t border-hairline px-3 py-2 text-xs text-destructive"
-        >
+        <p role="alert" className="px-3 pb-2 pl-[42px] text-xs text-destructive">
           {renameError}
         </p>
       )}
 
-      {open && (
-        <div className="border-t border-hairline">
-          {project.diagrams.length === 0 ? (
+      <CollapsibleContent>
+        <div className="border-t border-hairline bg-bg/30 pl-7">
+          {count === 0 ? (
             <button
               type="button"
               onClick={() => setNewDiagramOpen(true)}
-              className="flex w-full items-center gap-2 px-4 py-4 text-left text-sm text-fg-subtle transition-colors hover:text-fg"
+              className="flex w-full items-center gap-2 px-4 py-3.5 text-left text-sm text-fg-subtle transition-colors hover:text-fg"
             >
               <Plus className="size-4" />
               No diagrams yet — create your first.
             </button>
           ) : (
-            <ul>
-              {project.diagrams.map((d) => (
-                <DiagramRow
-                  key={d.id}
-                  id={d.id}
-                  name={d.name}
-                  kind={d.type}
-                  updatedAt={d.updatedAt}
-                />
-              ))}
-            </ul>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-hairline hover:bg-transparent">
+                  <TableHead className="px-3 text-xs font-medium text-fg-subtle">Name</TableHead>
+                  <TableHead className="px-3 text-xs font-medium text-fg-subtle">Type</TableHead>
+                  <TableHead className="px-3 text-xs font-medium text-fg-subtle">Edited</TableHead>
+                  <TableHead className="w-10 px-3" aria-label="Actions" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {project.diagrams.map((d) => (
+                  <DiagramRow
+                    key={d.id}
+                    id={d.id}
+                    name={d.name}
+                    kind={d.type}
+                    updatedAt={d.updatedAt}
+                  />
+                ))}
+              </TableBody>
+            </Table>
           )}
         </div>
-      )}
+      </CollapsibleContent>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -462,13 +472,13 @@ function ProjectCard({
           if (!o) setDeleteError(null);
         }}
         title={`Delete “${project.name}”?`}
-        description={`This permanently deletes the project and its ${project.diagrams.length} diagram(s). This cannot be undone.`}
+        description={`This permanently deletes the project and its ${count} diagram(s). This cannot be undone.`}
         confirmLabel="Delete project"
         pending={pending}
         error={deleteError}
         onConfirm={handleDelete}
       />
-    </section>
+    </Collapsible>
   );
 }
 
@@ -529,70 +539,78 @@ function DiagramRow({
   }
 
   return (
-    <li
-      className={cn(
-        "group border-b border-hairline px-3 py-2 transition-colors last:border-b-0 hover:bg-elevated/40",
-        pending && "opacity-60",
-      )}
-    >
-      <div className="flex items-center gap-3">
-      <span className="grid size-7 shrink-0 place-items-center rounded-[6px] bg-elevated text-fg-subtle">
-        <KindIcon className="size-3.5" />
-      </span>
+    <>
+      <TableRow className={cn("group border-hairline", pending && "opacity-60")}>
+        <TableCell className="px-3">
+          <div className="flex items-center gap-2.5">
+            <span className="grid size-7 shrink-0 place-items-center rounded-[6px] bg-elevated text-fg-subtle">
+              <KindIcon className="size-3.5" />
+            </span>
+            {renaming ? (
+              <form onSubmit={commit} className="min-w-0 flex-1">
+                <input
+                  autoFocus
+                  className={cn(inputClass, "py-1")}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  onBlur={commit}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setRenaming(false);
+                      setValue(name);
+                    }
+                  }}
+                />
+              </form>
+            ) : (
+              <Link href={`/d/${id}`} className="min-w-0">
+                <span className="truncate text-sm text-fg transition-colors group-hover:text-accent">
+                  {name}
+                </span>
+              </Link>
+            )}
+          </div>
+          {renameError && (
+            <p role="alert" className="mt-1 pl-[38px] text-xs text-destructive">
+              {renameError}
+            </p>
+          )}
+        </TableCell>
 
-      {renaming ? (
-        <form onSubmit={commit} className="flex-1">
-          <input
-            autoFocus
-            className={cn(inputClass, "py-1")}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setRenaming(false);
-                setValue(name);
-              }
-            }}
-          />
-        </form>
-      ) : (
-        <Link href={`/d/${id}`} className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate text-sm text-fg transition-colors group-hover:text-accent">
-            {name}
-          </span>
-          <span className="shrink-0 text-[11px] text-fg-subtle">{KIND_LABEL[kind] ?? kind}</span>
-        </Link>
-      )}
+        <TableCell className="px-3">
+          <Badge variant="outline" className="text-fg-muted">
+            {KIND_LABEL[kind] ?? kind}
+          </Badge>
+        </TableCell>
 
-      <span className="shrink-0 text-xs text-fg-subtle">{relativeTime(updatedAt)}</span>
+        <TableCell className="px-3 text-xs text-fg-subtle">{relativeTime(updatedAt)}</TableCell>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle opacity-0 outline-none transition-all hover:bg-elevated hover:text-fg focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent/50 group-hover:opacity-100 disabled:opacity-50 aria-expanded:opacity-100"
-          aria-label="Diagram actions"
-          disabled={pending}
-        >
-          <MoreHorizontal className="size-4" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem onSelect={() => setRenaming(true)}>
-            <Pencil />
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
-            <Trash2 />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      </div>
-
-      {renameError && (
-        <p role="alert" className="mt-1 pl-10 text-xs text-destructive">
-          {renameError}
-        </p>
-      )}
+        <TableCell className="px-3 text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle opacity-0 outline-none transition-all hover:bg-elevated hover:text-fg focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent/50 group-hover:opacity-100 disabled:opacity-50 aria-expanded:opacity-100"
+              aria-label="Diagram actions"
+              disabled={pending}
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onSelect={() => router.push(`/d/${id}`)}>
+                <SquareArrowOutUpRight />
+                Open
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setRenaming(true)}>
+                <Pencil />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
+                <Trash2 />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      </TableRow>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -607,7 +625,7 @@ function DiagramRow({
         error={deleteError}
         onConfirm={handleDelete}
       />
-    </li>
+    </>
   );
 }
 

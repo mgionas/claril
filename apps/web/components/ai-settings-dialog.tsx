@@ -35,7 +35,9 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
         </DialogHeader>
 
         {open && (
-          <AiConnectionsManager initialProvider={initialProvider as AiProvider | undefined} />
+          <div className="-mr-2 mt-4 min-h-0 flex-1 overflow-y-auto pr-2">
+            <AiConnectionsManager initialProvider={initialProvider as AiProvider | undefined} />
+          </div>
         )}
 
         <div className="mt-5 flex items-center justify-between border-t border-hairline pt-4">

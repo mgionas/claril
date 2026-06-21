@@ -3,7 +3,17 @@
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Boxes, Layers, Loader2, Plus, Settings2, Sparkles } from "lucide-react";
+import {
+  Boxes,
+  Layers,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Settings2,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import type { Asset, AssetType, FieldDef, FieldType } from "@claril/db";
 import {
   createAssetType,
@@ -12,9 +22,25 @@ import {
   ensureBuiltinAssetTypes,
   createAsset,
   updateAsset,
+  deleteAsset,
 } from "@/lib/catalog-actions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TypeChip } from "@/components/catalog/type-chip";
 import { summarizeValues } from "@/components/catalog/field-value";
 
@@ -51,6 +77,7 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
   const [selectedTypeId, setSelectedTypeId] = useState<string>(ALL);
   const [typeEditor, setTypeEditor] = useState<AssetType | "new" | null>(null);
   const [assetEditor, setAssetEditor] = useState<Asset | "new" | null>(null);
+  const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
 
   const typeById = useMemo(
     () => new Map(initialTypes.map((t) => [t.id, t])),
@@ -188,24 +215,50 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
               </div>
             )}
 
-            {visibleAssets.length === 0 ? (
-              <EmptyAssets
-                onCreate={() => editorType && setAssetEditor("new")}
-                disabled={!editorType}
-              />
-            ) : (
-              <div className="overflow-hidden rounded-[10px] border border-hairline">
-                <table className="w-full text-sm">
-                  <thead className="bg-panel/60 text-left text-xs text-fg-subtle">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">Name</th>
-                      <th className="hidden px-3 py-2 font-medium sm:table-cell">Type</th>
-                      <th className="hidden px-3 py-2 font-medium lg:table-cell">Fields</th>
-                      <th className="px-3 py-2 text-right font-medium">Used in</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleAssets.map((a) => {
+            <div className="overflow-hidden rounded-[10px] border border-hairline">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-hairline hover:bg-transparent">
+                    <TableHead className="text-fg-subtle">Name</TableHead>
+                    <TableHead className="hidden text-fg-subtle sm:table-cell">
+                      Type
+                    </TableHead>
+                    <TableHead className="hidden text-fg-subtle lg:table-cell">
+                      Fields
+                    </TableHead>
+                    <TableHead className="text-right text-fg-subtle">Used in</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visibleAssets.length === 0 ? (
+                    <TableRow className="border-hairline hover:bg-transparent">
+                      <TableCell
+                        colSpan={5}
+                        className="py-12 text-center align-middle"
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="grid size-10 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
+                            <Plus className="size-5" />
+                          </span>
+                          <p className="text-sm font-medium">No assets here yet</p>
+                          <p className="max-w-xs text-sm text-fg-muted">
+                            Create a reusable asset that your diagram elements can bind to.
+                          </p>
+                          <Button
+                            size="sm"
+                            className="mt-1"
+                            onClick={() => editorType && setAssetEditor("new")}
+                            disabled={!editorType}
+                          >
+                            <Plus className="size-4" />
+                            New asset
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    visibleAssets.map((a) => {
                       const type = typeById.get(a.assetTypeId);
                       const summary = summarizeValues(
                         (type?.fieldSchema as FieldDef[]) ?? [],
@@ -213,11 +266,11 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
                       );
                       const usage = usageCounts[a.id] ?? 0;
                       return (
-                        <tr
+                        <TableRow
                           key={a.id}
-                          className="group border-t border-hairline transition-colors hover:bg-elevated/40"
+                          className="group border-hairline hover:bg-elevated/40"
                         >
-                          <td className="px-3 py-2.5">
+                          <TableCell className="align-top">
                             <Link
                               href={`/catalog/${a.id}`}
                               className="font-medium text-fg transition-colors group-hover:text-accent"
@@ -225,37 +278,60 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
                               {a.name}
                             </Link>
                             {a.description && (
-                              <div className="truncate text-xs text-fg-subtle">
+                              <div className="max-w-xs truncate text-xs text-fg-subtle">
                                 {a.description}
                               </div>
                             )}
-                          </td>
-                          <td className="hidden px-3 py-2.5 sm:table-cell">
+                          </TableCell>
+                          <TableCell className="hidden align-top sm:table-cell">
                             <TypeChip type={type} />
-                          </td>
-                          <td className="hidden max-w-xs truncate px-3 py-2.5 text-fg-muted lg:table-cell">
+                          </TableCell>
+                          <TableCell className="hidden max-w-xs truncate align-top text-fg-muted lg:table-cell">
                             {summary || "—"}
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <span
-                              className={cn(
-                                "inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] tabular-nums",
-                                usage > 0
-                                  ? "bg-accent/15 text-accent"
-                                  : "bg-elevated text-fg-subtle",
-                              )}
+                          </TableCell>
+                          <TableCell className="text-right align-top">
+                            <Badge
+                              variant={usage > 0 ? "default" : "secondary"}
+                              className="tabular-nums"
                               title={`${usage} diagram element(s)`}
                             >
                               {usage}
-                            </span>
-                          </td>
-                        </tr>
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right align-top">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-7 text-fg-muted opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+                                  aria-label={`Actions for ${a.name}`}
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => setAssetEditor(a)}>
+                                  <Pencil className="size-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onSelect={() => setAssetToDelete(a)}
+                                >
+                                  <Trash2 className="size-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </section>
         </div>
       )}
@@ -289,23 +365,69 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
         />
       )}
 
-      {assetEditor && editorType && (
-        <AssetEditor
-          type={editorType}
-          value={assetEditor === "new" ? null : assetEditor}
-          pending={pending}
-          onClose={() => setAssetEditor(null)}
-          onSubmit={(input) =>
-            run(async () => {
-              if (assetEditor === "new") {
-                await createAsset(input);
-              } else {
-                await updateAsset(assetEditor.id, input);
+      {assetEditor &&
+        (() => {
+          // When editing an existing asset, use that asset's own type (rows can
+          // come from any type). For "new", fall back to the filter/first type.
+          const t =
+            assetEditor === "new"
+              ? editorType
+              : typeById.get(assetEditor.assetTypeId) ?? editorType;
+          if (!t) return null;
+          return (
+            <AssetEditor
+              type={t}
+              value={assetEditor === "new" ? null : assetEditor}
+              pending={pending}
+              onClose={() => setAssetEditor(null)}
+              onSubmit={(input) =>
+                run(async () => {
+                  if (assetEditor === "new") {
+                    await createAsset(input);
+                  } else {
+                    await updateAsset(assetEditor.id, input);
+                  }
+                  setAssetEditor(null);
+                })
               }
-              setAssetEditor(null);
-            })
-          }
-        />
+            />
+          );
+        })()}
+
+      {assetToDelete && (
+        <Modal
+          onClose={() => !pending && setAssetToDelete(null)}
+          title={`Delete “${assetToDelete.name}”?`}
+        >
+          <p className="text-sm text-fg-muted">
+            This permanently deletes the asset and removes it from any diagram elements
+            that reference it. This cannot be undone.
+          </p>
+          <div className="mt-5 flex justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              onClick={() => setAssetToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                run(async () => {
+                  await deleteAsset(assetToDelete.id);
+                  setAssetToDelete(null);
+                })
+              }
+            >
+              {pending && <Loader2 className="size-4 animate-spin" />}
+              Delete asset
+            </Button>
+          </div>
+        </Modal>
       )}
     </div>
   );
@@ -385,30 +507,6 @@ function EmptyTypes({
           New type
         </Button>
       </div>
-    </div>
-  );
-}
-
-function EmptyAssets({
-  onCreate,
-  disabled,
-}: {
-  onCreate: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-hairline bg-panel/40 px-6 py-16 text-center">
-      <span className="grid size-10 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
-        <Plus className="size-5" />
-      </span>
-      <p className="mt-3 text-sm font-medium">No assets here yet</p>
-      <p className="mt-1 max-w-xs text-sm text-fg-muted">
-        Create a reusable asset that your diagram elements can bind to.
-      </p>
-      <Button className="mt-4" onClick={onCreate} disabled={disabled}>
-        <Plus className="size-4" />
-        New asset
-      </Button>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 
 export type Status = { kind: "success" | "error"; message: string } | null;
 
@@ -14,13 +16,19 @@ export function SettingsHeader({
 }) {
   return (
     <div className="mb-6">
-      <h2 className="text-lg font-medium tracking-tight text-fg">{title}</h2>
+      <CardTitle className="text-lg font-medium tracking-tight text-fg">
+        {title}
+      </CardTitle>
       {description && <p className="mt-1 text-sm text-fg-muted">{description}</p>}
     </div>
   );
 }
 
-/** A frosted, hairline-bordered panel used to group form fields. */
+/**
+ * A frosted, hairline-bordered panel used to group form fields.
+ * Re-based on shadcn `Card` while keeping the floating-glass aesthetic
+ * (hairline border + frosted blur, 10px radius, no drop shadow).
+ */
 export function SettingsCard({
   children,
   className,
@@ -29,15 +37,14 @@ export function SettingsCard({
   className?: string;
 }) {
   return (
-    <div
+    <Card
       className={cn(
-        "rounded-[10px] border border-hairline bg-panel/60 p-5 backdrop-blur",
-        "flex flex-col gap-5",
+        "gap-5 rounded-[10px] border-hairline bg-panel/60 py-5 shadow-none backdrop-blur",
         className,
       )}
     >
-      {children}
-    </div>
+      <CardContent className="flex flex-col gap-5 px-5">{children}</CardContent>
+    </Card>
   );
 }
 
@@ -91,16 +98,18 @@ export function Avatar({ name, className }: { name: string; className?: string }
 /** Compact role pill. Owner is accented; others stay neutral. */
 export function RoleBadge({ role }: { role: string }) {
   const label = role.charAt(0).toUpperCase() + role.slice(1);
+  const isOwner = role === "owner";
   return (
-    <span
+    <Badge
+      variant="outline"
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium capitalize",
-        role === "owner"
+        "capitalize",
+        isOwner
           ? "border-accent/30 bg-accent/10 text-accent"
           : "border-hairline bg-elevated text-fg-muted",
       )}
     >
       {label}
-    </span>
+    </Badge>
   );
 }
