@@ -5,7 +5,8 @@ import { getActiveContext } from "@/lib/context";
 import { listProjects } from "@/lib/diagram-actions";
 import { listPersonalProjects } from "@/lib/personal-actions";
 import { getAiConfig } from "@/lib/ai";
-import { Dashboard } from "@/components/dashboard";
+import { AppShell } from "@/components/app-shell";
+import { ProjectsList } from "@/components/projects-list";
 
 export default async function ProjectsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -24,12 +25,12 @@ export default async function ProjectsPage() {
   const aiConnected = ctx ? Boolean(await getAiConfig(ctx)) : false;
 
   return (
-    <Dashboard
-      userName={session.user.name}
-      userEmail={session.user.email}
-      projects={projects}
-      aiConnected={aiConnected}
-      context={ctx?.kind ?? "personal"}
-    />
+    <AppShell userName={session.user.name} userEmail={session.user.email} title="Projects">
+      <ProjectsList
+        projects={projects}
+        aiConnected={aiConnected}
+        context={ctx?.kind ?? "personal"}
+      />
+    </AppShell>
   );
 }
