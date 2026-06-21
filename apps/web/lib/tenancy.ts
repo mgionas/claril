@@ -86,6 +86,63 @@ export async function assertWorkspaceAccess(userId: string, workspaceId: string)
   if (!rows[0]) throw new Error("Forbidden");
 }
 
+export type WorkspaceRole = "admin" | "editor" | "viewer" | "member"; // "member" = legacy ≈ editor
+export type WorkspaceAction = "view" | "edit" | "manage";
+
+/** Pure capability check for a workspace role. */
+export function canDo(role: WorkspaceRole, action: WorkspaceAction): boolean {
+  if (action === "view") return true;
+  if (action === "edit") return role === "admin" || role === "editor" || role === "member";
+  return role === "admin"; // "manage"
+}
+
+/**
+ * Resolve the user's effective role in a workspace and require at least `min`.
+ * Org owners/admins are implicitly workspace admins. Throws "Not found" /
+ * "Forbidden". Returns the effective role.
+ */
+export async function requireWorkspaceRole(
+  userId: string,
+  workspaceId: string,
+  min: WorkspaceAction,
+): Promise<WorkspaceRole> {
+  const ws = (
+    await db
+      .select({ orgId: schema.workspace.organizationId })
+      .from(schema.workspace)
+      .where(eq(schema.workspace.id, workspaceId))
+      .limit(1)
+  )[0];
+  if (!ws) throw new Error("Not found");
+  const orgRole = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, ws.orgId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0]?.role;
+  if (orgRole === "owner" || orgRole === "admin") {
+    if (!canDo("admin", min)) throw new Error("Forbidden");
+    return "admin";
+  }
+  const wm = (
+    await db
+      .select({ role: schema.workspaceMember.role })
+      .from(schema.workspaceMember)
+      .where(
+        and(
+          eq(schema.workspaceMember.workspaceId, workspaceId),
+          eq(schema.workspaceMember.userId, userId),
+        ),
+      )
+      .limit(1)
+  )[0];
+  if (!wm) throw new Error("Forbidden");
+  const role = wm.role as WorkspaceRole;
+  if (!canDo(role, min)) throw new Error("Forbidden");
+  return role;
+}
+
 /**
  * Assert the user may access the given project (via its workspace). Returns the
  * project's workspaceId. Throws if not authorized.
