@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 
 export interface AiConnectionsManagerProps {
-  /** Auto-expand this provider's card when it isn't connected yet (optional). */
+  /** Auto-select & expand this provider when it isn't connected yet (optional). */
   initialProvider?: AiProvider;
 }
 
@@ -41,46 +41,104 @@ const decodeDefault = (v: string): { provider: AiProvider; model: string } => {
 
 type TestResult = { ok: boolean; message: string } | null;
 
-function StatusPill({ connection }: { connection?: ConnectionView }) {
-  if (connection?.usable) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success">
-        <span className="size-1.5 rounded-full bg-success" />
-        Connected
-      </span>
-    );
-  }
-  if (connection && !connection.usable) {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
-        Needs key
-      </span>
-    );
-  }
+/** Connection status, distilled to one of three states shared with the tile dot. */
+type ProviderStatus = "connected" | "needs-key" | "not-connected";
+function statusOf(connection?: ConnectionView): ProviderStatus {
+  if (connection?.usable) return "connected";
+  if (connection && !connection.usable) return "needs-key";
+  return "not-connected";
+}
+
+const STATUS_META: Record<ProviderStatus, { label: string; dot: string; text: string }> = {
+  connected: { label: "Connected", dot: "bg-success", text: "text-success" },
+  "needs-key": { label: "Needs key", dot: "bg-warning", text: "text-warning" },
+  "not-connected": { label: "Not connected", dot: "bg-fg-subtle/50", text: "text-fg-subtle" },
+};
+
+/**
+ * Compact, scannable provider tile: icon + label + status dot, with a subtle
+ * "Default" marker and the current model in tiny muted text. A real toggle
+ * button (single-open accordion) that drives the shared detail panel below.
+ */
+function ProviderTile({
+  provider,
+  connection,
+  selected,
+  onSelect,
+}: {
+  provider: AiProvider;
+  connection?: ConnectionView;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const meta = providerMeta(provider);
+  const status = statusOf(connection);
+  const s = STATUS_META[status];
+
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
-      Not connected
-    </span>
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-expanded={selected}
+      aria-pressed={selected}
+      className={cn(
+        "group flex w-full items-center gap-2.5 rounded-[10px] border p-2.5 text-left transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
+        selected
+          ? "border-accent/60 bg-accent/[0.07]"
+          : "border-hairline bg-elevated/30 hover:border-fg-subtle/25 hover:bg-elevated/60",
+      )}
+    >
+      <ProviderIcon provider={provider} className="size-5 shrink-0 text-fg-muted" />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium text-fg">{meta.label}</span>
+          {connection?.isOrgDefault && (
+            <span className="shrink-0 rounded-full border border-accent/40 bg-accent/10 px-1.5 py-px text-[9px] font-medium leading-tight text-accent">
+              Default
+            </span>
+          )}
+        </span>
+        {connection?.usable && connection.defaultModel ? (
+          <span className="truncate font-mono text-[10px] text-fg-subtle">
+            {connection.defaultModel}
+          </span>
+        ) : (
+          <span className={cn("truncate text-[10px]", s.text)}>{s.label}</span>
+        )}
+      </div>
+      <span
+        className={cn("size-2 shrink-0 rounded-full", s.dot)}
+        role="img"
+        aria-label={`Status: ${s.label}`}
+      />
+    </button>
   );
 }
 
-function ProviderCard({
+/**
+ * Focused detail panel for a single selected provider — exactly the actions the
+ * old card had: Test / Edit (form) / Remove for connected, or the connect form
+ * + Connect when not. Remounted per provider (via key) so form state is fresh.
+ */
+function ProviderDetail({
   provider,
   connection,
   canEdit,
-  defaultOpen,
+  startEditing,
   onChanged,
 }: {
   provider: AiProvider;
   connection?: ConnectionView;
   canEdit: boolean;
-  defaultOpen: boolean;
+  /** When false (connected), start collapsed showing Test/Edit/Remove. */
+  startEditing: boolean;
   onChanged: () => Promise<void>;
 }) {
   const meta = providerMeta(provider);
   const connected = Boolean(connection?.usable);
 
-  const [expanded, setExpanded] = useState(defaultOpen);
+  const [editing, setEditing] = useState(startEditing);
   const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState(connection?.baseUrl ?? "");
   const [model, setModel] = useState(connection?.defaultModel ?? "");
@@ -100,11 +158,11 @@ function ProviderCard({
     setError(null);
     setTestResult(null);
     setRefetchKey((k) => k + 1);
-    setExpanded(true);
+    setEditing(true);
   }
 
   function closeForm() {
-    setExpanded(false);
+    setEditing(false);
     setError(null);
     setApiKey("");
   }
@@ -136,7 +194,7 @@ function ProviderCard({
         baseUrl: baseUrl || undefined,
         defaultModel: model || undefined,
       });
-      setExpanded(false);
+      setEditing(false);
       setApiKey("");
       await onChanged();
     } catch (err) {
@@ -152,7 +210,7 @@ function ProviderCard({
     try {
       await removeAiProvider(provider);
       setConfirmRemove(false);
-      setExpanded(false);
+      setEditing(false);
       await onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove provider.");
@@ -161,30 +219,27 @@ function ProviderCard({
     }
   }
 
+  // For connected providers we show the form only when "Edit" is toggled on.
+  // For not-connected providers the form is always present (connect flow).
+  const showForm = connected ? editing : true;
+
   return (
-    <div className="rounded-[10px] border border-hairline bg-elevated/30 p-3">
+    <div className="flex animate-[fadeIn_160ms_ease] flex-col gap-3 rounded-[10px] border border-hairline bg-elevated/30 p-3">
       <div className="flex items-center gap-2.5">
         <ProviderIcon provider={provider} className="size-5 shrink-0 text-fg-muted" />
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-medium text-fg">{meta.label}</span>
-          {connected && connection?.defaultModel && (
-            <span className="truncate font-mono text-[10px] text-fg-subtle">
-              {connection.defaultModel}
-            </span>
-          )}
-        </div>
+        <span className="truncate text-sm font-medium text-fg">{meta.label}</span>
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {connection?.isOrgDefault && (
             <span className="inline-flex items-center rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
               Default
             </span>
           )}
-          <StatusPill connection={connection} />
+          <StatusBadge connection={connection} />
         </div>
       </div>
 
       {/* Action row */}
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {connected ? (
           <>
             <Button
@@ -202,11 +257,11 @@ function ProviderCard({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => (expanded ? closeForm() : openForm())}
+              onClick={() => (editing ? closeForm() : openForm())}
               disabled={!canEdit}
               className="text-fg-muted"
             >
-              {expanded ? "Cancel" : "Edit"}
+              {editing ? "Cancel" : "Edit"}
             </Button>
             {confirmRemove ? (
               <span className="flex items-center gap-1.5">
@@ -243,28 +298,17 @@ function ProviderCard({
               </Button>
             )}
           </>
-        ) : (
-          <Button
-            type="button"
-            variant={expanded ? "ghost" : "outline"}
-            size="sm"
-            onClick={() => (expanded ? closeForm() : openForm())}
-            disabled={!canEdit}
-            className={expanded ? "text-fg-muted" : ""}
-          >
-            {expanded ? "Cancel" : "Add"}
-          </Button>
-        )}
+        ) : null}
 
-        {testResult && !expanded && (
+        {testResult && !showForm && (
           <span className={cn("text-[11px]", testResult.ok ? "text-success" : "text-error")}>
             {testResult.message}
           </span>
         )}
       </div>
 
-      {expanded && (
-        <div className="mt-3 flex animate-[fadeIn_160ms_ease] flex-col gap-3 border-t border-hairline pt-3">
+      {showForm && (
+        <div className="flex flex-col gap-3 border-t border-hairline pt-3">
           <ProviderConnectForm
             provider={provider}
             apiKey={apiKey}
@@ -305,14 +349,39 @@ function ProviderCard({
         </div>
       )}
 
-      {error && !expanded && <p className="mt-2 text-[11px] text-error">{error}</p>}
+      {error && !showForm && <p className="text-[11px] text-error">{error}</p>}
     </div>
   );
 }
 
+/** Status badge (dot + label) for the detail panel header. */
+function StatusBadge({ connection }: { connection?: ConnectionView }) {
+  const status = statusOf(connection);
+  const s = STATUS_META[status];
+  const border =
+    status === "connected"
+      ? "border-success/40 bg-success/10"
+      : status === "needs-key"
+        ? "border-warning/40 bg-warning/10"
+        : "border-hairline";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+        border,
+        s.text,
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", s.dot)} />
+      {s.label}
+    </span>
+  );
+}
+
 /**
- * Multi-provider connections manager: org-default model selector + a card per
- * provider (Test / Edit / Remove / Connect). Owns its own data load and refresh.
+ * Multi-provider connections manager: org-default model selector + a compact
+ * grid of provider tiles. Clicking a tile opens a single-open detail panel
+ * (Test / Edit / Remove / Connect). Owns its own data load and refresh.
  * Rendered both inside the workbench settings dialog and on /settings/ai.
  */
 export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerProps) {
@@ -320,6 +389,8 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
   const [data, setData] = useState<AiSettingsView | null>(null);
   const [loading, setLoading] = useState(false);
   const [defaultError, setDefaultError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<AiProvider | null>(null);
+  const [appliedInitial, setAppliedInitial] = useState(false);
 
   const refresh = useCallback(async () => {
     const next = await getAiSettings();
@@ -349,6 +420,14 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
   const orgDefault = data?.orgDefault;
   const defaultValue = orgDefault ? encodeDefault(orgDefault.provider, orgDefault.model) : "";
 
+  // Auto-select the requested provider once data has loaded (when not connected).
+  useEffect(() => {
+    if (appliedInitial || !data || !initialProvider) return;
+    const conn = byProvider.get(initialProvider);
+    if (!conn?.usable) setSelected(initialProvider);
+    setAppliedInitial(true);
+  }, [appliedInitial, data, initialProvider, byProvider]);
+
   async function onDefaultChange(v: string) {
     const { provider, model } = decodeDefault(v);
     setDefaultError(null);
@@ -368,6 +447,8 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
       </div>
     );
   }
+
+  const selectedConnection = selected ? byProvider.get(selected) : undefined;
 
   return (
     <div className="flex flex-col">
@@ -407,22 +488,37 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
         </div>
       )}
 
-      {/* Cards grid */}
-      <div className="mt-4 flex flex-col gap-2.5 overflow-y-auto pr-1">
+      {/* Compact provider tiles */}
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {PROVIDER_META.map((p) => {
           const connection = byProvider.get(p.value);
           return (
-            <ProviderCard
+            <ProviderTile
               key={p.value}
               provider={p.value}
               connection={connection}
-              canEdit={canEdit}
-              defaultOpen={!connection?.usable && p.value === initialProvider}
-              onChanged={refresh}
+              selected={selected === p.value}
+              onSelect={() =>
+                setSelected((cur) => (cur === p.value ? null : p.value))
+              }
             />
           );
         })}
       </div>
+
+      {/* Single-open detail panel for the selected provider */}
+      {selected && (
+        <div className="mt-3">
+          <ProviderDetail
+            key={selected}
+            provider={selected}
+            connection={selectedConnection}
+            canEdit={canEdit}
+            startEditing={!selectedConnection?.usable}
+            onChanged={refresh}
+          />
+        </div>
+      )}
     </div>
   );
 }
