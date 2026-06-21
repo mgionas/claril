@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { AiProvider } from "@claril/ai-advisor";
-import { PROVIDER_META, providerMeta, keyLooksValid } from "@/lib/ai-providers";
+import { PROVIDER_META, providerMeta } from "@/lib/ai-providers";
 import { testProviderConnection } from "@/lib/ai-models";
-import { saveAiConfig } from "@/lib/actions";
-import { ModelPicker } from "@/components/ai/model-picker";
+import {
+  connectAiProvider,
+  getAiSettings,
+  removeAiProvider,
+  setOrgDefaultModel,
+  type AiSettingsView,
+} from "@/lib/actions";
+import type { ConnectionView } from "@/lib/ai";
+import { ProviderConnectForm } from "@/components/provider-connect-form";
 import { ProviderIcon } from "@/components/ai/provider-icon";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -29,87 +35,98 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Step = 0 | 1 | 2;
-const STEP_LABELS = ["Provider", "API key", "Model"] as const;
-
 interface AiSettingsDialogProps {
   open: boolean;
   onClose: () => void;
+  /** Provider whose card should start expanded (when not yet connected). */
   initialProvider?: string;
 }
 
-function HowToPanel({
-  heading,
-  steps,
-  url,
-  urlLabel,
-}: {
-  heading: string;
-  steps: string[];
-  url: string;
-  urlLabel: string;
-}) {
+/** Encode a {provider, model} pair into a single Select value. */
+const encodeDefault = (provider: AiProvider, model: string) => `${provider}::${model}`;
+const decodeDefault = (v: string): { provider: AiProvider; model: string } => {
+  const idx = v.indexOf("::");
+  return { provider: v.slice(0, idx) as AiProvider, model: v.slice(idx + 2) };
+};
+
+type TestResult = { ok: boolean; message: string } | null;
+
+function StatusPill({ connection }: { connection?: ConnectionView }) {
+  if (connection?.usable) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success">
+        <span className="size-1.5 rounded-full bg-success" />
+        Connected
+      </span>
+    );
+  }
+  if (connection && !connection.usable) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
+        Needs key
+      </span>
+    );
+  }
   return (
-    <div className="rounded-[10px] border border-hairline bg-elevated/40 p-3">
-      <p className="mb-1.5 text-[11px] font-medium text-fg-muted">{heading}</p>
-      <ol className="flex list-decimal flex-col gap-1 pl-4 text-[11px] text-fg-subtle">
-        {steps.map((s, i) => (
-          <li key={i}>{s}</li>
-        ))}
-      </ol>
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
-      >
-        Open {urlLabel} ↗
-      </a>
-    </div>
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+      Not connected
+    </span>
   );
 }
 
-export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsDialogProps) {
-  const router = useRouter();
-  const [step, setStep] = useState<Step>(0);
-  const [provider, setProvider] = useState<AiProvider>(
-    (initialProvider as AiProvider) ?? "anthropic",
-  );
-  const [model, setModel] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
+function ProviderCard({
+  provider,
+  connection,
+  canEdit,
+  defaultOpen,
+  onChanged,
+}: {
+  provider: AiProvider;
+  connection?: ConnectionView;
+  canEdit: boolean;
+  defaultOpen: boolean;
+  onChanged: () => Promise<void>;
+}) {
+  const meta = providerMeta(provider);
+  const connected = Boolean(connection?.usable);
+
+  const [expanded, setExpanded] = useState(defaultOpen);
   const [apiKey, setApiKey] = useState("");
+  const [baseUrl, setBaseUrl] = useState(connection?.baseUrl ?? "");
+  const [model, setModel] = useState(connection?.defaultModel ?? "");
   const [refetchKey, setRefetchKey] = useState(0);
 
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<TestResult>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
-  // Reset to step 0 each time the dialog opens.
-  useEffect(() => {
-    if (open) {
-      setStep(0);
-      setProvider((initialProvider as AiProvider) ?? "anthropic");
-      setError(null);
-      setTestResult(null);
-    }
-  }, [open, initialProvider]);
-
-  const meta = providerMeta(provider);
-
-  function goModelStep() {
-    // Re-fetch live models now that the key is entered.
+  function openForm() {
+    // Prefill with the stored config; key stays blank (keep existing).
+    setApiKey("");
+    setBaseUrl(connection?.baseUrl ?? "");
+    setModel(connection?.defaultModel ?? "");
+    setError(null);
+    setTestResult(null);
     setRefetchKey((k) => k + 1);
-    setStep(2);
+    setExpanded(true);
+  }
+
+  function closeForm() {
+    setExpanded(false);
+    setError(null);
+    setApiKey("");
   }
 
   async function onTest() {
     setTesting(true);
     setTestResult(null);
     try {
+      // Blank key → server falls back to the stored credential.
       const res = await testProviderConnection(
         provider,
-        model,
+        model || connection?.defaultModel || "",
         apiKey || undefined,
         baseUrl || undefined,
       );
@@ -119,209 +136,322 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
     }
   }
 
-  async function onSave() {
-    setSaving(true);
+  async function onConnect() {
+    setBusy(true);
     setError(null);
     try {
-      await saveAiConfig({
+      await connectAiProvider({
         provider,
-        model: model || undefined,
-        baseUrl: baseUrl || undefined,
         apiKey: apiKey || undefined,
+        baseUrl: baseUrl || undefined,
+        defaultModel: model || undefined,
       });
-      onClose();
-      router.refresh();
+      setExpanded(false);
+      setApiKey("");
+      await onChanged();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save AI settings.");
+      setError(err instanceof Error ? err.message : "Failed to save provider.");
     } finally {
-      setSaving(false);
+      setBusy(false);
+    }
+  }
+
+  async function onRemove() {
+    setBusy(true);
+    setError(null);
+    try {
+      await removeAiProvider(provider);
+      setConfirmRemove(false);
+      setExpanded(false);
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove provider.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-[10px] border border-hairline bg-elevated/30 p-3">
+      <div className="flex items-center gap-2.5">
+        <ProviderIcon provider={provider} className="size-5 shrink-0 text-fg-muted" />
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-sm font-medium text-fg">{meta.label}</span>
+          {connected && connection?.defaultModel && (
+            <span className="truncate font-mono text-[10px] text-fg-subtle">
+              {connection.defaultModel}
+            </span>
+          )}
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {connection?.isOrgDefault && (
+            <span className="inline-flex items-center rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
+              Default
+            </span>
+          )}
+          <StatusPill connection={connection} />
+        </div>
+      </div>
+
+      {/* Action row */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        {connected ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onTest}
+              disabled={testing || !canEdit}
+              className="gap-1.5 text-fg-muted"
+            >
+              {testing && <Loader2 className="size-3 animate-spin" />}
+              {testing ? "Testing…" : "Test"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => (expanded ? closeForm() : openForm())}
+              disabled={!canEdit}
+              className="text-fg-muted"
+            >
+              {expanded ? "Cancel" : "Edit"}
+            </Button>
+            {confirmRemove ? (
+              <span className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRemove}
+                  disabled={busy || !canEdit}
+                  className="text-error hover:text-error"
+                >
+                  {busy ? "Removing…" : "Confirm remove"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmRemove(false)}
+                  className="text-fg-subtle"
+                >
+                  Cancel
+                </Button>
+              </span>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmRemove(true)}
+                disabled={busy || !canEdit}
+                className="text-fg-subtle hover:text-error"
+              >
+                Remove
+              </Button>
+            )}
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant={expanded ? "ghost" : "outline"}
+            size="sm"
+            onClick={() => (expanded ? closeForm() : openForm())}
+            disabled={!canEdit}
+            className={expanded ? "text-fg-muted" : ""}
+          >
+            {expanded ? "Cancel" : "Add"}
+          </Button>
+        )}
+
+        {testResult && !expanded && (
+          <span className={cn("text-[11px]", testResult.ok ? "text-success" : "text-error")}>
+            {testResult.message}
+          </span>
+        )}
+      </div>
+
+      {expanded && (
+        <div className="mt-3 flex animate-[fadeIn_160ms_ease] flex-col gap-3 border-t border-hairline pt-3">
+          <ProviderConnectForm
+            provider={provider}
+            apiKey={apiKey}
+            onApiKeyChange={setApiKey}
+            baseUrl={baseUrl}
+            onBaseUrlChange={setBaseUrl}
+            model={model}
+            onModelChange={setModel}
+            disabled={!canEdit || busy}
+            refetchKey={refetchKey}
+          />
+
+          <div className="flex items-center gap-2">
+            <Button type="button" size="sm" onClick={onConnect} disabled={busy || !canEdit}>
+              {busy ? "Saving…" : connected ? "Save" : "Connect"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onTest}
+              disabled={testing || !canEdit}
+              className="gap-1.5 text-fg-muted"
+            >
+              {testing && <Loader2 className="size-3 animate-spin" />}
+              {testing ? "Testing…" : "Test"}
+            </Button>
+            {testResult && (
+              <span
+                className={cn("text-[11px]", testResult.ok ? "text-success" : "text-error")}
+              >
+                {testResult.message}
+              </span>
+            )}
+          </div>
+
+          {error && <p className="text-[11px] text-error">{error}</p>}
+        </div>
+      )}
+
+      {error && !expanded && <p className="mt-2 text-[11px] text-error">{error}</p>}
+    </div>
+  );
+}
+
+export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsDialogProps) {
+  const router = useRouter();
+  const [data, setData] = useState<AiSettingsView | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [defaultError, setDefaultError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    const next = await getAiSettings();
+    setData(next);
+    router.refresh();
+  }, [router]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoading(true);
+    getAiSettings()
+      .then((next) => {
+        if (!cancelled) setData(next);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const canEdit = data?.canEdit ?? false;
+  const connections = data?.connections ?? [];
+  const byProvider = new Map(connections.map((c) => [c.provider, c]));
+  const usable = connections.filter((c) => c.usable);
+  const orgDefault = data?.orgDefault;
+  const defaultValue = orgDefault ? encodeDefault(orgDefault.provider, orgDefault.model) : "";
+
+  async function onDefaultChange(v: string) {
+    const { provider, model } = decodeDefault(v);
+    setDefaultError(null);
+    try {
+      await setOrgDefaultModel({ provider, model });
+      await refresh();
+    } catch (e) {
+      setDefaultError(e instanceof Error ? e.message : "Couldn't set the default model.");
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent
-        aria-label="AI provider setup"
-        className="max-w-md gap-0 rounded-[10px] border-hairline bg-panel/95 p-6 backdrop-blur-md"
+        aria-label="AI providers"
+        className="flex max-h-[85vh] max-w-lg flex-col gap-0 overflow-hidden rounded-[10px] border-hairline bg-panel/95 p-6 backdrop-blur-md"
       >
         <DialogHeader className="text-left">
-          <DialogTitle className="text-base font-medium">Set up AI provider</DialogTitle>
+          <DialogTitle className="text-base font-medium">AI providers</DialogTitle>
           <DialogDescription className="text-sm text-fg-muted">
-            Bring your own key — stored encrypted, per organization. Claril works fully without AI;
-            this only enables the advisor and other AI features.
+            Connect one or more providers — keys are stored encrypted, per organization. Pick which
+            model your org uses by default. Claril works fully without AI.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step indicator */}
-        <ol className="mt-4 flex items-center gap-2" aria-label="Setup steps">
-          {STEP_LABELS.map((label, i) => (
-            <li key={label} className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "flex size-5 items-center justify-center rounded-full text-[11px] transition-colors",
-                  i < step
-                    ? "bg-accent text-white"
-                    : i === step
-                      ? "border border-accent text-accent"
-                      : "border border-hairline text-fg-subtle",
-                )}
-              >
-                {i < step ? <Check className="size-3" /> : i + 1}
-              </span>
-              <span
-                className={cn(
-                  "text-xs transition-colors",
-                  i === step ? "text-fg" : "text-fg-subtle",
-                )}
-              >
-                {label}
-              </span>
-              {i < STEP_LABELS.length - 1 && <ChevronRight className="size-3 text-fg-subtle" />}
-            </li>
-          ))}
-        </ol>
-
-        <div key={step} className="mt-5 flex animate-[fadeIn_160ms_ease] flex-col gap-3">
-          {step === 0 && (
-            <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-fg-muted" htmlFor="provider-select">
-                Provider
-              </Label>
-              <Select
-                value={provider}
-                onValueChange={(v) => {
-                  setProvider(v as AiProvider);
-                  setModel("");
-                  setTestResult(null);
-                }}
-              >
-                <SelectTrigger id="provider-select" className="w-full bg-elevated">
-                  <SelectValue>
-                    <span className="flex items-center gap-2">
-                      <ProviderIcon provider={provider} className="size-4 text-fg-muted" />
-                      {meta.label}
-                    </span>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="border-hairline bg-panel">
-                  {PROVIDER_META.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      <ProviderIcon provider={p.value} className="size-4 text-fg-muted" />
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="mt-1 text-[11px] text-fg-muted">{meta.description}</p>
-              <p className="text-[11px] text-fg-subtle">
-                Provider-agnostic. Switch any time — keys are stored per provider, encrypted.
-              </p>
-            </div>
-          )}
-
-          {step === 1 && (
-            <>
-              {meta.needsKey ? (
-                <div className="flex flex-col gap-2">
-                  {/* How-to guidance */}
-                  <HowToPanel
-                    heading={`How to connect ${meta.label}`}
-                    steps={meta.steps}
-                    url={meta.keyUrl}
-                    urlLabel={meta.keyUrlLabel}
-                  />
-
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs text-fg-muted" htmlFor="api-key">
-                      API key
-                    </Label>
-                    <Input
-                      id="api-key"
-                      type="password"
-                      className="bg-elevated"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder={meta.keyPlaceholder ?? "Leave blank to keep the existing key"}
-                      autoComplete="off"
-                      autoFocus
-                    />
-                    {!keyLooksValid(provider, apiKey) && (
-                      <p className="text-[11px] text-warning">
-                        That doesn&apos;t look like a {meta.label} key — it usually starts with{" "}
-                        <code className="font-mono">{meta.keyPrefix}</code>. You can still continue.
-                      </p>
-                    )}
-                    {meta.note && <p className="text-[11px] text-fg-subtle">{meta.note}</p>}
-                  </div>
-                </div>
-              ) : (
-                <HowToPanel
-                  heading={`How to run ${meta.label}`}
-                  steps={meta.steps}
-                  url={meta.keyUrl}
-                  urlLabel={meta.keyUrlLabel}
-                />
-              )}
-
-              {(provider === "ollama" || provider === "openai") && (
-                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs text-fg-muted" htmlFor="base-url">
-                    Base URL {provider === "openai" ? "(optional, for compatible proxies)" : ""}
-                  </Label>
-                  <Input
-                    id="base-url"
-                    className="bg-elevated"
-                    value={baseUrl}
-                    onChange={(e) => setBaseUrl(e.target.value)}
-                    placeholder={
-                      provider === "ollama"
-                        ? "http://localhost:11434/v1"
-                        : "https://api.openai.com/v1"
-                    }
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <ModelPicker
-                provider={provider}
-                apiKey={apiKey}
-                baseUrl={baseUrl}
-                value={model}
-                onChange={setModel}
-                refetchKey={refetchKey}
-              />
-
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onTest}
-                  disabled={testing || !model}
-                  className="gap-1.5 text-fg-muted"
+        {loading && !data ? (
+          <div className="mt-6 flex items-center gap-2 text-sm text-fg-muted">
+            <Loader2 className="size-4 animate-spin" />
+            Loading providers…
+          </div>
+        ) : (
+          <>
+            {/* Org default selector */}
+            {usable.length > 0 && (
+              <div className="mt-4 flex flex-col gap-1.5">
+                <Label className="text-xs text-fg-muted" htmlFor="org-default-select">
+                  Organization default
+                </Label>
+                <Select
+                  value={defaultValue}
+                  onValueChange={onDefaultChange}
+                  disabled={!canEdit}
                 >
-                  {testing && <Loader2 className="size-3 animate-spin" />}
-                  {testing ? "Testing…" : "Test connection"}
-                </Button>
-                {testResult && (
-                  <span
-                    className={cn("text-[11px]", testResult.ok ? "text-success" : "text-error")}
-                  >
-                    {testResult.message}
-                  </span>
-                )}
+                  <SelectTrigger id="org-default-select" className="w-full bg-elevated">
+                    <SelectValue placeholder="Choose a default model">
+                      {orgDefault && (
+                        <span className="flex items-center gap-2">
+                          <ProviderIcon
+                            provider={orgDefault.provider}
+                            className="size-4 text-fg-muted"
+                          />
+                          {providerMeta(orgDefault.provider).label} · {orgDefault.model}
+                        </span>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="border-hairline bg-panel">
+                    {usable.map((c) => {
+                      const m = c.defaultModel ?? "";
+                      return (
+                        <SelectItem
+                          key={c.provider}
+                          value={encodeDefault(c.provider, m)}
+                        >
+                          <ProviderIcon provider={c.provider} className="size-4 text-fg-muted" />
+                          {providerMeta(c.provider).label} · {m}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                {defaultError && <p className="text-[11px] text-error">{defaultError}</p>}
               </div>
-            </>
-          )}
+            )}
 
-          {error && <p className="text-sm text-error">{error}</p>}
-        </div>
+            {/* Cards grid */}
+            <div className="mt-4 flex flex-col gap-2.5 overflow-y-auto pr-1">
+              {PROVIDER_META.map((p) => {
+                const connection = byProvider.get(p.value);
+                return (
+                  <ProviderCard
+                    key={p.value}
+                    provider={p.value}
+                    connection={connection}
+                    canEdit={canEdit}
+                    defaultOpen={
+                      !connection?.usable && p.value === (initialProvider as AiProvider)
+                    }
+                    onChanged={refresh}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
 
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-5 flex items-center justify-between border-t border-hairline pt-4">
           <Link
             href="/settings/ai"
             onClick={onClose}
@@ -329,31 +459,9 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
           >
             Manage in settings →
           </Link>
-
-          <div className="flex gap-2">
-            {step > 0 && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setStep((s) => (s - 1) as Step)}
-                className="text-fg-muted"
-              >
-                Back
-              </Button>
-            )}
-            {step < 2 ? (
-              <Button
-                type="button"
-                onClick={() => (step === 1 ? goModelStep() : setStep((s) => (s + 1) as Step))}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button type="button" onClick={onSave} disabled={saving || !model}>
-                {saving ? "Saving…" : "Save"}
-              </Button>
-            )}
-          </div>
+          <Button type="button" variant="ghost" onClick={onClose} className="text-fg-muted">
+            Done
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
