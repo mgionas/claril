@@ -148,3 +148,60 @@ export async function listOrgConnections(orgId: string): Promise<ConnectionView[
     }))
     .sort((a, b) => a.provider.localeCompare(b.provider));
 }
+
+/** Which scope an AI call resolves against. */
+export type AiContext = { kind: "personal"; userId: string } | { kind: "org"; orgId: string };
+
+/** Decrypted personal (user-scoped) AI config, or null when nothing usable. */
+export async function getUserAiConfig(
+  userId: string,
+  opts?: AiOverride,
+): Promise<LLMProviderConfig | null> {
+  const [conns, defRows] = await Promise.all([
+    db.select().from(schema.userAiConnection).where(eq(schema.userAiConnection.userId, userId)),
+    db
+      .select()
+      .from(schema.userAiDefault)
+      .where(eq(schema.userAiDefault.userId, userId))
+      .limit(1),
+  ]);
+  const def = defRows[0] ? { provider: defRows[0].provider, model: defRows[0].model } : null;
+  const resolved = resolveConnection(conns, def, opts);
+  if (!resolved) return null;
+  return {
+    provider: resolved.provider,
+    model: resolved.model,
+    baseUrl: resolved.baseUrl,
+    apiKey: resolved.encryptedKey ? decryptSecret(resolved.encryptedKey) : undefined,
+  };
+}
+
+/** Personal connections summarized for the (future) settings UI. */
+export async function listUserConnections(userId: string): Promise<ConnectionView[]> {
+  const [conns, defRows] = await Promise.all([
+    db.select().from(schema.userAiConnection).where(eq(schema.userAiConnection.userId, userId)),
+    db
+      .select()
+      .from(schema.userAiDefault)
+      .where(eq(schema.userAiDefault.userId, userId))
+      .limit(1),
+  ]);
+  const defaultProvider = defRows[0]?.provider;
+  return conns
+    .map((c) => ({
+      provider: c.provider as AiProvider,
+      hasKey: Boolean(c.encryptedKey),
+      usable: isUsable(c),
+      baseUrl: c.baseUrl ?? undefined,
+      defaultModel: c.defaultModel ?? undefined,
+      isOrgDefault: c.provider === defaultProvider,
+    }))
+    .sort((a, b) => a.provider.localeCompare(b.provider));
+}
+
+/** Route an AI-config lookup to the personal or org resolver by context. */
+export function getAiConfig(ctx: AiContext, opts?: AiOverride): Promise<LLMProviderConfig | null> {
+  return ctx.kind === "personal"
+    ? getUserAiConfig(ctx.userId, opts)
+    : getOrgAiConfig(ctx.orgId, opts);
+}
