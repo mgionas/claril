@@ -9,7 +9,13 @@ import {
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
-import { createModel, planEdits, describeFindings, describeAssetContext } from "@claril/ai-advisor";
+import {
+  createModel,
+  planEdits,
+  describeFindings,
+  describeAssetContext,
+  type AiProvider,
+} from "@claril/ai-advisor";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
 import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
 import { getOrRefreshSynopsis } from "@/lib/knowledge";
@@ -24,6 +30,12 @@ const BodySchema = z.object({
   graph: z.any(),
   findings: z.array(z.any()).default([]),
   diagramId: z.string().optional(),
+  override: z
+    .object({
+      provider: z.enum(["anthropic", "openai", "google", "mistral", "ollama"]).optional(),
+      model: z.string().optional(),
+    })
+    .optional(),
 });
 
 /** Strip lone surrogates from every text part so the provider body stays valid JSON. */
@@ -45,17 +57,19 @@ export async function POST(req: Request) {
   if (!session?.user) return new Response("Unauthorized", { status: 401 });
 
   const orgId = await getUserOrgId(session.user.id);
-  const config = orgId ? await getOrgAiConfig(orgId) : null;
-  if (!orgId || !config) return new Response("No AI provider configured.", { status: 400 });
 
   const parsed = BodySchema.safeParse(await req.json());
   if (!parsed.success) return new Response("Bad request", { status: 400 });
-  const { messages, graph, findings, diagramId } = parsed.data as {
+  const { messages, graph, findings, diagramId, override } = parsed.data as {
     messages: UIMessage[];
     graph: ProcessGraph;
     findings: Finding[];
     diagramId?: string;
+    override?: { provider?: AiProvider; model?: string };
   };
+
+  const config = orgId ? await getOrgAiConfig(orgId, override) : null;
+  if (!orgId || !config) return new Response("No AI provider configured.", { status: 400 });
 
   const assetContext = diagramId
     ? await buildDiagramAssetContext(orgId, diagramId)

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { HistoryMenu } from "@/components/history-menu";
+import { ModelSwitcher, type ModelSwitcherProps } from "@/components/model-switcher";
 import type { DiffMarks } from "@/lib/bpmn-diff";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,8 @@ interface TopBarProps {
       marks: DiffMarks | null,
     ) => void;
   };
+  /** Per-session model override (BPMN workbench only; omit elsewhere). */
+  modelSwitcher?: ModelSwitcherProps;
 }
 
 export function TopBar({
@@ -43,6 +46,7 @@ export function TopBar({
   aiProvider,
   onOpenAiSettings,
   history,
+  modelSwitcher,
 }: TopBarProps) {
   const router = useRouter();
 
@@ -85,6 +89,7 @@ export function TopBar({
             {aiConnected ? `AI: ${aiProvider ?? "on"}` : "AI: off"}
           </span>
         </button>
+        {aiConnected && modelSwitcher && <ModelSwitcher {...modelSwitcher} />}
         {history && (
           <HistoryMenu
             diagramId={diagramId}

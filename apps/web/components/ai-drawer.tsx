@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import type { EditPlan } from "@claril/ai-advisor";
+import type { AiOverride } from "@/lib/ai";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProblemsTab } from "@/components/problems-tab";
 import { ChatTab, type ChatTabHandle } from "@/components/chat-tab";
@@ -23,7 +24,12 @@ export interface AiDrawerProps {
   chatHandleRef: Ref<ChatTabHandle>;
   activeTab: "chat" | "problems";
   onTabChange: (tab: "chat" | "problems") => void;
-  getChatContext: () => { graph: ProcessGraph | null; findings: Finding[]; diagramId: string };
+  getChatContext: () => {
+    graph: ProcessGraph | null;
+    findings: Finding[];
+    diagramId: string;
+    override?: AiOverride;
+  };
   initialChatMessages?: { id: string; role: string; parts: unknown }[];
   pendingProposalId: string | null;
   resolutions: Record<string, "approved" | "rolledback">;

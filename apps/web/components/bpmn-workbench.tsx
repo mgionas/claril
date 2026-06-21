@@ -5,7 +5,15 @@ import dynamic from "next/dynamic";
 import { ChevronLeft } from "lucide-react";
 import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
-import { runAdvisor, runDocGen, saveDiagramContent } from "@/lib/actions";
+import {
+  getAiSettings,
+  runAdvisor,
+  runDocGen,
+  saveDiagramContent,
+  setOrgDefaultModel,
+} from "@/lib/actions";
+import type { AiOverride, ConnectionView } from "@/lib/ai";
+import type { AiProvider } from "@claril/ai-advisor";
 import { autosnapshotVersion } from "@/lib/version-actions";
 import { createVersionCoalescer, type VersionCoalescer } from "@/lib/version-coalescer";
 import type { VersionSource } from "@/lib/actions";
@@ -66,6 +74,14 @@ export function BpmnWorkbench({
   const [docBusy, setDocBusy] = useState(false);
   const [docError, setDocError] = useState<string | null>(null);
 
+  // Per-session provider/model override (null = use org default). Not persisted.
+  const [aiOverride, setAiOverride] = useState<AiOverride | null>(null);
+  const [aiSettings, setAiSettings] = useState<{
+    connections: ConnectionView[];
+    orgDefault?: { provider: AiProvider; model: string };
+    canEdit: boolean;
+  } | null>(null);
+
   // Which proposal (by toolCallId) is the one currently awaiting review.
   const [pendingProposalId, setPendingProposalId] = useState<string | null>(null);
   // How each resolved proposal ended up (keyed by toolCallId).
@@ -85,6 +101,26 @@ export function BpmnWorkbench({
   useEffect(() => {
     if (aiBusy || aiError) setInspectorOpen(true);
   }, [aiBusy, aiError]);
+
+  // Load the model switcher's data once AI is connected (best-effort).
+  useEffect(() => {
+    if (!aiConnected) return;
+    let cancelled = false;
+    getAiSettings()
+      .then((s) => {
+        if (!cancelled) {
+          setAiSettings({
+            connections: s.connections,
+            orgDefault: s.orgDefault,
+            canEdit: s.canEdit,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [aiConnected]);
 
   // Best-effort snapshot of the freshest canvas XML (never blocks the UI).
   const forceSnapshot = useCallback(
@@ -168,14 +204,20 @@ export function BpmnWorkbench({
     setAiBusy(true);
     setAiError(null);
     try {
-      const result = await runAdvisor(graphRef.current, findingsRef.current, undefined, diagramId);
+      const result = await runAdvisor(
+        graphRef.current,
+        findingsRef.current,
+        undefined,
+        diagramId,
+        aiOverride ?? undefined,
+      );
       setAdvisorFindings(result);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "AI request failed.");
     } finally {
       setAiBusy(false);
     }
-  }, [aiConnected, diagramId]);
+  }, [aiConnected, diagramId, aiOverride]);
 
   // History: read the freshest XML for diffing.
   const getCurrentXml = useCallback(() => currentXmlRef.current ?? null, []);
@@ -200,7 +242,12 @@ export function BpmnWorkbench({
     setDocBusy(true);
     setAiBusy(true);
     try {
-      const md = await runDocGen(graphRef.current, findingsRef.current, diagramId);
+      const md = await runDocGen(
+        graphRef.current,
+        findingsRef.current,
+        diagramId,
+        aiOverride ?? undefined,
+      );
       setDocMarkdown(md);
     } catch (err) {
       setDocError(err instanceof Error ? err.message : "AI request failed.");
@@ -208,7 +255,7 @@ export function BpmnWorkbench({
       setDocBusy(false);
       setAiBusy(false);
     }
-  }, [diagramId]);
+  }, [diagramId, aiOverride]);
 
   // Open the panel; only generate if we have no doc yet (persisted or prior run).
   const handleGenerateDocs = useCallback(() => {
@@ -258,8 +305,13 @@ export function BpmnWorkbench({
   }, []);
 
   const getChatContext = useCallback(
-    () => ({ graph: graphRef.current, findings: findingsRef.current, diagramId }),
-    [diagramId],
+    () => ({
+      graph: graphRef.current,
+      findings: findingsRef.current,
+      diagramId,
+      override: aiOverride ?? undefined,
+    }),
+    [diagramId, aiOverride],
   );
 
   const allFindings = advisorFindings.length > 0 ? [...findings, ...advisorFindings] : findings;
@@ -294,6 +346,27 @@ export function BpmnWorkbench({
             onRestored: handleRestored,
             onShowDiff: handleShowDiff,
           }}
+          modelSwitcher={
+            aiSettings
+              ? {
+                  connections: aiSettings.connections.filter((c) => c.usable),
+                  orgDefault: aiSettings.orgDefault,
+                  value: aiOverride,
+                  onChange: setAiOverride,
+                  canSetDefault: aiSettings.canEdit,
+                  onSetDefault: async (v) => {
+                    await setOrgDefaultModel(v);
+                    const next = await getAiSettings();
+                    setAiSettings({
+                      connections: next.connections,
+                      orgDefault: next.orgDefault,
+                      canEdit: next.canEdit,
+                    });
+                    setAiOverride(null);
+                  },
+                }
+              : undefined
+          }
         />
         <CommandBar
           onAskAi={handleAskAi}

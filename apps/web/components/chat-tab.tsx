@@ -7,6 +7,7 @@ import { Send, Wand2, FileText, Trash2 } from "lucide-react";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import type { EditPlan } from "@claril/ai-advisor";
+import type { AiOverride } from "@/lib/ai";
 import { ChatBubble } from "@/components/chat-bubble";
 import { ProposalCard } from "@/components/proposal-card";
 import { appendChatMessages, clearChat } from "@/lib/chat-actions";
@@ -22,6 +23,7 @@ interface ChatContext {
   graph: ProcessGraph | null;
   findings: Finding[];
   diagramId: string;
+  override?: AiOverride;
 }
 
 interface ChatTabProps {
@@ -96,7 +98,14 @@ export function ChatTab(props: ChatTabProps) {
     const ctx = props.getContext();
     void sendMessage(
       { text: t },
-      { body: { graph: ctx.graph, findings: ctx.findings, diagramId: ctx.diagramId } },
+      {
+        body: {
+          graph: ctx.graph,
+          findings: ctx.findings,
+          diagramId: ctx.diagramId,
+          override: ctx.override,
+        },
+      },
     );
   };
 
