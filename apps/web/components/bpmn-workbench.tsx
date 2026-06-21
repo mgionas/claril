@@ -7,7 +7,6 @@ import type { Finding, QuickFix } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import {
   getAiSettings,
-  runAdvisor,
   runDocGen,
   saveDiagramContent,
   setOrgDefaultModel,
@@ -73,11 +72,9 @@ export function BpmnWorkbench({
   initialChatMessages,
 }: BpmnWorkbenchProps) {
   const [findings, setFindings] = useState<Finding[]>([]);
-  const [advisorFindings, setAdvisorFindings] = useState<Finding[]>([]);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [focus, setFocus] = useState<{ id: string; nonce: number }>({ id: "", nonce: 0 });
   const [aiBusy, setAiBusy] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isOrg = diagramScope === "org";
   const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
@@ -128,8 +125,8 @@ export function BpmnWorkbench({
 
   // Surface AI work in the drawer automatically.
   useEffect(() => {
-    if (aiBusy || aiError) setInspectorOpen(true);
-  }, [aiBusy, aiError]);
+    if (aiBusy) setInspectorOpen(true);
+  }, [aiBusy]);
 
   // Load the model switcher's data once AI is connected (best-effort).
   useEffect(() => {
@@ -196,7 +193,6 @@ export function BpmnWorkbench({
   const handleFindings = useCallback((next: Finding[]) => {
     findingsRef.current = next;
     setFindings(next);
-    setAdvisorFindings([]);
   }, []);
 
   const handleGraph = useCallback((graph: ProcessGraph) => {
@@ -232,32 +228,32 @@ export function BpmnWorkbench({
     [diagramId, refreshLiveElements],
   );
 
-  // Advisor critique: one-click grounded findings, shown in the Problems tab.
-  const handleAskAi = useCallback(async () => {
+  // "Ask AI" opens the conversational assistant and lets the user ask — it does
+  // NOT run problem detection. Deterministic problems live in the Problems tab
+  // (the inspector); the AI answers questions and proposes edits in chat.
+  const handleAskAi = useCallback(() => {
     if (!aiConnected) {
       setSettingsOpen(true);
       return;
     }
-    if (!graphRef.current) return;
     setInspectorOpen(true);
-    setActiveTab("problems");
-    setAiBusy(true);
-    setAiError(null);
-    try {
-      const result = await runAdvisor(
-        graphRef.current,
-        findingsRef.current,
-        undefined,
-        diagramId,
-        aiOverride ?? undefined,
-      );
-      setAdvisorFindings(result);
-    } catch (err) {
-      setAiError(err instanceof Error ? err.message : "AI request failed.");
-    } finally {
-      setAiBusy(false);
+    setActiveTab("chat");
+    chatHandleRef.current?.focusComposer();
+  }, [aiConnected]);
+
+  // "Review" is a one-click chat prompt — the AI answers in the conversation
+  // (grounded on the inspector findings), rather than injecting into Problems.
+  const handleReview = useCallback(() => {
+    if (!aiConnected) {
+      setSettingsOpen(true);
+      return;
     }
-  }, [aiConnected, diagramId, aiOverride]);
+    setInspectorOpen(true);
+    setActiveTab("chat");
+    chatHandleRef.current?.ask(
+      "Review this process and point out any issues, risks, or improvements.",
+    );
+  }, [aiConnected]);
 
   // History: read the freshest XML for diffing.
   const getCurrentXml = useCallback(() => currentXmlRef.current ?? null, []);
@@ -354,7 +350,9 @@ export function BpmnWorkbench({
     [diagramId, aiOverride],
   );
 
-  const allFindings = advisorFindings.length > 0 ? [...findings, ...advisorFindings] : findings;
+  // Problems = the deterministic inspector only. AI critique never lands here;
+  // it answers in chat. So the Problems tab + board markers always agree.
+  const allFindings = findings;
   const errorCount = allFindings.filter((f) => f.severity === "error").length;
   const warningCount = allFindings.filter((f) => f.severity === "warning").length;
 
@@ -525,7 +523,7 @@ export function BpmnWorkbench({
         onDiscardPlan={handleDiscardPlan}
         onKeepRefining={handleKeepRefining}
         onGenerateDocs={handleGenerateDocs}
-        onReview={handleAskAi}
+        onReview={handleReview}
         onSelect={handleSelectFinding}
         onApplyFix={handleApplyFix}
         onAskAiAboutFinding={handleAskAiAboutFinding}
