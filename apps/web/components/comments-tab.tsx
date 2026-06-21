@@ -16,7 +16,7 @@ import {
 } from "@/lib/comment-actions";
 import { Avatar } from "@/components/settings/settings-ui";
 import { CommentComposer } from "@/components/comment-composer";
-import { CommentThreadView, relativeTime } from "@/components/comment-thread-view";
+import { CommentThreadView, ThreadStatusBadge, relativeTime } from "@/components/comment-thread-view";
 import { cn } from "@/lib/utils";
 
 interface CommentsTabProps {
@@ -71,6 +71,12 @@ export function CommentsTab({
 
   const liveSet = useMemo(() => new Set(liveElementIds), [liveElementIds]);
   const appliedInitial = useRef(false);
+  // Loop guards for the select-element <-> open-thread <-> focus-element cycle.
+  const lastSelectedElementIdRef = useRef<string | null>(null);
+  const lastFocusedThreadIdRef = useRef<string | null>(null);
+
+  const onFocusRef = useRef(onFocusElement);
+  onFocusRef.current = onFocusElement;
 
   const onCommentedRef = useRef(onCommentedElementsChange);
   onCommentedRef.current = onCommentedElementsChange;
@@ -124,6 +130,36 @@ export function CommentsTab({
     setOpenThreadId(null);
     setComposing(true);
   }, [composeRequest]);
+
+  // (2) Selecting an element on the canvas opens its most-recent OPEN thread.
+  // Acts only on genuine selection changes (guarded by lastSelectedElementIdRef)
+  // and never while composing a new comment. If no open thread exists for the
+  // element, the current view is left unchanged. setOpenThreadId is idempotent:
+  // when #3 re-focuses the same element, this finds the same already-open thread
+  // and the state doesn't change → no further cascade.
+  useEffect(() => {
+    const id = selectedElement?.id ?? null;
+    if (id === lastSelectedElementIdRef.current) return;
+    lastSelectedElementIdRef.current = id;
+    if (!id || composing) return;
+    const match = threads
+      .filter((t) => t.status === "open" && t.elementId === id)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+    if (match) setOpenThreadId(match.id);
+  }, [selectedElement?.id, composing, threads]);
+
+  // (3) Opening an element-anchored thread outlines its element on the canvas.
+  // Keyed on openThreadId; only fires when the open thread genuinely changes
+  // (lastFocusedThreadIdRef). Diagram-level threads (elementId === null) never
+  // focus. Because focusing re-selects the same element that opened the thread,
+  // effect #2 finds the same thread and leaves openThreadId unchanged → no loop.
+  useEffect(() => {
+    if (openThreadId === lastFocusedThreadIdRef.current) return;
+    lastFocusedThreadIdRef.current = openThreadId;
+    if (!openThreadId) return;
+    const t = threads.find((x) => x.id === openThreadId);
+    if (t?.elementId) onFocusRef.current(t.elementId);
+  }, [openThreadId, threads]);
 
   /** Run a mutation, then refetch; surface errors inline. */
   const mutate = useCallback(
@@ -400,6 +436,7 @@ function ThreadRow({
       )}
     >
       <div className="flex items-center gap-2">
+        <ThreadStatusBadge status={thread.status} />
         {thread.elementId ? (
           <span
             className={cn(
