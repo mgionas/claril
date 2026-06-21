@@ -1,0 +1,25 @@
+{
+  "name": "@claril/eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "eval": "tsx src/cli.ts",
+    "eval:ci": "tsx src/cli.ts --threshold 0.8 --json eval-report.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@claril/ai-advisor": "workspace:*",
+    "@claril/bpmn-parse": "workspace:*",
+    "@claril/logic-inspector": "workspace:*",
+    "@claril/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
