@@ -177,7 +177,7 @@ function AppSidebar({
                   isActive={isActive(item.href)}
                   tooltip={item.label}
                 >
-                  <Link href={item.href}>
+                  <Link href={item.href} aria-current={isActive(item.href) ? "page" : undefined}>
                     <item.icon />
                     <span>{item.label}</span>
                   </Link>
@@ -203,7 +203,10 @@ function AppSidebar({
                     {settingsNav.map((item) => (
                       <SidebarMenuSubItem key={item.href}>
                         <SidebarMenuSubButton asChild isActive={isActive(item.href)}>
-                          <Link href={item.href}>
+                          <Link
+                            href={item.href}
+                            aria-current={isActive(item.href) ? "page" : undefined}
+                          >
                             <span>{item.label}</span>
                           </Link>
                         </SidebarMenuSubButton>
@@ -251,6 +254,7 @@ function UserMenu({ userName, userEmail }: { userName: string; userEmail?: strin
       <DropdownMenuTrigger asChild>
         <SidebarMenuButton
           size="lg"
+          tooltip={userName}
           className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           aria-label="Account menu"
         >
