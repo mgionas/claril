@@ -118,6 +118,20 @@
   color-scheme: dark;
 }
 
+/*
+ * Tailwind v4 defaults a bare `border` utility's color to `currentColor`, so
+ * shadcn components using `border` without an explicit color inherit the
+ * (near-white) text color — a stray white border on every card/table/etc.
+ * Restore the v3/shadcn behavior: default every border to the hairline token.
+ */
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-border);
+  }
+}
+
 /* Step-transition fade for the AI setup wizard / settings (no JS deps). */
 @keyframes fadeIn {
   from {
