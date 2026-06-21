@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default-diagram";
@@ -57,12 +57,12 @@ export async function listProjects(workspaceId: string): Promise<ProjectWithDiag
       updatedAt: schema.diagram.updatedAt,
     })
     .from(schema.diagram)
+    .where(inArray(schema.diagram.projectId, projectIds))
     .orderBy(asc(schema.diagram.name));
 
   const byProject = new Map<string, DiagramSummary[]>();
   for (const d of diagrams) {
     if (!d.projectId) continue; // personal diagrams aren't listed in the org dashboard
-    if (!projectIds.includes(d.projectId)) continue;
     const list = byProject.get(d.projectId) ?? [];
     list.push({ id: d.id, name: d.name, type: d.type, updatedAt: d.updatedAt.toISOString() });
     byProject.set(d.projectId, list);

@@ -96,6 +96,18 @@ export function canDo(role: WorkspaceRole, action: WorkspaceAction): boolean {
   return role === "admin"; // "manage"
 }
 
+/** True when the user is an owner/admin of the org — implicitly admin on every workspace within it. */
+async function isOrgAdmin(userId: string, organizationId: string): Promise<boolean> {
+  const orgRole = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, organizationId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0]?.role;
+  return orgRole === "owner" || orgRole === "admin";
+}
+
 /**
  * Resolve the user's effective role in a workspace and require at least `min`.
  * Org owners/admins are implicitly workspace admins. Throws "Not found" /
@@ -114,14 +126,7 @@ export async function requireWorkspaceRole(
       .limit(1)
   )[0];
   if (!ws) throw new Error("Not found");
-  const orgRole = (
-    await db
-      .select({ role: schema.member.role })
-      .from(schema.member)
-      .where(and(eq(schema.member.organizationId, ws.orgId), eq(schema.member.userId, userId)))
-      .limit(1)
-  )[0]?.role;
-  if (orgRole === "owner" || orgRole === "admin") {
+  if (await isOrgAdmin(userId, ws.orgId)) {
     if (!canDo("admin", min)) throw new Error("Forbidden");
     return "admin";
   }
@@ -145,20 +150,38 @@ export async function requireWorkspaceRole(
 
 /**
  * Assert the user may access the given project (via its workspace). Returns the
- * project's workspaceId. Throws if not authorized.
+ * project's workspaceId. Org owners/admins are implicitly admins on every
+ * workspace in the org; otherwise an explicit workspace membership is required.
+ * Throws if not authorized.
  */
 export async function assertProjectAccess(userId: string, projectId: string): Promise<string> {
-  const rows = await db
-    .select({ workspaceId: schema.project.workspaceId })
-    .from(schema.project)
-    .innerJoin(
-      schema.workspaceMember,
-      eq(schema.workspaceMember.workspaceId, schema.project.workspaceId),
-    )
-    .where(and(eq(schema.project.id, projectId), eq(schema.workspaceMember.userId, userId)))
-    .limit(1);
-  if (!rows[0]) throw new Error("Forbidden");
-  return rows[0].workspaceId;
+  const proj = (
+    await db
+      .select({
+        workspaceId: schema.project.workspaceId,
+        orgId: schema.workspace.organizationId,
+      })
+      .from(schema.project)
+      .innerJoin(schema.workspace, eq(schema.workspace.id, schema.project.workspaceId))
+      .where(eq(schema.project.id, projectId))
+      .limit(1)
+  )[0];
+  if (!proj) throw new Error("Forbidden");
+  if (await isOrgAdmin(userId, proj.orgId)) return proj.workspaceId;
+  const wm = (
+    await db
+      .select({ id: schema.workspaceMember.id })
+      .from(schema.workspaceMember)
+      .where(
+        and(
+          eq(schema.workspaceMember.workspaceId, proj.workspaceId),
+          eq(schema.workspaceMember.userId, userId),
+        ),
+      )
+      .limit(1)
+  )[0];
+  if (!wm) throw new Error("Forbidden");
+  return proj.workspaceId;
 }
 
 /** Assert the user owns the given personal project. Throws if not. */
