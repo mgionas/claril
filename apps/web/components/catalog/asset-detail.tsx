@@ -16,6 +16,13 @@ import type { Asset, AssetType, AssetLink, FieldDef } from "@claril/db";
 import type { AssetUsage } from "@/lib/catalog-actions";
 import { deleteAsset, updateAsset } from "@/lib/catalog-actions";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -287,19 +294,19 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="flex items-center gap-1.5 text-sm font-medium text-fg-muted">
-        {icon}
-        {title}
-        {typeof count === "number" && (
-          <span className="rounded-full bg-elevated px-1.5 text-[11px] tabular-nums text-fg-subtle">
-            {count}
-          </span>
-        )}
-      </h2>
-      <div className="overflow-hidden rounded-[10px] border border-hairline bg-panel/40">
-        {children}
-      </div>
-    </section>
+    <Card className="gap-0 border-hairline bg-panel/40 py-0">
+      <CardHeader className="border-b border-hairline px-3 py-3">
+        <CardTitle className="flex items-center gap-1.5 text-sm font-medium text-fg-muted">
+          {icon}
+          {title}
+          {typeof count === "number" && (
+            <Badge variant="secondary" className="tabular-nums">
+              {count}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-0 py-0">{children}</CardContent>
+    </Card>
   );
 }
