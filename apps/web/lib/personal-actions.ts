@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { asc, desc, eq, isNotNull } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { assertPersonalProjectAccess } from "@/lib/tenancy";
@@ -34,11 +34,11 @@ export async function listPersonalProjects(): Promise<ProjectWithDiagrams[]> {
       updatedAt: schema.diagram.updatedAt,
     })
     .from(schema.diagram)
-    .where(isNotNull(schema.diagram.personalProjectId))
+    .where(inArray(schema.diagram.personalProjectId, ids))
     .orderBy(asc(schema.diagram.name));
   const byProject = new Map<string, DiagramSummary[]>();
   for (const d of diagrams) {
-    if (!d.personalProjectId || !ids.includes(d.personalProjectId)) continue;
+    if (!d.personalProjectId) continue;
     const list = byProject.get(d.personalProjectId) ?? [];
     list.push({ id: d.id, name: d.name, type: d.type, updatedAt: d.updatedAt.toISOString() });
     byProject.set(d.personalProjectId, list);
