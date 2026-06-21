@@ -1,20 +1,13 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { asc, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 import { assertPersonalProjectAccess } from "@/lib/tenancy";
 import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default-diagram";
 import type { ProjectWithDiagrams, DiagramSummary } from "@/lib/diagram-actions";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
 
 export async function listPersonalProjects(): Promise<ProjectWithDiagrams[]> {
   const userId = await requireUserId();

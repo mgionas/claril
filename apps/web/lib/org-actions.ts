@@ -6,6 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { getUserOrgId } from "@/lib/ai";
+import { requireUserId } from "@/lib/session";
 import { ensureWorkspaceForOrg } from "@/lib/tenancy";
 
 /**
@@ -17,12 +18,6 @@ import { ensureWorkspaceForOrg } from "@/lib/tenancy";
  */
 
 export type OrgRole = "owner" | "admin" | "member";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
 
 /**
  * Create an organization (the creator becomes its owner via Better Auth's

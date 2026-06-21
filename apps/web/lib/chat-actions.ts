@@ -1,16 +1,9 @@
 "use server";
 
 import { asc, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 import { assertDiagramAccess } from "@/lib/tenancy";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
 
 /** A persisted chat message (shape mirrors the AI SDK UIMessage we store). */
 export interface StoredChatMessage {

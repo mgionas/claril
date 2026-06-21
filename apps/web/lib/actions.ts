@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import type { Finding } from "@claril/shared";
@@ -16,7 +15,6 @@ import {
 } from "@claril/ai-advisor";
 import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
 import { layoutProcess } from "bpmn-auto-layout";
-import { auth } from "@/lib/auth";
 import {
   diagramContext,
   getAiConfig,
@@ -34,14 +32,7 @@ import { assertDiagramAccess } from "@/lib/tenancy";
 import { encryptSecret } from "@/lib/crypto";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
 import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
+import { requireUserId } from "@/lib/session";
 
 /** Persist a diagram's content (debounced autosave from the canvas). */
 export async function saveDiagramContent(diagramId: string, content: string): Promise<void> {

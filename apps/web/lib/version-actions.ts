@@ -1,10 +1,9 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 import { assertDiagramAccess } from "@/lib/tenancy";
 import type { VersionSource } from "@/lib/actions";
 
@@ -18,12 +17,6 @@ import type { VersionSource } from "@/lib/actions";
  * here. Restore is itself undoable: it snapshots the current content as an
  * automatic version before overwriting.
  */
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
 
 export interface VersionSummary {
   id: string;

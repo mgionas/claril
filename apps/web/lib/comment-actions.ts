@@ -1,11 +1,10 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 import { notifyTargets } from "@/lib/mentions";
 import {
   assertDiagramAccess,
@@ -22,12 +21,6 @@ import {
  * swallowed); on personal diagrams the only participant is the owner, so
  * `notifyTargets` (which excludes the actor) produces no notifications.
  */
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
 
 type DiagramGate =
   | { kind: "org"; workspaceId: string; role: WorkspaceRole }
