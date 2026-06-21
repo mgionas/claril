@@ -58,6 +58,15 @@
   --border: var(--color-hairline);
   --input: var(--color-hairline);
   --ring: var(--color-accent);
+
+  /* chart series — Claril accent + semantic palette (consumed via
+     bg-chart-N / var(--color-chart-N) by recharts-based charts) */
+  --chart-1: var(--color-accent);
+  --chart-2: var(--color-info);
+  --chart-3: var(--color-success);
+  --chart-4: var(--color-warning);
+  --chart-5: var(--color-fg-subtle);
+
   --sidebar: var(--color-panel);
   --sidebar-foreground: var(--color-fg);
   --sidebar-border: var(--color-hairline);
@@ -85,6 +94,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
