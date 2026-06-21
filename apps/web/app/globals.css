@@ -242,6 +242,27 @@ body {
 .djs-element.drop-not-ok .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   fill: #18181b !important;
 }
+
+/* Drag/drop feedback: bpmn-js flashes a near-white fill on the whole canvas
+   (svg.new-parent) and on the drop target while dragging. Mute to subtle
+   accent/error tints so the dark canvas never goes bright. */
+.djs-container svg.new-parent {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent) !important;
+}
+.djs-container svg.drop-not-ok {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent) !important;
+}
+.djs-shape.new-parent .djs-visual > :nth-child(1),
+.djs-shape.drop-ok .djs-visual > :nth-child(1),
+.djs-shape.connect-ok .djs-visual > :nth-child(1),
+.djs-element.attach-ok .djs-visual > :nth-child(1) {
+  fill: color-mix(in srgb, var(--color-accent) 12%, #18181b) !important;
+  stroke: var(--color-accent) !important;
+}
+.djs-shape.drop-not-ok .djs-visual > :nth-child(1),
+.djs-shape.connect-not-ok .djs-visual > :nth-child(1) {
+  fill: color-mix(in srgb, var(--color-error) 14%, #18181b) !important;
+}
 /* connections (override the shape fill above for edges) */
 .djs-connection .djs-visual > path {
   stroke: #71717a !important;
