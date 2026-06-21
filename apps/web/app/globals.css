@@ -360,6 +360,134 @@ body {
   --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 8h12l-3-3'/><path d='M20 16H8l3 3'/></svg>");
 }
 
+/* ---- "Change element" replace popup (diagram-js popup-menu) ----
+   bpmn-js ships a light-themed popup; restyle the whole surface to the Claril
+   design system: dark frosted panel, hairline borders, accent selection. */
+.djs-popup {
+  border-radius: 10px !important;
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--color-hairline) !important;
+  overflow: hidden;
+  font-family: inherit !important;
+}
+.djs-popup-header {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--color-hairline) !important;
+}
+.djs-popup-title {
+  color: var(--color-fg) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+/* Search */
+.djs-popup-search {
+  padding: 8px 10px !important;
+  border-bottom: 1px solid var(--color-hairline) !important;
+}
+.djs-popup-search input,
+.djs-popup-search-input {
+  background-color: var(--color-canvas) !important;
+  border: 1px solid var(--color-hairline) !important;
+  border-radius: 6px !important;
+  color: var(--color-fg) !important;
+  font-size: 13px !important;
+  padding: 6px 8px 6px 28px !important;
+}
+.djs-popup-search input::placeholder {
+  color: var(--color-fg-subtle) !important;
+}
+.djs-popup-search input:focus,
+.djs-popup-search-input:focus {
+  outline: none !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent) !important;
+}
+.djs-popup-search-icon {
+  color: var(--color-fg-subtle) !important;
+}
+.djs-popup-search-count {
+  color: var(--color-fg-subtle) !important;
+}
+/* Body + groups */
+.djs-popup-body {
+  background-color: transparent !important;
+  padding: 6px !important;
+}
+.djs-popup-body .entry-header,
+.djs-popup .entry-header {
+  color: var(--color-fg-subtle) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 8px 4px !important;
+}
+/* Entries */
+.djs-popup-body .entry,
+.djs-popup button.entry {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px !important;
+  border-radius: 6px !important;
+  color: var(--color-fg-muted) !important;
+  background: transparent !important;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.djs-popup-body .entry:hover,
+.djs-popup .entry.selected {
+  background-color: var(--color-elevated) !important;
+  color: var(--color-fg) !important;
+}
+.djs-popup .entry.selected {
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+.djs-popup .entry.disabled {
+  color: var(--color-fg-subtle) !important;
+  opacity: 0.5;
+}
+/* Entry icons (bpmn-font glyphs) follow the entry text color. */
+.djs-popup-entry-icon {
+  color: currentColor !important;
+  opacity: 0.9;
+}
+.djs-popup-entry-content {
+  min-width: 0;
+}
+.djs-popup-entry-name {
+  color: inherit !important;
+  font-size: 13px !important;
+}
+.djs-popup-entry-description {
+  color: var(--color-fg-subtle) !important;
+  font-size: 11px !important;
+}
+.djs-popup-no-results {
+  color: var(--color-fg-subtle) !important;
+  padding: 12px !important;
+  font-size: 13px !important;
+}
+/* Header tool toggles (e.g. show/hide) + breadcrumbs */
+.djs-popup-header .entry {
+  color: var(--color-fg-muted) !important;
+  border-radius: 6px !important;
+}
+.djs-popup-header .entry.active,
+.djs-popup-header .entry:hover {
+  color: var(--color-accent) !important;
+  background-color: var(--color-elevated) !important;
+}
+.djs-popup-breadcrumbs-item {
+  color: var(--color-fg-muted) !important;
+}
+.djs-popup-breadcrumbs-item:hover,
+.djs-popup-breadcrumbs-item--current {
+  color: var(--color-fg) !important;
+}
+
 /* ---- logic-inspector finding overlays + markers ---- */
 .claril-finding {
   width: 10px;
