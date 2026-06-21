@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { DEFAULT_MODELS, type AiProvider, type LLMProviderConfig } from "@claril/ai-advisor";
 import { decryptSecret } from "@/lib/crypto";
+import { assertDiagramAccess } from "@/lib/tenancy";
 
 /** The org the user belongs to (V1: first membership). */
 export async function getUserOrgId(userId: string): Promise<string | null> {
@@ -204,4 +205,24 @@ export function getAiConfig(ctx: AiContext, opts?: AiOverride): Promise<LLMProvi
   return ctx.kind === "personal"
     ? getUserAiConfig(ctx.userId, opts)
     : getOrgAiConfig(ctx.orgId, opts);
+}
+
+/**
+ * Resolve the AI context for an open diagram, authorizing the user along the
+ * way. Personal diagrams resolve to a user-scoped context; org diagrams resolve
+ * to their owning organization (via workspace → org).
+ */
+export async function diagramContext(
+  userId: string,
+  diagramId: string,
+): Promise<{ ctx: AiContext; orgId?: string }> {
+  const access = await assertDiagramAccess(userId, diagramId);
+  if (access.kind === "personal") return { ctx: { kind: "personal", userId } };
+  const ws = await db
+    .select({ organizationId: schema.workspace.organizationId })
+    .from(schema.workspace)
+    .where(eq(schema.workspace.id, access.workspaceId))
+    .limit(1);
+  const orgId = ws[0]!.organizationId;
+  return { ctx: { kind: "org", orgId }, orgId };
 }

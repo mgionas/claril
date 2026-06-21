@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { auth } from "@/lib/auth";
 import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default-diagram";
@@ -176,6 +176,11 @@ export interface LoadedDiagram {
 /** Load a single diagram for the workbench, authorized for the current user. */
 export async function getDiagram(diagramId: string): Promise<LoadedDiagram | null> {
   const userId = await requireUserId();
+  try {
+    await assertDiagramAccess(userId, diagramId);
+  } catch {
+    return null;
+  }
   const rows = await db
     .select({
       id: schema.diagram.id,
@@ -184,12 +189,7 @@ export async function getDiagram(diagramId: string): Promise<LoadedDiagram | nul
       content: schema.diagram.content,
     })
     .from(schema.diagram)
-    .innerJoin(schema.project, eq(schema.project.id, schema.diagram.projectId))
-    .innerJoin(
-      schema.workspaceMember,
-      eq(schema.workspaceMember.workspaceId, schema.project.workspaceId),
-    )
-    .where(and(eq(schema.diagram.id, diagramId), eq(schema.workspaceMember.userId, userId)))
+    .where(eq(schema.diagram.id, diagramId))
     .limit(1);
   return rows[0] ?? null;
 }

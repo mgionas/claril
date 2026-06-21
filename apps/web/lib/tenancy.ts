@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 
 /**
@@ -95,6 +95,46 @@ export async function ensureUserWorkspace(userId: string): Promise<ActiveTenancy
       .values({ id: randomUUID(), workspaceId, userId, role: "admin" });
   });
   return { organizationId, workspaceId };
+}
+
+/**
+ * Ensure the org has a default workspace and that the user is a member of it,
+ * creating either as needed. Idempotent. Returns the workspace id. Used when an
+ * active-org context needs a concrete workspace to host projects/diagrams.
+ */
+export async function ensureWorkspaceForOrg(
+  userId: string,
+  organizationId: string,
+): Promise<string> {
+  const existing = await db
+    .select({ id: schema.workspace.id })
+    .from(schema.workspace)
+    .where(eq(schema.workspace.organizationId, organizationId))
+    .orderBy(asc(schema.workspace.createdAt))
+    .limit(1);
+  let workspaceId = existing[0]?.id;
+  if (!workspaceId) {
+    workspaceId = randomUUID();
+    await db
+      .insert(schema.workspace)
+      .values({ id: workspaceId, organizationId, name: "My Workspace", slug: "default" });
+  }
+  const member = await db
+    .select({ id: schema.workspaceMember.id })
+    .from(schema.workspaceMember)
+    .where(
+      and(
+        eq(schema.workspaceMember.workspaceId, workspaceId),
+        eq(schema.workspaceMember.userId, userId),
+      ),
+    )
+    .limit(1);
+  if (!member[0]) {
+    await db
+      .insert(schema.workspaceMember)
+      .values({ id: randomUUID(), workspaceId, userId, role: "admin" });
+  }
+  return workspaceId;
 }
 
 /**
