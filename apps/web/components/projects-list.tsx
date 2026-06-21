@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Boxes,
+  ChevronRight,
   FileText,
+  Folder,
+  FolderOpen,
   FolderPlus,
   GitBranch,
   Loader2,
@@ -35,12 +38,10 @@ import { NewDiagramDialog } from "@/components/new-diagram-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -150,9 +151,9 @@ export function ProjectsList({ projects, aiConnected, context }: ProjectsListPro
       {projects.length === 0 ? (
         <EmptyState onCreate={() => setCreateOpen(true)} isPersonal={isPersonal} />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="overflow-hidden rounded-[10px] border border-hairline bg-panel/40">
           {projects.map((project) => (
-            <ProjectCard
+            <ProjectFolder
               key={project.id}
               project={project}
               aiConnected={aiConnected}
@@ -277,7 +278,7 @@ function EmptyState({ onCreate, isPersonal }: { onCreate: () => void; isPersonal
   );
 }
 
-function ProjectCard({
+function ProjectFolder({
   project,
   aiConnected,
   context,
@@ -289,12 +290,15 @@ function ProjectCard({
   const router = useRouter();
   const actions = projectActions(context);
   const [pending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(project.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [newDiagramOpen, setNewDiagramOpen] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const count = project.diagrams.length;
 
   function commitRename(e: FormEvent) {
     e.preventDefault();
@@ -333,41 +337,50 @@ function ProjectCard({
   }
 
   return (
-    <Card
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
       className={cn(
-        "gap-0 rounded-[10px] border-hairline bg-panel/60 py-0 shadow-none transition-colors",
+        "group border-b border-hairline transition-colors last:border-b-0",
         pending && "opacity-60",
       )}
     >
-      <CardHeader className="gap-0 border-b px-3 py-2.5 [.border-b]:pb-2.5">
+      <div className="relative flex items-center gap-2 pr-2 transition-colors hover:bg-elevated/40">
         {renaming ? (
-          <CardTitle>
-            <form onSubmit={commitRename} className="flex items-center">
-              <input
-                autoFocus
-                className={cn(inputClass, "py-1")}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={commitRename}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setRenaming(false);
-                    setName(project.name);
-                  }
-                }}
-              />
-            </form>
-          </CardTitle>
+          <form onSubmit={commitRename} className="flex flex-1 items-center gap-2 py-2 pl-3">
+            <Folder className="size-4 shrink-0 text-fg-subtle" />
+            <input
+              autoFocus
+              className={cn(inputClass, "py-1")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setRenaming(false);
+                  setName(project.name);
+                }
+              }}
+            />
+          </form>
         ) : (
-          <CardTitle className="flex items-center gap-2 truncate text-sm font-medium">
-            <span className="truncate">{project.name}</span>
-            <span className="shrink-0 rounded-full bg-elevated px-1.5 py-0.5 text-[11px] tabular-nums text-fg-subtle">
-              {project.diagrams.length}
+          <CollapsibleTrigger
+            className="flex min-w-0 flex-1 items-center gap-2.5 py-2.5 pl-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            aria-label={`${open ? "Collapse" : "Expand"} ${project.name}`}
+          >
+            <ChevronRight className="size-4 shrink-0 text-fg-subtle transition-transform duration-150 group-data-[state=open]:rotate-90" />
+            <span className="shrink-0 text-fg-muted">
+              <Folder className="size-4 group-data-[state=open]:hidden" />
+              <FolderOpen className="hidden size-4 group-data-[state=open]:block" />
             </span>
-          </CardTitle>
+            <span className="truncate text-sm font-medium text-fg">{project.name}</span>
+            <span className="shrink-0 text-xs text-fg-subtle">
+              {count} {count === 1 ? "diagram" : "diagrams"}
+            </span>
+          </CollapsibleTrigger>
         )}
 
-        <CardAction className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
@@ -406,52 +419,51 @@ function ProjectCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </CardAction>
-      </CardHeader>
+        </div>
+      </div>
 
       {renameError && (
-        <p
-          role="alert"
-          className="border-b border-hairline px-3 py-2 text-xs text-destructive"
-        >
+        <p role="alert" className="px-3 pb-2 pl-[42px] text-xs text-destructive">
           {renameError}
         </p>
       )}
 
-      <CardContent className="px-0">
-        {project.diagrams.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => setNewDiagramOpen(true)}
-            className="flex w-full items-center gap-2 px-4 py-4 text-left text-sm text-fg-subtle transition-colors hover:text-fg"
-          >
-            <Plus className="size-4" />
-            No diagrams yet — create your first.
-          </button>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="border-hairline hover:bg-transparent">
-                <TableHead className="px-3 text-xs font-medium text-fg-subtle">Name</TableHead>
-                <TableHead className="px-3 text-xs font-medium text-fg-subtle">Type</TableHead>
-                <TableHead className="px-3 text-xs font-medium text-fg-subtle">Edited</TableHead>
-                <TableHead className="w-10 px-3" aria-label="Actions" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {project.diagrams.map((d) => (
-                <DiagramRow
-                  key={d.id}
-                  id={d.id}
-                  name={d.name}
-                  kind={d.type}
-                  updatedAt={d.updatedAt}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+      <CollapsibleContent>
+        <div className="border-t border-hairline bg-bg/30 pl-7">
+          {count === 0 ? (
+            <button
+              type="button"
+              onClick={() => setNewDiagramOpen(true)}
+              className="flex w-full items-center gap-2 px-4 py-3.5 text-left text-sm text-fg-subtle transition-colors hover:text-fg"
+            >
+              <Plus className="size-4" />
+              No diagrams yet — create your first.
+            </button>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-hairline hover:bg-transparent">
+                  <TableHead className="px-3 text-xs font-medium text-fg-subtle">Name</TableHead>
+                  <TableHead className="px-3 text-xs font-medium text-fg-subtle">Type</TableHead>
+                  <TableHead className="px-3 text-xs font-medium text-fg-subtle">Edited</TableHead>
+                  <TableHead className="w-10 px-3" aria-label="Actions" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {project.diagrams.map((d) => (
+                  <DiagramRow
+                    key={d.id}
+                    id={d.id}
+                    name={d.name}
+                    kind={d.type}
+                    updatedAt={d.updatedAt}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </CollapsibleContent>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -460,13 +472,13 @@ function ProjectCard({
           if (!o) setDeleteError(null);
         }}
         title={`Delete “${project.name}”?`}
-        description={`This permanently deletes the project and its ${project.diagrams.length} diagram(s). This cannot be undone.`}
+        description={`This permanently deletes the project and its ${count} diagram(s). This cannot be undone.`}
         confirmLabel="Delete project"
         pending={pending}
         error={deleteError}
         onConfirm={handleDelete}
       />
-    </Card>
+    </Collapsible>
   );
 }
 
