@@ -26,7 +26,7 @@ async function savedCredential(
     if (!userId) return {};
     const orgId = await getUserOrgId(userId);
     if (!orgId) return {};
-    const cfg = await getOrgAiConfig(orgId);
+    const cfg = await getOrgAiConfig(orgId, { provider });
     if (cfg && cfg.provider === provider) return { apiKey: cfg.apiKey, baseUrl: cfg.baseUrl };
     return {};
   } catch {

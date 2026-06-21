@@ -17,7 +17,14 @@ import {
 import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
 import { layoutProcess } from "bpmn-auto-layout";
 import { auth } from "@/lib/auth";
-import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+import {
+  getOrgAiConfig,
+  getUserOrgId,
+  listOrgConnections,
+  repointDefault,
+  type AiOverride,
+  type ConnectionView,
+} from "@/lib/ai";
 import { assertDiagramAccess } from "@/lib/tenancy";
 import { encryptSecret } from "@/lib/crypto";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
@@ -213,6 +220,201 @@ export async function removeAiConfig(): Promise<void> {
     .where(eq(schema.aiProviderConfig.organizationId, orgId));
 }
 
+/* ---- AI (multi-provider, org-level) ---- */
+
+/**
+ * Resolve the caller's org and assert they may configure AI (owner/admin).
+ * Throws on no org / insufficient role. Returns the orgId for the write.
+ */
+async function requireOrgAdmin(): Promise<string> {
+  const userId = await requireUserId();
+  const orgId = await getUserOrgId(userId);
+  if (!orgId) throw new Error("No organization.");
+  const membership = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, orgId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0];
+  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
+    throw new Error("Only organization owners or admins can configure AI.");
+  }
+  return orgId;
+}
+
+export interface ConnectAiProviderInput {
+  provider: AiProvider;
+  apiKey?: string;
+  baseUrl?: string;
+  defaultModel?: string;
+}
+
+export async function connectAiProvider(input: ConnectAiProviderInput): Promise<void> {
+  const orgId = await requireOrgAdmin();
+  const existing = (
+    await db
+      .select()
+      .from(schema.aiConnection)
+      .where(
+        and(
+          eq(schema.aiConnection.organizationId, orgId),
+          eq(schema.aiConnection.provider, input.provider),
+        ),
+      )
+      .limit(1)
+  )[0];
+
+  const encryptedKey =
+    input.apiKey && input.apiKey.length > 0
+      ? encryptSecret(input.apiKey)
+      : (existing?.encryptedKey ?? null);
+
+  const defaultModel =
+    (input.defaultModel && input.defaultModel.length > 0 ? input.defaultModel : null) ??
+    existing?.defaultModel ??
+    DEFAULT_MODELS[input.provider];
+
+  const baseUrl = input.baseUrl && input.baseUrl.length > 0 ? input.baseUrl : null;
+
+  if (existing) {
+    await db
+      .update(schema.aiConnection)
+      .set({ encryptedKey, baseUrl, defaultModel, updatedAt: new Date() })
+      .where(
+        and(
+          eq(schema.aiConnection.organizationId, orgId),
+          eq(schema.aiConnection.provider, input.provider),
+        ),
+      );
+  } else {
+    await db.insert(schema.aiConnection).values({
+      id: crypto.randomUUID(),
+      organizationId: orgId,
+      provider: input.provider,
+      encryptedKey,
+      baseUrl,
+      defaultModel,
+    });
+  }
+}
+
+export async function removeAiProvider(provider: AiProvider): Promise<void> {
+  const orgId = await requireOrgAdmin();
+  await db
+    .delete(schema.aiConnection)
+    .where(
+      and(
+        eq(schema.aiConnection.organizationId, orgId),
+        eq(schema.aiConnection.provider, provider),
+      ),
+    );
+
+  const def = (
+    await db
+      .select()
+      .from(schema.aiOrgDefault)
+      .where(eq(schema.aiOrgDefault.organizationId, orgId))
+      .limit(1)
+  )[0];
+  if (!def || def.provider !== provider) return;
+
+  const remaining = await db
+    .select()
+    .from(schema.aiConnection)
+    .where(eq(schema.aiConnection.organizationId, orgId));
+  const next = repointDefault(
+    remaining.map((c) => ({
+      provider: c.provider,
+      encryptedKey: c.encryptedKey,
+      defaultModel: c.defaultModel,
+      baseUrl: c.baseUrl,
+    })),
+  );
+  if (!next) {
+    await db.delete(schema.aiOrgDefault).where(eq(schema.aiOrgDefault.organizationId, orgId));
+  } else {
+    const nextConn = remaining.find((c) => c.provider === next)!;
+    await db
+      .update(schema.aiOrgDefault)
+      .set({
+        provider: next,
+        model: nextConn.defaultModel ?? DEFAULT_MODELS[next as AiProvider],
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.aiOrgDefault.organizationId, orgId));
+  }
+}
+
+export async function setOrgDefaultModel(input: {
+  provider: AiProvider;
+  model: string;
+}): Promise<void> {
+  const orgId = await requireOrgAdmin();
+  const conn = (
+    await db
+      .select()
+      .from(schema.aiConnection)
+      .where(
+        and(
+          eq(schema.aiConnection.organizationId, orgId),
+          eq(schema.aiConnection.provider, input.provider),
+        ),
+      )
+      .limit(1)
+  )[0];
+  const usable = conn && (Boolean(conn.encryptedKey) || conn.provider === "ollama");
+  if (!usable) throw new Error("That provider isn't connected.");
+
+  const existing = (
+    await db
+      .select()
+      .from(schema.aiOrgDefault)
+      .where(eq(schema.aiOrgDefault.organizationId, orgId))
+      .limit(1)
+  )[0];
+  if (existing) {
+    await db
+      .update(schema.aiOrgDefault)
+      .set({ provider: input.provider, model: input.model, updatedAt: new Date() })
+      .where(eq(schema.aiOrgDefault.organizationId, orgId));
+  } else {
+    await db
+      .insert(schema.aiOrgDefault)
+      .values({ organizationId: orgId, provider: input.provider, model: input.model });
+  }
+}
+
+export interface AiSettingsView {
+  canEdit: boolean;
+  connections: ConnectionView[];
+  orgDefault?: { provider: AiProvider; model: string };
+}
+
+export async function getAiSettings(): Promise<AiSettingsView> {
+  const userId = await requireUserId();
+  const orgId = await getUserOrgId(userId);
+  if (!orgId) return { canEdit: false, connections: [] };
+  const membership = (
+    await db
+      .select({ role: schema.member.role })
+      .from(schema.member)
+      .where(and(eq(schema.member.organizationId, orgId), eq(schema.member.userId, userId)))
+      .limit(1)
+  )[0];
+  const canEdit = membership?.role === "owner" || membership?.role === "admin";
+  const connections = await listOrgConnections(orgId);
+  const defRows = await db
+    .select()
+    .from(schema.aiOrgDefault)
+    .where(eq(schema.aiOrgDefault.organizationId, orgId))
+    .limit(1);
+  const orgDefault = defRows[0]
+    ? { provider: defRows[0].provider as AiProvider, model: defRows[0].model }
+    : undefined;
+  return { canEdit, connections, orgDefault };
+}
+
 /**
  * Run the AI advisor, grounded on the deterministic findings — and, when a
  * `diagramId` is supplied, on the Asset Catalog assets bound to that diagram
@@ -224,10 +426,11 @@ export async function runAdvisor(
   findings: Finding[],
   question?: string,
   diagramId?: string,
+  override?: AiOverride,
 ): Promise<Finding[]> {
   const userId = await requireUserId();
   const orgId = await getUserOrgId(userId);
-  const config = orgId ? await getOrgAiConfig(orgId) : null;
+  const config = orgId ? await getOrgAiConfig(orgId, override) : null;
   if (!config || !orgId) throw new Error("No AI provider configured.");
 
   const assetContext = diagramId
@@ -257,10 +460,10 @@ export async function runAdvisor(
  * identical. Throws "No AI provider configured." when AI is off — callers route
  * that to the one-click setup dialog.
  */
-async function resolveAiContext(diagramId?: string) {
+async function resolveAiContext(diagramId?: string, override?: AiOverride) {
   const userId = await requireUserId();
   const orgId = await getUserOrgId(userId);
-  const config = orgId ? await getOrgAiConfig(orgId) : null;
+  const config = orgId ? await getOrgAiConfig(orgId, override) : null;
   if (!config || !orgId) throw new Error("No AI provider configured.");
   const assetContext = diagramId
     ? await buildDiagramAssetContext(orgId, diagramId)
@@ -278,8 +481,9 @@ export async function runDocGen(
   graph: ProcessGraph,
   findings: Finding[],
   diagramId?: string,
+  override?: AiOverride,
 ): Promise<string> {
-  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId);
+  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId, override);
   const { value, usage } = await generateProcessDocWithUsage(
     { graph, findings, assetContext },
     config,
@@ -343,8 +547,9 @@ export async function runDiagramEdit(
   findings: Finding[],
   instruction: string,
   diagramId?: string,
+  override?: AiOverride,
 ): Promise<EditPlan> {
-  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId);
+  const { config, assetContext, orgId, projectId } = await resolveAiContext(diagramId, override);
   const { plan, usage } = await planEditsWithUsage(
     { graph, findings, instruction, assetContext },
     config,
@@ -397,13 +602,16 @@ function countDiEdges(xml: string): number {
  * No persistence happens here — the caller passes the returned XML to
  * `createDiagram(projectId, "bpmn", name, content)`.
  */
-export async function generateDiagramFromPrompt(description: string): Promise<string> {
+export async function generateDiagramFromPrompt(
+  description: string,
+  override?: AiOverride,
+): Promise<string> {
   const prompt = description.trim();
   if (!prompt) throw new Error("Describe the process you want to generate.");
 
   // Same BYOK resolution as every other T3 capability. Throws
   // "No AI provider configured." when AI is off.
-  const { config, orgId } = await resolveAiContext();
+  const { config, orgId } = await resolveAiContext(undefined, override);
 
   const { value: raw, usage } = await generateBpmnXmlWithUsage(prompt, config);
   await recordAiUsage({
