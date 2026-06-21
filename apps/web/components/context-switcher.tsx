@@ -199,7 +199,13 @@ function CreateOrgDialog({
         }
         setName("");
         onOpenChange(false);
-        router.refresh();
+        // Full navigation into the new org's Workspaces page — where the next
+        // action (create a workspace → projects) lives for a fresh org. A hard
+        // load guarantees the session (new active org), the client org list, and
+        // all server components re-read fresh — router.refresh() alone leaves the
+        // client org-list atom stale, so the new org wouldn't appear without a
+        // manual reload.
+        window.location.assign("/workspaces");
       } catch (err) {
         setError(errorMessage(err));
       }
