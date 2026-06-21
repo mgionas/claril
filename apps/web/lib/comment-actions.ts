@@ -1,34 +1,44 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 import { notifyTargets } from "@/lib/mentions";
-import { assertDiagramAccess, canDo, requireWorkspaceRole } from "@/lib/tenancy";
+import {
+  assertDiagramAccess,
+  canDo,
+  requireWorkspaceRole,
+  type WorkspaceRole,
+} from "@/lib/tenancy";
 
 /**
- * Org-only, role-gated comment server actions (W16). Every action resolves the
- * target diagram through {@link orgDiagram}, which rejects personal diagrams and
- * yields the diagram's workspace for role gating. Notification fan-out is
- * best-effort (the gate is never swallowed).
+ * Comment server actions (W16). Every action resolves the target diagram through
+ * {@link gateDiagram}, which enforces access for BOTH scopes: org diagrams are
+ * role-gated via the workspace; personal diagrams are owner-only (the solo owner
+ * may do everything). Notification fan-out is best-effort (the gate is never
+ * swallowed); on personal diagrams the only participant is the owner, so
+ * `notifyTargets` (which excludes the actor) produces no notifications.
  */
 
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
+type DiagramGate =
+  | { kind: "org"; workspaceId: string; role: WorkspaceRole }
+  | { kind: "personal" };
 
-/** Resolve a diagram to its workspace, REQUIRING org scope. */
-async function orgDiagram(userId: string, diagramId: string): Promise<{ workspaceId: string }> {
+/**
+ * Resolve + access-gate a diagram for commenting. Throws if the caller has no
+ * access. For org diagrams it also resolves the caller's workspace role (≥view);
+ * for personal diagrams access means sole ownership (enforced by
+ * `assertDiagramAccess` → `assertPersonalProjectAccess`).
+ */
+async function gateDiagram(userId: string, diagramId: string): Promise<DiagramGate> {
   const access = await assertDiagramAccess(userId, diagramId);
-  if (access.kind !== "org") {
-    throw new Error("Comments are only available on organization diagrams.");
+  if (access.kind === "org") {
+    const role = await requireWorkspaceRole(userId, access.workspaceId, "view");
+    return { kind: "org", workspaceId: access.workspaceId, role };
   }
-  return { workspaceId: access.workspaceId };
+  return { kind: "personal" };
 }
 
 const bodySchema = z
@@ -64,11 +74,10 @@ export interface MentionableUser {
   image: string | null;
 }
 
-/** Load every thread for an org diagram, each with its ordered comments. */
+/** Load every thread for a diagram (org or personal), each with its ordered comments. */
 export async function listThreads(diagramId: string): Promise<ThreadView[]> {
   const userId = await requireUserId();
-  const { workspaceId } = await orgDiagram(userId, diagramId);
-  await requireWorkspaceRole(userId, workspaceId, "view");
+  await gateDiagram(userId, diagramId);
 
   const threads = await db
     .select()
@@ -129,11 +138,16 @@ export async function listThreads(diagramId: string): Promise<ThreadView[]> {
   return views;
 }
 
-/** Members who can be @mentioned: the diagram's workspace members + org owners/admins. */
+/**
+ * Members who can be @mentioned: the diagram's workspace members + org
+ * owners/admins. Personal diagrams are solo, so there is no one to mention —
+ * returns an empty list.
+ */
 export async function listMentionableUsers(diagramId: string): Promise<MentionableUser[]> {
   const userId = await requireUserId();
-  const { workspaceId } = await orgDiagram(userId, diagramId);
-  await requireWorkspaceRole(userId, workspaceId, "view");
+  const gate = await gateDiagram(userId, diagramId);
+  if (gate.kind === "personal") return [];
+  const workspaceId = gate.workspaceId;
 
   const ws = (
     await db
@@ -194,7 +208,7 @@ async function fanOut(args: {
   }
 }
 
-/** Create a new thread (viewers allowed) with its first comment. */
+/** Create a new thread with its first comment (org viewers + personal owner allowed). */
 export async function createThread(input: {
   diagramId: string;
   elementId?: string | null;
@@ -202,8 +216,7 @@ export async function createThread(input: {
   mentionedUserIds?: string[];
 }): Promise<{ threadId: string }> {
   const userId = await requireUserId();
-  const { workspaceId } = await orgDiagram(userId, input.diagramId);
-  await requireWorkspaceRole(userId, workspaceId, "view");
+  await gateDiagram(userId, input.diagramId);
 
   const body = bodySchema.parse(input.body);
   const mentionedUserIds = idListSchema.parse(input.mentionedUserIds ?? []);
@@ -256,8 +269,7 @@ export async function addComment(input: {
   )[0];
   if (!thread) throw new Error("Not found");
 
-  const { workspaceId } = await orgDiagram(userId, thread.diagramId);
-  await requireWorkspaceRole(userId, workspaceId, "view");
+  await gateDiagram(userId, thread.diagramId);
 
   const body = bodySchema.parse(input.body);
   const mentionedUserIds = idListSchema.parse(input.mentionedUserIds ?? []);
@@ -309,9 +321,10 @@ async function loadThreadForResolve(userId: string, threadId: string) {
       .limit(1)
   )[0];
   if (!thread) throw new Error("Not found");
-  const { workspaceId } = await orgDiagram(userId, thread.diagramId);
-  const role = await requireWorkspaceRole(userId, workspaceId, "view");
-  const allowed = thread.createdBy === userId || canDo(role, "edit");
+  const gate = await gateDiagram(userId, thread.diagramId);
+  // Personal diagrams are solo (owner == author). Org: author or editor+.
+  const allowed =
+    gate.kind === "personal" || thread.createdBy === userId || canDo(gate.role, "edit");
   if (!allowed) throw new Error("Forbidden");
   return thread;
 }
@@ -379,7 +392,7 @@ export async function editComment(input: {
 }): Promise<void> {
   const userId = await requireUserId();
   const row = await loadCommentWithThread(input.commentId);
-  await orgDiagram(userId, row.diagramId);
+  await gateDiagram(userId, row.diagramId);
   if (row.commentCreatedBy !== userId) throw new Error("Forbidden");
 
   const body = bodySchema.parse(input.body);
@@ -391,15 +404,14 @@ export async function editComment(input: {
     .where(eq(schema.comment.id, input.commentId));
 }
 
-/** Delete a comment (author or org admin). Removes the thread if it was the last comment. */
+/** Delete a comment (author, or org admin). Removes the thread if it was the last comment. */
 export async function deleteComment(commentId: string): Promise<void> {
   const userId = await requireUserId();
   const row = await loadCommentWithThread(commentId);
-  const { workspaceId } = await orgDiagram(userId, row.diagramId);
+  const gate = await gateDiagram(userId, row.diagramId);
 
-  const role = await requireWorkspaceRole(userId, workspaceId, "view");
-  const isOrgAdmin = role === "admin";
-  if (row.commentCreatedBy !== userId && !isOrgAdmin) throw new Error("Forbidden");
+  const isAdmin = gate.kind === "org" && gate.role === "admin";
+  if (row.commentCreatedBy !== userId && !isAdmin) throw new Error("Forbidden");
 
   await db.delete(schema.comment).where(eq(schema.comment.id, commentId));
 

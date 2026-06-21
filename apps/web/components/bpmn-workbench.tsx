@@ -21,6 +21,7 @@ import type { DiffMarks } from "@/lib/bpmn-diff";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
+import { downloadBpmn, downloadPdf, downloadPng } from "@/lib/diagram-export";
 import { AiDrawer, type DrawerTab } from "@/components/ai-drawer";
 import type { ChatTabHandle } from "@/components/chat-tab";
 import { CommandBar } from "@/components/command-bar";
@@ -81,10 +82,19 @@ export function BpmnWorkbench({
   const isOrg = diagramScope === "org";
   const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
   const [activeTab, setActiveTab] = useState<DrawerTab>(
-    initialThreadId && isOrg ? "comments" : aiConnected ? "chat" : "problems",
+    initialThreadId ? "comments" : aiConnected ? "chat" : "problems",
   );
   // First selected canvas element (drives the Comments tab anchor; W16, Task 6).
   const [selectedElement, setSelectedElement] = useState<{ id: string; name: string } | null>(null);
+  // Compose-request signal: a right-click "Comment" asks the Comments tab to open
+  // a new-comment composer anchored to a specific element (decoupled from the
+  // bpmn-js selection, which the right-clicked element may not match). The nonce
+  // bumps on every request so re-commenting the same element re-fires.
+  const [composeRequest, setComposeRequest] = useState<{
+    id: string;
+    name: string;
+    nonce: number;
+  } | null>(null);
   // Live element id/label set from the canvas registry (anchors comment threads).
   const [liveElements, setLiveElements] = useState<{ id: string; name: string }[]>([]);
   // Doc-gen (Markdown), shown in its own slide-over; seeded from persisted doc.
@@ -210,7 +220,7 @@ export function BpmnWorkbench({
       currentXmlRef.current = xml;
       coalescerRef.current?.onChange();
       // Element set may have changed (add/remove/rename) — refresh comment anchors.
-      if (isOrg) refreshLiveElements();
+      refreshLiveElements();
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -219,7 +229,7 @@ export function BpmnWorkbench({
           .catch(() => setSaveState("error"));
       }, 800);
     },
-    [diagramId, isOrg, refreshLiveElements],
+    [diagramId, refreshLiveElements],
   );
 
   // Advisor critique: one-click grounded findings, shown in the Problems tab.
@@ -358,6 +368,15 @@ export function BpmnWorkbench({
   const handleCommentedElementsChange = useCallback((ids: string[]) => {
     canvasApiRef.current?.setCommentedElements(ids);
   }, []);
+  // Right-click "Comment": open the drawer on the Comments tab and signal it to
+  // open a composer anchored to this element (also fly the camera to it).
+  function handleCommentElement(elementId: string) {
+    const name = elementNames[elementId] ?? "";
+    setComposeRequest((prev) => ({ id: elementId, name, nonce: (prev?.nonce ?? 0) + 1 }));
+    setInspectorOpen(true);
+    setActiveTab("comments");
+    canvasApiRef.current?.focusElement(elementId);
+  }
 
   return (
     <main
@@ -379,6 +398,7 @@ export function BpmnWorkbench({
           findings={allFindings}
           onShowProblems={handleShowProblems}
           onSelectionChange={setSelectedElement}
+          onCommentElement={handleCommentElement}
         />
         <TopBar
           diagramId={diagramId}
@@ -392,6 +412,17 @@ export function BpmnWorkbench({
             getCurrentXml,
             onRestored: handleRestored,
             onShowDiff: handleShowDiff,
+          }}
+          onExport={async (fmt) => {
+            const api = canvasApiRef.current;
+            if (!api) return;
+            try {
+              if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
+              else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName);
+              else await downloadPdf(await api.exportSvg(), diagramName);
+            } catch (e) {
+              console.error("Export failed", e);
+            }
           }}
           modelSwitcher={
             aiSettings
@@ -479,6 +510,7 @@ export function BpmnWorkbench({
         selectedElement={selectedElement}
         liveElementIds={liveElementIds}
         elementNames={elementNames}
+        composeRequest={composeRequest}
         canResolveComments={canResolveComments}
         initialThreadId={initialThreadId}
         onFocusElement={handleFocusElement}

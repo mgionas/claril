@@ -34,6 +34,8 @@ export interface AiDrawerProps {
   selectedElement: { id: string; name: string } | null;
   liveElementIds: string[];
   elementNames?: Record<string, string>;
+  /** Right-click "Comment" signal: open a composer anchored to {id,name}; nonce re-fires it. */
+  composeRequest?: { id: string; name: string; nonce: number } | null;
   canResolveComments?: boolean;
   initialThreadId?: string;
   onFocusElement: (elementId: string) => void;
@@ -66,9 +68,12 @@ export interface AiDrawerProps {
  */
 export function AiDrawer(props: AiDrawerProps) {
   const showChat = props.aiConnected;
-  const showComments = Boolean(props.isOrg);
+  // Comments are available on every diagram (org teams collaborate; solo users
+  // annotate their own personal diagrams). `isOrg` only governs mentions/bell
+  // (resolved server-side), not whether the tab shows.
+  const showComments = true;
   // Tabs are shown whenever there is more than one surface (Chat and/or Comments
-  // beyond Problems). Personal + no-AI degrades to the bare Problems list.
+  // beyond Problems).
   const tabbed = showChat || showComments;
   const tabCount = (showChat ? 1 : 0) + (showComments ? 1 : 0) + 1; // +1 = Problems
 
@@ -158,6 +163,7 @@ export function AiDrawer(props: AiDrawerProps) {
                   selectedElement={props.selectedElement}
                   liveElementIds={props.liveElementIds}
                   elementNames={props.elementNames}
+                  composeRequest={props.composeRequest}
                   initialThreadId={props.initialThreadId}
                   onFocusElement={props.onFocusElement}
                   onCommentedElementsChange={props.onCommentedElementsChange}

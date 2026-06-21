@@ -16,7 +16,7 @@ import {
 } from "@/lib/comment-actions";
 import { Avatar } from "@/components/settings/settings-ui";
 import { CommentComposer } from "@/components/comment-composer";
-import { CommentThreadView, relativeTime } from "@/components/comment-thread-view";
+import { CommentThreadView, ThreadStatusBadge, relativeTime } from "@/components/comment-thread-view";
 import { cn } from "@/lib/utils";
 
 interface CommentsTabProps {
@@ -28,6 +28,12 @@ interface CommentsTabProps {
   liveElementIds: string[];
   /** Map of element id -> label, sourced from the canvas registry (for thread chips). */
   elementNames?: Record<string, string>;
+  /**
+   * Right-click "Comment" signal from the canvas. When its nonce changes to a new
+   * non-null value, open a new-comment composer anchored to {id,name} — explicitly,
+   * not via the bpmn-js selection (the right-clicked element may differ).
+   */
+  composeRequest?: { id: string; name: string; nonce: number } | null;
   initialThreadId?: string;
   onFocusElement: (elementId: string) => void;
   onCommentedElementsChange: (ids: string[]) => void;
@@ -45,6 +51,7 @@ export function CommentsTab({
   selectedElement,
   liveElementIds,
   elementNames,
+  composeRequest,
   initialThreadId,
   onFocusElement,
   onCommentedElementsChange,
@@ -55,11 +62,21 @@ export function CommentsTab({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
+  // Explicit composer anchor set by a right-click "Comment" request. When non-null
+  // it overrides the bpmn-js selection as the new thread's anchor.
+  const [composeAnchor, setComposeAnchor] = useState<{ id: string; name: string } | null>(null);
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
   const [showResolved, setShowResolved] = useState(false);
+  const lastComposeNonce = useRef<number | null>(null);
 
   const liveSet = useMemo(() => new Set(liveElementIds), [liveElementIds]);
   const appliedInitial = useRef(false);
+  // Loop guards for the select-element <-> open-thread <-> focus-element cycle.
+  const lastSelectedElementIdRef = useRef<string | null>(null);
+  const lastFocusedThreadIdRef = useRef<string | null>(null);
+
+  const onFocusRef = useRef(onFocusElement);
+  onFocusRef.current = onFocusElement;
 
   const onCommentedRef = useRef(onCommentedElementsChange);
   onCommentedRef.current = onCommentedElementsChange;
@@ -100,6 +117,49 @@ export function CommentsTab({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diagramId]);
+
+  // Right-click "Comment": open a composer anchored to the requested element.
+  // Keyed on the nonce so it fires once per genuine request (and re-fires when
+  // the same element is re-requested). Closes any open thread and overrides the
+  // selection-based anchor with the explicit {id,name} from the request.
+  useEffect(() => {
+    if (!composeRequest) return;
+    if (lastComposeNonce.current === composeRequest.nonce) return;
+    lastComposeNonce.current = composeRequest.nonce;
+    setComposeAnchor({ id: composeRequest.id, name: composeRequest.name });
+    setOpenThreadId(null);
+    setComposing(true);
+  }, [composeRequest]);
+
+  // (2) Selecting an element on the canvas opens its most-recent OPEN thread.
+  // Acts only on genuine selection changes (guarded by lastSelectedElementIdRef)
+  // and never while composing a new comment. If no open thread exists for the
+  // element, the current view is left unchanged. setOpenThreadId is idempotent:
+  // when #3 re-focuses the same element, this finds the same already-open thread
+  // and the state doesn't change → no further cascade.
+  useEffect(() => {
+    const id = selectedElement?.id ?? null;
+    if (id === lastSelectedElementIdRef.current) return;
+    lastSelectedElementIdRef.current = id;
+    if (!id || composing) return;
+    const match = threads
+      .filter((t) => t.status === "open" && t.elementId === id)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+    if (match) setOpenThreadId(match.id);
+  }, [selectedElement?.id, composing, threads]);
+
+  // (3) Opening an element-anchored thread outlines its element on the canvas.
+  // Keyed on openThreadId; only fires when the open thread genuinely changes
+  // (lastFocusedThreadIdRef). Diagram-level threads (elementId === null) never
+  // focus. Because focusing re-selects the same element that opened the thread,
+  // effect #2 finds the same thread and leaves openThreadId unchanged → no loop.
+  useEffect(() => {
+    if (openThreadId === lastFocusedThreadIdRef.current) return;
+    lastFocusedThreadIdRef.current = openThreadId;
+    if (!openThreadId) return;
+    const t = threads.find((x) => x.id === openThreadId);
+    if (t?.elementId) onFocusRef.current(t.elementId);
+  }, [openThreadId, threads]);
 
   /** Run a mutation, then refetch; surface errors inline. */
   const mutate = useCallback(
@@ -174,8 +234,11 @@ export function CommentsTab({
   }
 
   // ----- List view -----
-  const anchorLabel = selectedElement
-    ? `Commenting on «${selectedElement.name || "element"}»`
+  // A right-click "Comment" anchor (composeAnchor) takes precedence over the
+  // bpmn-js selection; otherwise fall back to the current selection / general.
+  const activeAnchor = composeAnchor ?? selectedElement;
+  const anchorLabel = activeAnchor
+    ? `Commenting on «${activeAnchor.name || "element"}»`
     : "General (whole diagram)";
 
   const isEmpty =
@@ -191,7 +254,12 @@ export function CommentsTab({
         {canComment && !composing && (
           <button
             type="button"
-            onClick={() => setComposing(true)}
+            onClick={() => {
+              // Manual "New comment" uses the live selection, not a stale
+              // right-click anchor.
+              setComposeAnchor(null);
+              setComposing(true);
+            }}
             className="flex items-center gap-1 rounded-[6px] border border-hairline px-2 py-1 text-[11px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
           >
             <MessageSquarePlus className="size-3.5" />
@@ -214,14 +282,18 @@ export function CommentsTab({
                 mutate(async () => {
                   await createThread({
                     diagramId,
-                    elementId: selectedElement?.id ?? null,
+                    elementId: activeAnchor?.id ?? null,
                     body,
                     mentionedUserIds: ids,
                   });
                   setComposing(false);
+                  setComposeAnchor(null);
                 })
               }
-              onCancel={() => setComposing(false)}
+              onCancel={() => {
+                setComposing(false);
+                setComposeAnchor(null);
+              }}
             />
           </div>
         )}
@@ -364,6 +436,7 @@ function ThreadRow({
       )}
     >
       <div className="flex items-center gap-2">
+        <ThreadStatusBadge status={thread.status} />
         {thread.elementId ? (
           <span
             className={cn(

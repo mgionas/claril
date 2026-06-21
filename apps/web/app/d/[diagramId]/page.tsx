@@ -34,9 +34,10 @@ export default async function DiagramPage({
   const initialDoc = aiConfig ? await getDiagramDoc(diagram.id) : null;
   const initialChatMessages = await getChatMessages(diagram.id);
 
-  // Comments are org-only. For org diagrams, resolve the viewer's workspace role
-  // so editors+ can resolve any thread (the server still enforces this).
-  let canResolveComments = false;
+  // Comments are available in both scopes. On a personal diagram the solo owner
+  // can resolve their own threads; on org diagrams editors+ can resolve any
+  // thread (resolved from the viewer's workspace role). The server enforces both.
+  let canResolveComments = ctx.kind === "personal";
   if (ctx.kind === "org") {
     try {
       const access = await assertDiagramAccess(session.user.id, diagram.id);

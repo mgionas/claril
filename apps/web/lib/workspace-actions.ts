@@ -1,11 +1,10 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { and, count, eq, inArray } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 import { requireActiveOrg } from "@/lib/context";
 import { requireWorkspaceRole } from "@/lib/tenancy";
 
@@ -32,12 +31,6 @@ export interface WorkspaceMemberView {
   name: string;
   email: string;
   role: WsRole;
-}
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
 }
 
 /** Resolve the caller's org role within `orgId` (null if not a member). */

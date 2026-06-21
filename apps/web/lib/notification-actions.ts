@@ -1,20 +1,13 @@
 "use server";
 
-import { headers } from "next/headers";
 import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
+import { requireUserId } from "@/lib/session";
 
 /**
  * In-app notification server actions (W16). All reads/writes are scoped to the
  * current user (recipient); a caller can only ever see or mark their own rows.
  */
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) throw new Error("Unauthorized");
-  return session.user.id;
-}
 
 export interface NotificationView {
   id: string;

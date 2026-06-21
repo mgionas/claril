@@ -172,7 +172,7 @@ export function CommentComposer({
   return (
     <div className="space-y-1.5">
       {anchorLabel && (
-        <p className="px-0.5 text-[11px] text-fg-subtle">{anchorLabel}</p>
+        <p className="px-0.5 text-[11px] font-medium text-fg-muted">{anchorLabel}</p>
       )}
       <div className="relative">
         {popupOpen && (

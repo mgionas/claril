@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import type { Finding } from "@claril/shared";
@@ -16,7 +15,6 @@ import {
 } from "@claril/ai-advisor";
 import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
 import { layoutProcess } from "bpmn-auto-layout";
-import { auth } from "@/lib/auth";
 import {
   diagramContext,
   getAiConfig,
@@ -34,14 +32,7 @@ import { assertDiagramAccess } from "@/lib/tenancy";
 import { encryptSecret } from "@/lib/crypto";
 import { buildDiagramAssetContext } from "@/lib/catalog-grounding";
 import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
-
-async function requireUserId(): Promise<string> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-  return session.user.id;
-}
+import { requireUserId } from "@/lib/session";
 
 /** Persist a diagram's content (debounced autosave from the canvas). */
 export async function saveDiagramContent(diagramId: string, content: string): Promise<void> {
@@ -172,6 +163,27 @@ export async function connectAiProvider(input: ConnectAiProviderInput): Promise<
       baseUrl,
       defaultModel,
     });
+  }
+
+  // Auto-set the org default when none exists yet, so connecting your first (or
+  // only) usable provider turns AI on immediately — no separate "set as default"
+  // step. A no-op once a default is set (switching defaults stays explicit).
+  const isUsable = Boolean(encryptedKey) || input.provider === "ollama";
+  if (isUsable) {
+    const hasDefault = (
+      await db
+        .select({ organizationId: schema.aiOrgDefault.organizationId })
+        .from(schema.aiOrgDefault)
+        .where(eq(schema.aiOrgDefault.organizationId, orgId))
+        .limit(1)
+    )[0];
+    if (!hasDefault) {
+      await db.insert(schema.aiOrgDefault).values({
+        organizationId: orgId,
+        provider: input.provider,
+        model: defaultModel ?? DEFAULT_MODELS[input.provider],
+      });
+    }
   }
 }
 
@@ -321,6 +333,21 @@ export async function connectUserAiProvider(input: ConnectUserAiProviderInput): 
     await db.insert(schema.userAiConnection).values({
       id: crypto.randomUUID(), userId, provider: input.provider, encryptedKey, baseUrl, defaultModel,
     });
+  }
+
+  // Auto-set the personal default when none exists yet (turns personal AI on as
+  // soon as you add your first/only usable key). No-op once a default is set.
+  const isUsable = Boolean(encryptedKey) || input.provider === "ollama";
+  if (isUsable) {
+    const hasDefault = (
+      await db.select({ userId: schema.userAiDefault.userId })
+        .from(schema.userAiDefault).where(eq(schema.userAiDefault.userId, userId)).limit(1)
+    )[0];
+    if (!hasDefault) {
+      await db.insert(schema.userAiDefault).values({
+        userId, provider: input.provider, model: defaultModel ?? DEFAULT_MODELS[input.provider],
+      });
+    }
   }
 }
 

@@ -56,6 +56,10 @@ export interface CanvasApi {
   getElements: () => { id: string; name: string }[];
   /** Select an element and bring it into view (no-op if missing). */
   focusElement: (id: string) => void;
+  /** Serialize the current model to formatted BPMN 2.0 XML (canonical artifact). */
+  exportXml: () => Promise<string>;
+  /** Serialize the current diagram to an SVG string (for PNG/PDF rendering). */
+  exportSvg: () => Promise<string>;
 }
 
 const DIFF_MARKERS = [
@@ -87,6 +91,8 @@ interface BpmnCanvasProps {
   onShowProblems?: (elementId: string) => void;
   /** Emits the first selected element ({id,name}) or null when nothing is selected. */
   onSelectionChange?: (selected: { id: string; name: string } | null) => void;
+  /** Open the Comments tab with a composer anchored to this element. Undefined ⇒ no Comment menu item (e.g. personal diagrams). */
+  onCommentElement?: (elementId: string) => void;
 }
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
@@ -103,6 +109,7 @@ export default function BpmnCanvas({
   findings,
   onShowProblems,
   onSelectionChange,
+  onCommentElement,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
@@ -396,6 +403,20 @@ export default function BpmnCanvas({
       }
     };
 
+    const exportXml = async (): Promise<string> => {
+      const m = modelerRef.current;
+      if (!m) throw new Error("Canvas is not ready — no diagram to export.");
+      const { xml } = await m.saveXML({ format: true });
+      return xml ?? "";
+    };
+
+    const exportSvg = async (): Promise<string> => {
+      const m = modelerRef.current;
+      if (!m) throw new Error("Canvas is not ready — no diagram to export.");
+      const { svg } = await m.saveSVG();
+      return svg ?? "";
+    };
+
     const reloadXml = async (xml: string) => {
       clearDiffMarks();
       clearAiEditMarks();
@@ -533,6 +554,8 @@ export default function BpmnCanvas({
           getElementIds,
           getElements,
           focusElement,
+          exportXml,
+          exportSvg,
         });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);
@@ -669,6 +692,14 @@ export default function BpmnCanvas({
             setMenu(null);
             onShowProblems?.(id);
           }}
+          onComment={
+            onCommentElement
+              ? (id) => {
+                  setMenu(null);
+                  onCommentElement(id);
+                }
+              : undefined
+          }
           boundAssetName={
             menu.elementId
               ? boundAssets.find((b) => b.elementId === menu.elementId)?.asset.name

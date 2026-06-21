@@ -27,6 +27,37 @@ interface CommentThreadViewProps {
   onFocusElement?: (elementId: string) => void;
 }
 
+/**
+ * Unambiguous open/resolved status badge, shared by the thread list rows and
+ * the thread-view header. Open → amber dot + "Open"; Resolved → green check +
+ * "Resolved". Uses the existing `warning`/`success` theme tokens.
+ */
+export function ThreadStatusBadge({
+  status,
+  className,
+}: {
+  status: "open" | "resolved";
+  className?: string;
+}) {
+  const resolved = status === "resolved";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+        resolved ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
+        className,
+      )}
+    >
+      {resolved ? (
+        <Check className="size-2.5" />
+      ) : (
+        <span className="size-1.5 rounded-full bg-warning" aria-hidden />
+      )}
+      {resolved ? "Resolved" : "Open"}
+    </span>
+  );
+}
+
 /** Compact relative-time formatter ("just now", "5m", "3h", "2d", or a date). */
 export function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -242,16 +273,7 @@ export function CommentThreadView({
             General
           </span>
         )}
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-            resolved
-              ? "bg-success/10 text-success"
-              : "bg-accent/10 text-accent",
-          )}
-        >
-          {resolved ? "Resolved" : "Open"}
-        </span>
+        <ThreadStatusBadge status={thread.status} />
         {canResolve && (
           <button
             type="button"
@@ -279,7 +301,8 @@ export function CommentThreadView({
         ))}
       </div>
 
-      <div className="border-t border-hairline p-3">
+      <div className="border-t-2 border-hairline bg-elevated/40 p-3">
+        <p className="mb-1.5 px-0.5 text-[11px] font-medium text-fg-muted">Reply</p>
         <CommentComposer
           candidates={candidates}
           submitting={busy}

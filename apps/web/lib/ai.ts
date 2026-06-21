@@ -98,6 +98,24 @@ export function repointDefault(remaining: ConnRow[]): string | null {
 }
 
 /**
+ * Decrypt a stored key, or report failure. A key encrypted under a DIFFERENT
+ * secret (e.g. connected in one environment, read in another against a shared
+ * DB) or a corrupted blob must NOT crash a page that merely checks whether AI is
+ * configured — it should degrade to "AI off". Returns `{ ok:false }` on failure
+ * so callers can return null instead of throwing.
+ */
+function safeDecrypt(
+  encryptedKey: string | null,
+): { ok: true; key: string | undefined } | { ok: false } {
+  if (!encryptedKey) return { ok: true, key: undefined };
+  try {
+    return { ok: true, key: decryptSecret(encryptedKey) };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/**
  * Decrypted, ready-to-use AI config for an org, or null when nothing usable.
  * `opts` lets a single run override the provider/model (workbench selector);
  * with no opts it resolves the org default, then the sole-connection rule.
@@ -119,11 +137,14 @@ export async function getOrgAiConfig(
   const resolved = resolveConnection(conns, def, opts);
   if (!resolved) return null;
 
+  const dec = safeDecrypt(resolved.encryptedKey);
+  if (!dec.ok) return null; // undecryptable key → AI off (don't crash the page)
+
   return {
     provider: resolved.provider,
     model: resolved.model,
     baseUrl: resolved.baseUrl,
-    apiKey: resolved.encryptedKey ? decryptSecret(resolved.encryptedKey) : undefined,
+    apiKey: dec.key,
   };
 }
 
@@ -169,11 +190,13 @@ export async function getUserAiConfig(
   const def = defRows[0] ? { provider: defRows[0].provider, model: defRows[0].model } : null;
   const resolved = resolveConnection(conns, def, opts);
   if (!resolved) return null;
+  const dec = safeDecrypt(resolved.encryptedKey);
+  if (!dec.ok) return null; // undecryptable key → AI off (don't crash the page)
   return {
     provider: resolved.provider,
     model: resolved.model,
     baseUrl: resolved.baseUrl,
-    apiKey: resolved.encryptedKey ? decryptSecret(resolved.encryptedKey) : undefined,
+    apiKey: dec.key,
   };
 }
 
