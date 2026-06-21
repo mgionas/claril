@@ -71,7 +71,7 @@ Making `diagram.projectId` nullable tightens its type to `string | null`. The pl
 - No e2e/UX (nothing user-facing ships in the foundation).
 
 ## Out of scope (later phases — own specs)
-- **Phase 2:** active-context switcher + persistence; personal dashboard (list/create `personal_project`).
+- **Phase 2:** active-context **scope switcher in the AppShell top bar (top-left)** — GitHub/Vercel/Linear-style dropdown showing the current context (personal avatar, or org logo/initial + name), switching between Personal / each org, with **+ Create organization** and a link to the active context's settings; selection persists on the session and re-scopes dashboard/catalog/AI/settings. Pairs with the existing top-right user menu. Plus the personal dashboard (list/create `personal_project`).
 - **Phase 3:** personal AI settings UI (dual config) + catalog/unified-knowledge gating (hidden in personal).
 - **Phase 4:** org **workspaces UI** + explicit-grant access + `workspaceRole` (`admin/editor/viewer`) formalization + per-workspace member management; org creation flow.
 - **Phase 5:** legacy data migration ("Personal" org → personal space: projects→`personal_project`, re-point diagrams, `ai_connection`→`user_ai_connection`), retire pseudo-orgs, cleanup. Orgs with >1 member stay real orgs.
