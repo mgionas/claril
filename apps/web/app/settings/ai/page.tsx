@@ -23,9 +23,9 @@ export default async function AiSettingsPage() {
   const usage = orgId ? await getUsageSummary(orgId) : null;
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-10">
+    <div className="max-w-2xl">
       <AiSettingsForm initial={config} />
       <UsageSummary data={usage} />
-    </main>
+    </div>
   );
 }
