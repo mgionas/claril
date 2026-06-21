@@ -1,6 +1,6 @@
 "use server";
 
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { requireUserId } from "@/lib/session";
 import { assertDiagramAccess } from "@/lib/tenancy";
@@ -20,7 +20,12 @@ export async function getChatMessages(diagramId: string): Promise<StoredChatMess
     const rows = await db
       .select({ id: schema.chatMessage.id, role: schema.chatMessage.role, parts: schema.chatMessage.parts })
       .from(schema.chatMessage)
-      .where(eq(schema.chatMessage.diagramId, diagramId))
+      .where(
+        and(
+          eq(schema.chatMessage.diagramId, diagramId),
+          eq(schema.chatMessage.userId, userId),
+        ),
+      )
       .orderBy(asc(schema.chatMessage.createdAt));
     return rows.map((r) => ({ id: r.id, role: r.role, parts: r.parts }));
   } catch {
@@ -43,6 +48,7 @@ export async function appendChatMessages(
         messages.map((m) => ({
           id: m.id,
           diagramId,
+          userId,
           role: m.role,
           parts: m.parts as object,
         })),
@@ -58,7 +64,14 @@ export async function clearChat(diagramId: string): Promise<void> {
   const userId = await requireUserId();
   await assertDiagramAccess(userId, diagramId);
   try {
-    await db.delete(schema.chatMessage).where(eq(schema.chatMessage.diagramId, diagramId));
+    await db
+      .delete(schema.chatMessage)
+      .where(
+        and(
+          eq(schema.chatMessage.diagramId, diagramId),
+          eq(schema.chatMessage.userId, userId),
+        ),
+      );
   } catch {
     /* ignore */
   }
