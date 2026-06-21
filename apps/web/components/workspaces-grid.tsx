@@ -36,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { WorkspaceManageDialog } from "@/components/workspace-manage-dialog";
 
 interface WorkspacesGridProps {
   workspaces: WorkspaceSummary[];
@@ -109,6 +110,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceSummary }) {
   const isAdmin = workspace.role === "admin";
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
 
   return (
     <>
@@ -154,11 +156,9 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceSummary }) {
                   <Pencil />
                   Rename
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/w/${workspace.id}`}>
-                    <Users />
-                    Manage members
-                  </Link>
+                <DropdownMenuItem onSelect={() => setManageOpen(true)}>
+                  <Users />
+                  Manage members
                 </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
                   <Trash2 />
@@ -179,6 +179,12 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceSummary }) {
         workspace={workspace}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+      />
+      <WorkspaceManageDialog
+        workspaceId={workspace.id}
+        workspaceName={workspace.name}
+        open={manageOpen}
+        onOpenChange={setManageOpen}
       />
     </>
   );

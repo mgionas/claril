@@ -56,7 +56,11 @@ export default async function WorkspacePage({
       userName={session.user.name}
       userEmail={session.user.email}
       title={ws.name}
-      actions={canManage ? <WorkspaceManageButton workspaceId={workspaceId} /> : undefined}
+      actions={
+        canManage ? (
+          <WorkspaceManageButton workspaceId={workspaceId} workspaceName={ws.name} />
+        ) : undefined
+      }
     >
       <ProjectsList
         context="org"
