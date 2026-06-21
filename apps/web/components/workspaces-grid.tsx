@@ -18,7 +18,6 @@ import {
   deleteWorkspace,
   renameWorkspace,
 } from "@/lib/workspace-actions";
-import type { DashboardStats } from "@/lib/dashboard-stats-core";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +39,8 @@ import { WorkspaceManageDialog } from "@/components/workspace-manage-dialog";
 
 interface WorkspacesGridProps {
   workspaces: WorkspaceSummary[];
-  stats: DashboardStats;
+  /** Whether the active user may create workspaces (org owner/admin). */
+  canCreate: boolean;
 }
 
 const inputClass =
@@ -54,8 +54,14 @@ function errorMessage(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export function WorkspacesGrid({ workspaces, stats }: WorkspacesGridProps) {
+export function WorkspacesGrid({ workspaces, canCreate }: WorkspacesGridProps) {
   const [createOpen, setCreateOpen] = useState(false);
+
+  // Totals are summed over the workspaces the user can actually see, so the
+  // strip never exceeds the visible cards (org admins see all → org-wide totals;
+  // members see only their workspaces → scoped totals, no cross-workspace leak).
+  const projectTotal = workspaces.reduce((sum, ws) => sum + ws.projectCount, 0);
+  const diagramTotal = workspaces.reduce((sum, ws) => sum + ws.diagramCount, 0);
 
   return (
     <div className="flex flex-col gap-7">
@@ -66,20 +72,22 @@ export function WorkspacesGrid({ workspaces, stats }: WorkspacesGridProps) {
             Organize projects and diagrams into workspaces your team can share.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" />
-          New workspace
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" />
+            New workspace
+          </Button>
+        )}
       </div>
 
-      {/* Slim stat strip — org-wide totals across visible workspaces. */}
+      {/* Slim stat strip — totals summed over the visible workspaces. */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard label="Projects" value={numberFmt.format(stats.projectCount)} />
-        <StatCard label="Diagrams" value={numberFmt.format(stats.diagramCount)} />
+        <StatCard label="Projects" value={numberFmt.format(projectTotal)} />
+        <StatCard label="Diagrams" value={numberFmt.format(diagramTotal)} />
       </div>
 
       {workspaces.length === 0 ? (
-        <EmptyState onCreate={() => setCreateOpen(true)} />
+        <EmptyState canCreate={canCreate} onCreate={() => setCreateOpen(true)} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {workspaces.map((ws) => (
@@ -429,20 +437,28 @@ function DeleteWorkspaceDialog({
   );
 }
 
-function EmptyState({ onCreate }: { onCreate: () => void }) {
+function EmptyState({ canCreate, onCreate }: { canCreate: boolean; onCreate: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-hairline bg-panel/40 px-6 py-20 text-center">
       <span className="grid size-12 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
         <FolderKanban className="size-6" />
       </span>
       <p className="mt-4 text-sm font-medium">No workspaces yet</p>
-      <p className="mt-1 max-w-xs text-sm text-fg-muted">
-        Create your first workspace to start organizing projects and diagrams for your team.
-      </p>
-      <Button className="mt-5" onClick={onCreate}>
-        <Plus className="size-4" />
-        New workspace
-      </Button>
+      {canCreate ? (
+        <>
+          <p className="mt-1 max-w-xs text-sm text-fg-muted">
+            Create your first workspace to start organizing projects and diagrams for your team.
+          </p>
+          <Button className="mt-5" onClick={onCreate}>
+            <Plus className="size-4" />
+            New workspace
+          </Button>
+        </>
+      ) : (
+        <p className="mt-1 max-w-xs text-sm text-fg-subtle">
+          Ask an organization admin to create a workspace.
+        </p>
+      )}
     </div>
   );
 }
