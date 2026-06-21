@@ -87,11 +87,6 @@ export function AppShell({
   contentClassName,
   title,
 }: AppShellProps) {
-  // Org context drives the notification bell: mentions only originate on org
-  // diagrams, so the bell is hidden in the personal scope.
-  const { data: session } = useSession();
-  const isPersonal = !session?.session?.activeOrganizationId;
-
   return (
     <SidebarProvider>
       <AppSidebar userName={userName} userEmail={userEmail} />
@@ -103,7 +98,8 @@ export function AppShell({
           )}
           <div className="ml-auto flex items-center gap-2">
             {actions}
-            {!isPersonal && <NotificationBell />}
+            {/* Shown for everyone — personal accounts still receive org invitations. */}
+            <NotificationBell />
           </div>
         </header>
         {fullBleed ? (

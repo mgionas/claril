@@ -101,6 +101,61 @@ interface BpmnCanvasProps {
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
 
+/**
+ * Re-fit an exported SVG to the diagram's actual content bounds + a small uniform
+ * padding. bpmn-js `saveSVG()` can leave a large empty margin (especially on
+ * AI-generated layouts); this crops tight so PNG/PDF exports aren't swimming in
+ * whitespace. Falls back to the original SVG if bounds can't be computed.
+ */
+function cropSvgToContent(
+  modeler: { get: (name: string) => unknown },
+  svg: string,
+  pad = 24,
+): string {
+  try {
+    const registry = modeler.get("elementRegistry") as {
+      getAll: () => Array<{
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        waypoints?: Array<{ x: number; y: number }>;
+      }>;
+    };
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const el of registry.getAll()) {
+      if (typeof el.x === "number" && typeof el.width === "number" && typeof el.height === "number") {
+        minX = Math.min(minX, el.x);
+        minY = Math.min(minY, el.y ?? 0);
+        maxX = Math.max(maxX, el.x + el.width);
+        maxY = Math.max(maxY, (el.y ?? 0) + el.height);
+      }
+      if (Array.isArray(el.waypoints)) {
+        for (const wp of el.waypoints) {
+          minX = Math.min(minX, wp.x);
+          minY = Math.min(minY, wp.y);
+          maxX = Math.max(maxX, wp.x);
+          maxY = Math.max(maxY, wp.y);
+        }
+      }
+    }
+    if (!Number.isFinite(minX) || maxX <= minX || maxY <= minY) return svg;
+    const x = Math.round(minX - pad);
+    const y = Math.round(minY - pad);
+    const w = Math.round(maxX - minX + pad * 2);
+    const h = Math.round(maxY - minY + pad * 2);
+    return svg
+      .replace(/(<svg\b[^>]*?)\swidth="[^"]*"/, `$1 width="${w}"`)
+      .replace(/(<svg\b[^>]*?)\sheight="[^"]*"/, `$1 height="${h}"`)
+      .replace(/(<svg\b[^>]*?)\sviewBox="[^"]*"/, `$1 viewBox="${x} ${y} ${w} ${h}"`);
+  } catch {
+    return svg;
+  }
+}
+
 export default function BpmnCanvas({
   diagramId,
   initialXml,
@@ -420,7 +475,9 @@ export default function BpmnCanvas({
       const m = modelerRef.current;
       if (!m) throw new Error("Canvas is not ready — no diagram to export.");
       const { svg } = await m.saveSVG();
-      return svg ?? "";
+      if (!svg) return "";
+      // Crop tight to content (+ small padding) so PNG/PDF aren't full of margin.
+      return cropSvgToContent(m as unknown as { get: (n: string) => unknown }, svg);
     };
 
     const reloadXml = async (xml: string) => {
