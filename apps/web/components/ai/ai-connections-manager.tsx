@@ -11,6 +11,10 @@ import {
   getAiSettings,
   removeAiProvider,
   setOrgDefaultModel,
+  connectUserAiProvider,
+  getUserAiSettings,
+  removeUserAiProvider,
+  setUserDefaultModel,
   type AiSettingsView,
 } from "@/lib/actions";
 import type { ConnectionView } from "@/lib/ai";
@@ -30,6 +34,8 @@ import {
 export interface AiConnectionsManagerProps {
   /** Auto-select & expand this provider when it isn't connected yet (optional). */
   initialProvider?: AiProvider;
+  /** Which credential store the manager reads/writes. Defaults to "org". */
+  scope?: "personal" | "org";
 }
 
 /** Encode a {provider, model} pair into a single Select value. */
@@ -127,6 +133,8 @@ function ProviderDetail({
   canEdit,
   startEditing,
   onChanged,
+  connect,
+  remove,
 }: {
   provider: AiProvider;
   connection?: ConnectionView;
@@ -134,6 +142,15 @@ function ProviderDetail({
   /** When false (connected), start collapsed showing Test/Edit/Remove. */
   startEditing: boolean;
   onChanged: () => Promise<void>;
+  /** Scoped connect action (org or personal). */
+  connect: (input: {
+    provider: AiProvider;
+    apiKey?: string;
+    baseUrl?: string;
+    defaultModel?: string;
+  }) => Promise<void>;
+  /** Scoped remove action (org or personal). */
+  remove: (provider: AiProvider) => Promise<void>;
 }) {
   const meta = providerMeta(provider);
   const connected = Boolean(connection?.usable);
@@ -188,7 +205,7 @@ function ProviderDetail({
     setBusy(true);
     setError(null);
     try {
-      await connectAiProvider({
+      await connect({
         provider,
         apiKey: apiKey || undefined,
         baseUrl: baseUrl || undefined,
@@ -208,7 +225,7 @@ function ProviderDetail({
     setBusy(true);
     setError(null);
     try {
-      await removeAiProvider(provider);
+      await remove(provider);
       setConfirmRemove(false);
       setEditing(false);
       await onChanged();
@@ -384,8 +401,29 @@ function StatusBadge({ connection }: { connection?: ConnectionView }) {
  * (Test / Edit / Remove / Connect). Owns its own data load and refresh.
  * Rendered both inside the workbench settings dialog and on /settings/ai.
  */
-export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerProps) {
+export function AiConnectionsManager({
+  initialProvider,
+  scope = "org",
+}: AiConnectionsManagerProps) {
   const router = useRouter();
+  const isPersonal = scope === "personal";
+  // Scope-resolved action set. Each member is a stable module-level function,
+  // so we key effects/callbacks off `scope` (a primitive) rather than this
+  // object — the object identity changes per render but its contents don't.
+  const api = isPersonal
+    ? {
+        getSettings: getUserAiSettings,
+        connect: connectUserAiProvider,
+        remove: removeUserAiProvider,
+        setDefault: setUserDefaultModel,
+      }
+    : {
+        getSettings: getAiSettings,
+        connect: connectAiProvider,
+        remove: removeAiProvider,
+        setDefault: setOrgDefaultModel,
+      };
+
   const [data, setData] = useState<AiSettingsView | null>(null);
   const [loading, setLoading] = useState(false);
   const [defaultError, setDefaultError] = useState<string | null>(null);
@@ -393,15 +431,17 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
   const [appliedInitial, setAppliedInitial] = useState(false);
 
   const refresh = useCallback(async () => {
-    const next = await getAiSettings();
+    const getSettings = scope === "personal" ? getUserAiSettings : getAiSettings;
+    const next = await getSettings();
     setData(next);
     router.refresh();
-  }, [router]);
+  }, [router, scope]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getAiSettings()
+    const getSettings = scope === "personal" ? getUserAiSettings : getAiSettings;
+    getSettings()
       .then((next) => {
         if (!cancelled) setData(next);
       })
@@ -411,7 +451,7 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scope]);
 
   const canEdit = data?.canEdit ?? false;
   const connections = data?.connections ?? [];
@@ -432,7 +472,7 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
     const { provider, model } = decodeDefault(v);
     setDefaultError(null);
     try {
-      await setOrgDefaultModel({ provider, model });
+      await api.setDefault({ provider, model });
       await refresh();
     } catch (e) {
       setDefaultError(e instanceof Error ? e.message : "Couldn't set the default model.");
@@ -456,7 +496,7 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
       {usable.length > 0 && (
         <div className="mt-4 flex flex-col gap-1.5">
           <Label className="text-xs text-fg-muted" htmlFor="org-default-select">
-            Organization default
+            {isPersonal ? "Default model" : "Organization default"}
           </Label>
           <Select value={defaultValue} onValueChange={onDefaultChange} disabled={!canEdit}>
             <SelectTrigger id="org-default-select" className="w-full bg-elevated">
@@ -516,6 +556,8 @@ export function AiConnectionsManager({ initialProvider }: AiConnectionsManagerPr
             canEdit={canEdit}
             startEditing={!selectedConnection?.usable}
             onChanged={refresh}
+            connect={api.connect}
+            remove={api.remove}
           />
         </div>
       )}
