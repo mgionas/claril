@@ -187,7 +187,14 @@ function TypeDonut({ bpmn, sequence, c4 }: { bpmn: number; sequence: number; c4:
           <ChartContainer config={config} className="mx-auto aspect-square max-h-[200px]">
             <PieChart>
               <ChartTooltip cursor={false} content={<ChartTooltipContent nameKey="type" hideLabel />} />
-              <Pie data={data} dataKey="count" nameKey="type" innerRadius={48} strokeWidth={2}>
+              <Pie
+                data={data}
+                dataKey="count"
+                nameKey="type"
+                innerRadius={48}
+                stroke="var(--color-panel)"
+                strokeWidth={2}
+              >
                 {data.map((d) => (
                   <Cell key={d.type} fill={d.fill} />
                 ))}
