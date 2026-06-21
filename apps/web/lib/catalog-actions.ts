@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   db,
   schema,
@@ -60,6 +60,12 @@ function requireManage(ctx: OrgContext): void {
 /* -------------------------------------------------------------------------- */
 /* Asset types                                                                */
 /* -------------------------------------------------------------------------- */
+
+/** Whether the active member can manage the catalog (owner/admin). For UI gating. */
+export async function canManageCatalog(): Promise<boolean> {
+  const ctx = await requireOrg();
+  return ctx.role === "owner" || ctx.role === "admin";
+}
 
 export async function listAssetTypes(): Promise<AssetType[]> {
   const { orgId } = await requireOrg();
@@ -178,6 +184,37 @@ export async function listAssets(assetTypeId?: string): Promise<Asset[]> {
     ? and(eq(schema.asset.organizationId, orgId), eq(schema.asset.assetTypeId, assetTypeId))
     : eq(schema.asset.organizationId, orgId);
   return db.select().from(schema.asset).where(where).orderBy(schema.asset.name);
+}
+
+/** Load a single asset, org-scoped. Returns null if missing or cross-org. */
+export async function getAsset(id: string): Promise<Asset | null> {
+  const { orgId } = await requireOrg();
+  const [row] = await db
+    .select()
+    .from(schema.asset)
+    .where(and(eq(schema.asset.id, id), eq(schema.asset.organizationId, orgId)))
+    .limit(1);
+  return row ?? null;
+}
+
+/**
+ * One aggregate query: how many diagram-element bindings reference each asset in
+ * the org. Avoids an N+1 over {@link getAssetUsage} when rendering the listing.
+ * Returns a map keyed by assetId; assets with zero usage are simply absent.
+ */
+export async function getAssetUsageCounts(): Promise<Record<string, number>> {
+  const { orgId } = await requireOrg();
+  const rows = await db
+    .select({
+      assetId: schema.elementAssetBinding.assetId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(schema.elementAssetBinding)
+    .where(eq(schema.elementAssetBinding.organizationId, orgId))
+    .groupBy(schema.elementAssetBinding.assetId);
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.assetId] = Number(r.count);
+  return out;
 }
 
 export interface AssetInput {
