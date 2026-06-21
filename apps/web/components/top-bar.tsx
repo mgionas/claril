@@ -1,13 +1,21 @@
 "use client";
 
-import { LogOut, Settings, Sparkles } from "lucide-react";
+import { Download, FileImage, FileText, FileType, LogOut, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
 import { HistoryMenu } from "@/components/history-menu";
 import { ModelSwitcher, type ModelSwitcherProps } from "@/components/model-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { DiffMarks } from "@/lib/bpmn-diff";
 import { cn } from "@/lib/utils";
+
+export type ExportFormat = "bpmn" | "png" | "pdf";
 
 export type SaveState = "saved" | "saving" | "error";
 
@@ -35,6 +43,8 @@ interface TopBarProps {
   };
   /** Per-session model override (BPMN workbench only; omit elsewhere). */
   modelSwitcher?: ModelSwitcherProps;
+  /** Diagram export (BPMN workbench only; omit ⇒ no Export menu). */
+  onExport?: (format: ExportFormat) => void;
 }
 
 export function TopBar({
@@ -47,6 +57,7 @@ export function TopBar({
   onOpenAiSettings,
   history,
   modelSwitcher,
+  onExport,
 }: TopBarProps) {
   const router = useRouter();
 
@@ -90,6 +101,33 @@ export function TopBar({
           </span>
         </button>
         {aiConnected && modelSwitcher && <ModelSwitcher {...modelSwitcher} />}
+        {onExport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                title="Export diagram"
+                className="flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-2 py-1.5 text-fg-muted backdrop-blur transition-colors hover:text-fg data-[state=open]:text-fg"
+              >
+                <Download className="size-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[10rem]">
+              <DropdownMenuItem onSelect={() => onExport("bpmn")}>
+                <FileText className="size-4" />
+                Download .bpmn
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onExport("png")}>
+                <FileImage className="size-4" />
+                Export PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onExport("pdf")}>
+                <FileType className="size-4" />
+                Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {history && (
           <HistoryMenu
             diagramId={diagramId}

@@ -21,6 +21,7 @@ import type { DiffMarks } from "@/lib/bpmn-diff";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
 import { TopBar, type SaveState } from "@/components/top-bar";
+import { downloadBpmn, downloadPdf, downloadPng } from "@/lib/diagram-export";
 import { AiDrawer, type DrawerTab } from "@/components/ai-drawer";
 import type { ChatTabHandle } from "@/components/chat-tab";
 import { CommandBar } from "@/components/command-bar";
@@ -411,6 +412,17 @@ export function BpmnWorkbench({
             getCurrentXml,
             onRestored: handleRestored,
             onShowDiff: handleShowDiff,
+          }}
+          onExport={async (fmt) => {
+            const api = canvasApiRef.current;
+            if (!api) return;
+            try {
+              if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
+              else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName);
+              else await downloadPdf(await api.exportSvg(), diagramName);
+            } catch (e) {
+              console.error("Export failed", e);
+            }
           }}
           modelSwitcher={
             aiSettings

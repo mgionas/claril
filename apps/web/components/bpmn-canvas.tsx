@@ -56,6 +56,10 @@ export interface CanvasApi {
   getElements: () => { id: string; name: string }[];
   /** Select an element and bring it into view (no-op if missing). */
   focusElement: (id: string) => void;
+  /** Serialize the current model to formatted BPMN 2.0 XML (canonical artifact). */
+  exportXml: () => Promise<string>;
+  /** Serialize the current diagram to an SVG string (for PNG/PDF rendering). */
+  exportSvg: () => Promise<string>;
 }
 
 const DIFF_MARKERS = [
@@ -399,6 +403,20 @@ export default function BpmnCanvas({
       }
     };
 
+    const exportXml = async (): Promise<string> => {
+      const m = modelerRef.current;
+      if (!m) throw new Error("Canvas is not ready — no diagram to export.");
+      const { xml } = await m.saveXML({ format: true });
+      return xml ?? "";
+    };
+
+    const exportSvg = async (): Promise<string> => {
+      const m = modelerRef.current;
+      if (!m) throw new Error("Canvas is not ready — no diagram to export.");
+      const { svg } = await m.saveSVG();
+      return svg ?? "";
+    };
+
     const reloadXml = async (xml: string) => {
       clearDiffMarks();
       clearAiEditMarks();
@@ -536,6 +554,8 @@ export default function BpmnCanvas({
           getElementIds,
           getElements,
           focusElement,
+          exportXml,
+          exportSvg,
         });
       } catch (err) {
         if (!disposed) console.error("Failed to import diagram", err);
