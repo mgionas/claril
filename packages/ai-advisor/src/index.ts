@@ -25,6 +25,8 @@ export {
   OpSchema,
   orderOps,
   collectPlanRefs,
+  validateEditPlan,
+  checkPlanScope,
   NODE_TYPES,
   type EditPlan,
   type Op,
