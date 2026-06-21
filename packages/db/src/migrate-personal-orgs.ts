@@ -73,6 +73,19 @@ export async function migratePersonalOrgs(): Promise<{
     const ownerUserId = orgMembers[0]!.userId;
 
     const moved = await db.transaction(async (tx) => {
+      // Re-assert the qualifier INSIDE the transaction before any mutation. The
+      // outer snapshot was read non-transactionally; a member could have been
+      // added since, turning this into a real team org. The org delete is
+      // irreversible, so re-check live membership and skip (return null, no
+      // mutations) if it no longer qualifies.
+      const liveMembers = await tx
+        .select({ userId: member.userId, role: member.role })
+        .from(member)
+        .where(eq(member.organizationId, org.id));
+      if (!qualifiesAsAutoPersonalOrg({ name: org.name, members: liveMembers })) {
+        return null;
+      }
+
       let projectsMovedForOrg = 0;
 
       const workspaces = await tx
@@ -90,6 +103,8 @@ export async function migratePersonalOrgs(): Promise<{
             ownerUserId,
             name: proj.name,
             description: proj.description,
+            createdAt: proj.createdAt,
+            updatedAt: proj.updatedAt,
           });
 
           await tx
@@ -145,6 +160,7 @@ export async function migratePersonalOrgs(): Promise<{
       return projectsMovedForOrg;
     });
 
+    if (moved === null) continue; // re-check inside the tx rejected it (now a real org)
     orgsMigrated += 1;
     projectsMoved += moved;
   }
