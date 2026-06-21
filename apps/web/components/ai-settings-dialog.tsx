@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight, Loader2 } from "lucide-react";
 import type { AiProvider } from "@claril/ai-advisor";
-import { PROVIDER_META, providerMeta } from "@/lib/ai-providers";
+import { PROVIDER_META, providerMeta, keyLooksValid } from "@/lib/ai-providers";
 import { testProviderConnection } from "@/lib/ai-models";
 import { saveAiConfig } from "@/lib/actions";
 import { ModelPicker } from "@/components/ai/model-picker";
@@ -181,7 +181,8 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
                   ))}
                 </SelectContent>
               </Select>
-              <p className="mt-1 text-[11px] text-fg-subtle">
+              <p className="mt-1 text-[11px] text-fg-muted">{meta.description}</p>
+              <p className="text-[11px] text-fg-subtle">
                 Provider-agnostic. Switch any time — keys are stored per provider, encrypted.
               </p>
             </div>
@@ -190,34 +191,69 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
           {step === 1 && (
             <>
               {meta.needsKey ? (
-                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs text-fg-muted" htmlFor="api-key">
-                    API key
-                  </Label>
-                  <Input
-                    id="api-key"
-                    type="password"
-                    className="bg-elevated"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Leave blank to keep the existing key"
-                    autoComplete="off"
-                    autoFocus
-                  />
-                  <p className="mt-1 text-[11px] text-fg-subtle">
-                    {meta.keyHint}{" "}
+                <div className="flex flex-col gap-2">
+                  {/* How-to guidance */}
+                  <div className="rounded-[8px] border border-hairline bg-elevated/40 p-3">
+                    <p className="mb-1.5 text-[11px] font-medium text-fg-muted">
+                      How to connect {meta.label}
+                    </p>
+                    <ol className="flex list-decimal flex-col gap-1 pl-4 text-[11px] text-fg-subtle">
+                      {meta.steps.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ol>
                     <a
                       href={meta.keyUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-accent hover:underline"
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
                     >
-                      {meta.keyUrlLabel} →
+                      Open {meta.keyUrlLabel} ↗
                     </a>
-                  </p>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-xs text-fg-muted" htmlFor="api-key">
+                      API key
+                    </Label>
+                    <Input
+                      id="api-key"
+                      type="password"
+                      className="bg-elevated"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder={meta.keyPlaceholder ?? "Leave blank to keep the existing key"}
+                      autoComplete="off"
+                      autoFocus
+                    />
+                    {!keyLooksValid(provider, apiKey) && (
+                      <p className="text-[11px] text-warning">
+                        That doesn&apos;t look like a {meta.label} key — it usually starts with{" "}
+                        <code className="font-mono">{meta.keyPrefix}</code>. You can still continue.
+                      </p>
+                    )}
+                    {meta.note && <p className="text-[11px] text-fg-subtle">{meta.note}</p>}
+                  </div>
                 </div>
               ) : (
-                <p className="text-sm text-fg-muted">{meta.keyHint}</p>
+                <div className="rounded-[8px] border border-hairline bg-elevated/40 p-3">
+                  <p className="mb-1.5 text-[11px] font-medium text-fg-muted">
+                    How to run {meta.label}
+                  </p>
+                  <ol className="flex list-decimal flex-col gap-1 pl-4 text-[11px] text-fg-subtle">
+                    {meta.steps.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ol>
+                  <a
+                    href={meta.keyUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
+                  >
+                    Open {meta.keyUrlLabel} ↗
+                  </a>
+                </div>
               )}
 
               {(provider === "ollama" || provider === "openai") && (
