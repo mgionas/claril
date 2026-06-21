@@ -38,6 +38,37 @@ interface AiSettingsDialogProps {
   initialProvider?: string;
 }
 
+function HowToPanel({
+  heading,
+  steps,
+  url,
+  urlLabel,
+}: {
+  heading: string;
+  steps: string[];
+  url: string;
+  urlLabel: string;
+}) {
+  return (
+    <div className="rounded-[10px] border border-hairline bg-elevated/40 p-3">
+      <p className="mb-1.5 text-[11px] font-medium text-fg-muted">{heading}</p>
+      <ol className="flex list-decimal flex-col gap-1 pl-4 text-[11px] text-fg-subtle">
+        {steps.map((s, i) => (
+          <li key={i}>{s}</li>
+        ))}
+      </ol>
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
+      >
+        Open {urlLabel} ↗
+      </a>
+    </div>
+  );
+}
+
 export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsDialogProps) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
@@ -193,24 +224,12 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
               {meta.needsKey ? (
                 <div className="flex flex-col gap-2">
                   {/* How-to guidance */}
-                  <div className="rounded-[8px] border border-hairline bg-elevated/40 p-3">
-                    <p className="mb-1.5 text-[11px] font-medium text-fg-muted">
-                      How to connect {meta.label}
-                    </p>
-                    <ol className="flex list-decimal flex-col gap-1 pl-4 text-[11px] text-fg-subtle">
-                      {meta.steps.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ol>
-                    <a
-                      href={meta.keyUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
-                    >
-                      Open {meta.keyUrlLabel} ↗
-                    </a>
-                  </div>
+                  <HowToPanel
+                    heading={`How to connect ${meta.label}`}
+                    steps={meta.steps}
+                    url={meta.keyUrl}
+                    urlLabel={meta.keyUrlLabel}
+                  />
 
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-xs text-fg-muted" htmlFor="api-key">
@@ -236,24 +255,12 @@ export function AiSettingsDialog({ open, onClose, initialProvider }: AiSettingsD
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[8px] border border-hairline bg-elevated/40 p-3">
-                  <p className="mb-1.5 text-[11px] font-medium text-fg-muted">
-                    How to run {meta.label}
-                  </p>
-                  <ol className="flex list-decimal flex-col gap-1 pl-4 text-[11px] text-fg-subtle">
-                    {meta.steps.map((s, i) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ol>
-                  <a
-                    href={meta.keyUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:underline"
-                  >
-                    Open {meta.keyUrlLabel} ↗
-                  </a>
-                </div>
+                <HowToPanel
+                  heading={`How to run ${meta.label}`}
+                  steps={meta.steps}
+                  url={meta.keyUrl}
+                  urlLabel={meta.keyUrlLabel}
+                />
               )}
 
               {(provider === "ollama" || provider === "openai") && (
