@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Boxes, Layers, Loader2, Plus, Settings2, Sparkles } from "lucide-react";
 import type { Asset, AssetType, FieldDef, FieldType } from "@claril/db";
 import {
   createAssetType,
@@ -10,8 +12,11 @@ import {
   ensureBuiltinAssetTypes,
   createAsset,
   updateAsset,
-  deleteAsset,
 } from "@/lib/catalog-actions";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { TypeChip } from "@/components/catalog/type-chip";
+import { summarizeValues } from "@/components/catalog/field-value";
 
 const FIELD_TYPES: FieldType[] = [
   "text",
@@ -24,35 +29,54 @@ const FIELD_TYPES: FieldType[] = [
 ];
 
 const fieldClass =
-  "rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors focus:border-accent";
+  "rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent";
 const btnPrimary =
   "rounded-[6px] bg-accent px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50";
 const btnGhost =
   "rounded-[6px] px-3 py-2 text-sm text-fg-muted transition-colors hover:bg-elevated";
 
+const ALL = "__all__";
+
 interface Props {
   initialTypes: AssetType[];
   initialAssets: Asset[];
+  /** assetId -> number of diagram-element bindings referencing it. */
+  usageCounts?: Record<string, number>;
 }
 
-export function CatalogAdmin({ initialTypes, initialAssets }: Props) {
+export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [selectedTypeId, setSelectedTypeId] = useState<string | null>(
-    initialTypes[0]?.id ?? null,
-  );
+  const [selectedTypeId, setSelectedTypeId] = useState<string>(ALL);
   const [typeEditor, setTypeEditor] = useState<AssetType | "new" | null>(null);
   const [assetEditor, setAssetEditor] = useState<Asset | "new" | null>(null);
 
-  const selectedType = useMemo(
-    () => initialTypes.find((t) => t.id === selectedTypeId) ?? null,
-    [initialTypes, selectedTypeId],
+  const typeById = useMemo(
+    () => new Map(initialTypes.map((t) => [t.id, t])),
+    [initialTypes],
   );
+
+  const countsByType = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of initialAssets) m.set(a.assetTypeId, (m.get(a.assetTypeId) ?? 0) + 1);
+    return m;
+  }, [initialAssets]);
+
+  const selectedType =
+    selectedTypeId === ALL ? null : typeById.get(selectedTypeId) ?? null;
+
   const visibleAssets = useMemo(
-    () => initialAssets.filter((a) => a.assetTypeId === selectedTypeId),
+    () =>
+      selectedTypeId === ALL
+        ? initialAssets
+        : initialAssets.filter((a) => a.assetTypeId === selectedTypeId),
     [initialAssets, selectedTypeId],
   );
+
+  // For the asset editor we need a concrete type. When "All" is selected, fall
+  // back to the first type so "New asset" still works.
+  const editorType = selectedType ?? initialTypes[0] ?? null;
 
   function run(fn: () => Promise<unknown>) {
     setError(null);
@@ -66,26 +90,31 @@ export function CatalogAdmin({ initialTypes, initialAssets }: Props) {
     });
   }
 
+  const hasTypes = initialTypes.length > 0;
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-6 py-8">
-      <header className="flex items-center justify-between">
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-medium">Asset Catalog</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Asset Catalog</h1>
           <p className="mt-1 text-sm text-fg-muted">
-            Org-level CMDB. Reusable typed objects that diagram elements reference.
+            Org-level CMDB — reusable typed objects that diagram elements reference instead
+            of re-describe.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            className={btnGhost}
-            disabled={pending}
-            onClick={() => run(() => ensureBuiltinAssetTypes())}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setTypeEditor("new")}>
+            <Settings2 className="size-4" />
+            <span className="hidden sm:inline">Manage types</span>
+          </Button>
+          <Button
+            size="sm"
+            disabled={!editorType}
+            onClick={() => setAssetEditor("new")}
           >
-            Seed built-in types
-          </button>
-          <a className={btnGhost} href="/">
-            Back to workbench
-          </a>
+            <Plus className="size-4" />
+            New asset
+          </Button>
         </div>
       </header>
 
@@ -95,119 +124,141 @@ export function CatalogAdmin({ initialTypes, initialAssets }: Props) {
         </p>
       )}
 
-      <div className="grid grid-cols-[280px_1fr] gap-6">
-        {/* Asset types */}
-        <aside className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-fg-muted">Object types</h2>
-            <button className={btnGhost} onClick={() => setTypeEditor("new")}>
-              + New
-            </button>
-          </div>
-          <ul className="flex flex-col gap-1">
-            {initialTypes.length === 0 && (
-              <li className="text-sm text-fg-subtle">
-                No types yet. Seed the built-ins or create one.
-              </li>
-            )}
-            {initialTypes.map((t) => (
-              <li key={t.id}>
-                <button
-                  onClick={() => setSelectedTypeId(t.id)}
-                  className={`flex w-full items-center justify-between rounded-[6px] border px-3 py-2 text-left text-sm transition-colors ${
-                    t.id === selectedTypeId
-                      ? "border-accent/40 bg-elevated text-fg"
-                      : "border-hairline text-fg-muted hover:bg-elevated"
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ background: t.color ?? "#71717a" }}
-                    />
-                    {t.name}
-                  </span>
-                  {t.builtin === "true" && (
-                    <span className="text-[10px] uppercase text-fg-subtle">built-in</span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
+      {!hasTypes ? (
+        <EmptyTypes
+          pending={pending}
+          onSeed={() => run(() => ensureBuiltinAssetTypes())}
+          onCreate={() => setTypeEditor("new")}
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[220px_1fr]">
+          {/* Type rail / filter */}
+          <aside className="flex flex-col gap-1">
+            <div className="mb-1 flex items-center justify-between px-1">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
+                Object types
+              </h2>
+              <button
+                className="text-xs text-fg-subtle transition-colors hover:text-fg"
+                onClick={() => setTypeEditor("new")}
+              >
+                + New
+              </button>
+            </div>
 
-        {/* Assets of the selected type */}
-        <section className="flex flex-col gap-3">
-          {selectedType ? (
-            <>
-              <div className="flex items-center justify-between">
+            <TypeRailItem
+              label="All assets"
+              count={initialAssets.length}
+              active={selectedTypeId === ALL}
+              onClick={() => setSelectedTypeId(ALL)}
+              dot={null}
+            />
+            {initialTypes.map((t) => (
+              <TypeRailItem
+                key={t.id}
+                label={t.name}
+                count={countsByType.get(t.id) ?? 0}
+                active={selectedTypeId === t.id}
+                onClick={() => setSelectedTypeId(t.id)}
+                dot={t.color ?? "#71717a"}
+                builtin={t.builtin === "true"}
+              />
+            ))}
+          </aside>
+
+          {/* Assets table */}
+          <section className="flex flex-col gap-3">
+            {selectedType && (
+              <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-base font-medium">{selectedType.name}</h2>
                   {selectedType.description && (
                     <p className="text-sm text-fg-muted">{selectedType.description}</p>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button className={btnGhost} onClick={() => setTypeEditor(selectedType)}>
-                    Edit type
-                  </button>
-                  <button className={btnPrimary} onClick={() => setAssetEditor("new")}>
-                    + New asset
-                  </button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-fg-muted"
+                  onClick={() => setTypeEditor(selectedType)}
+                >
+                  <Settings2 className="size-4" />
+                  Edit type
+                </Button>
               </div>
+            )}
 
-              <div className="overflow-hidden rounded-[8px] border border-hairline">
+            {visibleAssets.length === 0 ? (
+              <EmptyAssets
+                onCreate={() => editorType && setAssetEditor("new")}
+                disabled={!editorType}
+              />
+            ) : (
+              <div className="overflow-hidden rounded-[10px] border border-hairline">
                 <table className="w-full text-sm">
-                  <thead className="bg-panel text-left text-xs text-fg-muted">
+                  <thead className="bg-panel/60 text-left text-xs text-fg-subtle">
                     <tr>
                       <th className="px-3 py-2 font-medium">Name</th>
-                      <th className="px-3 py-2 font-medium">Fields</th>
-                      <th className="px-3 py-2" />
+                      <th className="hidden px-3 py-2 font-medium sm:table-cell">Type</th>
+                      <th className="hidden px-3 py-2 font-medium lg:table-cell">Fields</th>
+                      <th className="px-3 py-2 text-right font-medium">Used in</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleAssets.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="px-3 py-6 text-center text-fg-subtle">
-                          No assets of this type yet.
-                        </td>
-                      </tr>
-                    )}
-                    {visibleAssets.map((a) => (
-                      <tr key={a.id} className="border-t border-hairline">
-                        <td className="px-3 py-2">
-                          <div className="text-fg">{a.name}</div>
-                          {a.description && (
-                            <div className="text-xs text-fg-subtle">{a.description}</div>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-fg-muted">
-                          {summarizeValues(selectedType.fieldSchema as FieldDef[], a.values)}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <button className={btnGhost} onClick={() => setAssetEditor(a)}>
-                            Edit
-                          </button>
-                          <button
-                            className={`${btnGhost} text-error`}
-                            disabled={pending}
-                            onClick={() => run(() => deleteAsset(a.id))}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {visibleAssets.map((a) => {
+                      const type = typeById.get(a.assetTypeId);
+                      const summary = summarizeValues(
+                        (type?.fieldSchema as FieldDef[]) ?? [],
+                        a.values,
+                      );
+                      const usage = usageCounts[a.id] ?? 0;
+                      return (
+                        <tr
+                          key={a.id}
+                          className="group border-t border-hairline transition-colors hover:bg-elevated/40"
+                        >
+                          <td className="px-3 py-2.5">
+                            <Link
+                              href={`/catalog/${a.id}`}
+                              className="font-medium text-fg transition-colors group-hover:text-accent"
+                            >
+                              {a.name}
+                            </Link>
+                            {a.description && (
+                              <div className="truncate text-xs text-fg-subtle">
+                                {a.description}
+                              </div>
+                            )}
+                          </td>
+                          <td className="hidden px-3 py-2.5 sm:table-cell">
+                            <TypeChip type={type} />
+                          </td>
+                          <td className="hidden max-w-xs truncate px-3 py-2.5 text-fg-muted lg:table-cell">
+                            {summary || "—"}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">
+                            <span
+                              className={cn(
+                                "inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] tabular-nums",
+                                usage > 0
+                                  ? "bg-accent/15 text-accent"
+                                  : "bg-elevated text-fg-subtle",
+                              )}
+                              title={`${usage} diagram element(s)`}
+                            >
+                              {usage}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            </>
-          ) : (
-            <p className="text-sm text-fg-subtle">Select or create an object type.</p>
-          )}
-        </section>
-      </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {typeEditor && (
         <TypeEditor
@@ -231,16 +282,16 @@ export function CatalogAdmin({ initialTypes, initialAssets }: Props) {
               : () =>
                   run(async () => {
                     await deleteAssetType(typeEditor.id);
-                    setSelectedTypeId(null);
+                    setSelectedTypeId(ALL);
                     setTypeEditor(null);
                   })
           }
         />
       )}
 
-      {assetEditor && selectedType && (
+      {assetEditor && editorType && (
         <AssetEditor
-          type={selectedType}
+          type={editorType}
           value={assetEditor === "new" ? null : assetEditor}
           pending={pending}
           onClose={() => setAssetEditor(null)}
@@ -260,17 +311,106 @@ export function CatalogAdmin({ initialTypes, initialAssets }: Props) {
   );
 }
 
-function summarizeValues(schema: FieldDef[], values: unknown): string {
-  const v = (values ?? {}) as Record<string, unknown>;
-  const parts = schema
-    .map((f) => {
-      const raw = v[f.key];
-      if (raw == null || raw === "") return null;
-      const text = Array.isArray(raw) ? raw.join(", ") : String(raw);
-      return `${f.label}: ${text}`;
-    })
-    .filter(Boolean);
-  return parts.length ? parts.join(" · ") : "—";
+function TypeRailItem({
+  label,
+  count,
+  active,
+  onClick,
+  dot,
+  builtin,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+  dot: string | null;
+  builtin?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "group flex items-center gap-2 rounded-[6px] px-2.5 py-1.5 text-sm transition-colors",
+        active ? "bg-elevated text-fg" : "text-fg-muted hover:bg-elevated/60",
+      )}
+    >
+      <button onClick={onClick} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+        {dot ? (
+          <span
+            className="inline-block size-2 shrink-0 rounded-full"
+            style={{ background: dot }}
+          />
+        ) : (
+          <Layers className="size-3.5 shrink-0 text-fg-subtle" />
+        )}
+        <span className="truncate">{label}</span>
+        {builtin && (
+          <span className="shrink-0 text-[9px] uppercase tracking-wide text-fg-subtle">
+            built-in
+          </span>
+        )}
+      </button>
+      <span className="shrink-0 rounded-full bg-canvas px-1.5 text-[11px] tabular-nums text-fg-subtle">
+        {count}
+      </span>
+    </div>
+  );
+}
+
+function EmptyTypes({
+  pending,
+  onSeed,
+  onCreate,
+}: {
+  pending: boolean;
+  onSeed: () => void;
+  onCreate: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-hairline bg-panel/40 px-6 py-20 text-center">
+      <span className="grid size-12 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
+        <Boxes className="size-6" />
+      </span>
+      <p className="mt-4 text-sm font-medium">No object types yet</p>
+      <p className="mt-1 max-w-sm text-sm text-fg-muted">
+        Seed the built-in types (Service, System, Data Object, Actor) to get started, or
+        define your own.
+      </p>
+      <div className="mt-5 flex gap-2">
+        <Button onClick={onSeed} disabled={pending}>
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          Seed built-in types
+        </Button>
+        <Button variant="outline" onClick={onCreate}>
+          <Plus className="size-4" />
+          New type
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function EmptyAssets({
+  onCreate,
+  disabled,
+}: {
+  onCreate: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-hairline bg-panel/40 px-6 py-16 text-center">
+      <span className="grid size-10 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
+        <Plus className="size-5" />
+      </span>
+      <p className="mt-3 text-sm font-medium">No assets here yet</p>
+      <p className="mt-1 max-w-xs text-sm text-fg-muted">
+        Create a reusable asset that your diagram elements can bind to.
+      </p>
+      <Button className="mt-4" onClick={onCreate} disabled={disabled}>
+        <Plus className="size-4" />
+        New asset
+      </Button>
+    </div>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -440,20 +580,22 @@ function TypeEditor({ value, pending, onClose, onSubmit, onDelete }: TypeEditorP
 /* Asset editor                                                               */
 /* -------------------------------------------------------------------------- */
 
+export interface AssetEditorSubmit {
+  assetTypeId: string;
+  name: string;
+  description?: string;
+  values: Record<string, unknown>;
+}
+
 interface AssetEditorProps {
   type: AssetType;
   value: Asset | null;
   pending: boolean;
   onClose: () => void;
-  onSubmit: (input: {
-    assetTypeId: string;
-    name: string;
-    description?: string;
-    values: Record<string, unknown>;
-  }) => void;
+  onSubmit: (input: AssetEditorSubmit) => void;
 }
 
-function AssetEditor({ type, value, pending, onClose, onSubmit }: AssetEditorProps) {
+export function AssetEditor({ type, value, pending, onClose, onSubmit }: AssetEditorProps) {
   const schema = (type.fieldSchema as FieldDef[]) ?? [];
   const [name, setName] = useState(value?.name ?? "");
   const [description, setDescription] = useState(value?.description ?? "");
