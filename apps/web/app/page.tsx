@@ -1,14 +1,14 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { listProjects } from "@/lib/diagram-actions";
 import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
 import { Dashboard } from "@/components/dashboard";
+import { Landing } from "@/components/marketing/landing";
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    redirect("/sign-in");
+    return <Landing />;
   }
 
   const projects = await listProjects();
