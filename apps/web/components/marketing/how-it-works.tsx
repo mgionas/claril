@@ -17,7 +17,7 @@ const steps = [
     icon: Wand2,
     title: "Let AI edit",
     description:
-      "Ask the co-editor to document, review, or fix it. Review the proposed edit, then apply with one click.",
+      "Ask the co-editor to generate, document, or fix it. Review each proposed edit, then approve, roll back, or keep refining.",
   },
 ];
 
