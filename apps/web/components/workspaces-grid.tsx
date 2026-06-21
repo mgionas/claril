@@ -20,7 +20,7 @@ import {
 } from "@/lib/workspace-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -46,8 +46,6 @@ interface WorkspacesGridProps {
 const inputClass =
   "w-full rounded-[6px] border border-hairline bg-elevated px-3 py-2 text-sm text-fg outline-none transition-colors placeholder:text-fg-subtle focus:border-accent";
 
-const numberFmt = new Intl.NumberFormat("en-US");
-
 function errorMessage(err: unknown): string {
   if (err instanceof Error && err.message) return err.message;
   if (typeof err === "string" && err) return err;
@@ -56,12 +54,6 @@ function errorMessage(err: unknown): string {
 
 export function WorkspacesGrid({ workspaces, canCreate }: WorkspacesGridProps) {
   const [createOpen, setCreateOpen] = useState(false);
-
-  // Totals are summed over the workspaces the user can actually see, so the
-  // strip never exceeds the visible cards (org admins see all → org-wide totals;
-  // members see only their workspaces → scoped totals, no cross-workspace leak).
-  const projectTotal = workspaces.reduce((sum, ws) => sum + ws.projectCount, 0);
-  const diagramTotal = workspaces.reduce((sum, ws) => sum + ws.diagramCount, 0);
 
   return (
     <div className="flex flex-col gap-7">
@@ -80,12 +72,6 @@ export function WorkspacesGrid({ workspaces, canCreate }: WorkspacesGridProps) {
         )}
       </div>
 
-      {/* Slim stat strip — totals summed over the visible workspaces. */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard label="Projects" value={numberFmt.format(projectTotal)} />
-        <StatCard label="Diagrams" value={numberFmt.format(diagramTotal)} />
-      </div>
-
       {workspaces.length === 0 ? (
         <EmptyState canCreate={canCreate} onCreate={() => setCreateOpen(true)} />
       ) : (
@@ -98,19 +84,6 @@ export function WorkspacesGrid({ workspaces, canCreate }: WorkspacesGridProps) {
 
       <CreateWorkspaceDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="gap-2 py-5">
-      <CardHeader className="pb-0">
-        <CardDescription className="text-fg-subtle">{label}</CardDescription>
-        <CardTitle className="text-3xl font-semibold tabular-nums tracking-tight">
-          {value}
-        </CardTitle>
-      </CardHeader>
-    </Card>
   );
 }
 
