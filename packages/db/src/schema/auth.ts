@@ -96,4 +96,7 @@ export const invitation = pgTable("invitation", {
   inviterId: text("inviter_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  // Better Auth's organization plugin writes createdAt on invite — required by
+  // recent versions (invite-member 500s without it).
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
