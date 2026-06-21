@@ -20,6 +20,29 @@ describe("parseMentions", () => {
   it("returns [] when no mentions", () => {
     expect(parseMentions("plain text", cands)).toEqual([]);
   });
+  it("longest name wins — does not also fire a prefix candidate", () => {
+    const overlap = [
+      { id: "short", name: "Ada" },
+      { id: "long", name: "Ada Lovelace" },
+    ];
+    expect(parseMentions("hi @Ada Lovelace", overlap)).toEqual(["long"]);
+  });
+  it("matches a prefix name when the longer one is absent from the text", () => {
+    const overlap = [
+      { id: "short", name: "Ada" },
+      { id: "long", name: "Ada Lovelace" },
+    ];
+    expect(parseMentions("hi @Ada there", overlap)).toEqual(["short"]);
+  });
+  it("requires a trailing word boundary — @Annabel does not mention Ann", () => {
+    expect(parseMentions("hi @Annabel rocks", [{ id: "ann", name: "Ann" }])).toEqual([]);
+  });
+  it("ignores a mid-word @ such as an email address", () => {
+    expect(parseMentions("ping a@Alan Turing.io", [{ id: "al", name: "Alan Turing" }])).toEqual([]);
+  });
+  it("matches a name at the very end of the string", () => {
+    expect(parseMentions("thanks @Grace Hopper", cands)).toEqual(["u3"]);
+  });
 });
 
 describe("notifyTargets", () => {
