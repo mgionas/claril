@@ -17,9 +17,11 @@ export default function SelfHostingPage() {
       />
 
       <Callout tone="accent">
-        The deterministic features (logic inspector, versioning, catalog) work with{" "}
-        <strong>no AI key configured</strong>. AI is BYOK and configured per-organization at runtime,
-        so there is nothing AI-related to set in the environment to get started.
+        The deterministic features (logic inspector, versioning, catalog, comments, export) work with{" "}
+        <strong>no AI key configured</strong>. AI is BYOK and configured at runtime in each personal
+        or organization space, so there is nothing AI-related you must set in the environment to get
+        started — though you can set <InlineCode>CLARIL_ENCRYPTION_KEY</InlineCode> to encrypt stored
+        keys with a dedicated secret.
       </Callout>
 
       <H2 id="services">What&apos;s in the box</H2>
@@ -97,6 +99,12 @@ docker compose up -d --build
           <InlineCode>POSTGRES_PORT</InlineCode> / <InlineCode>WEB_PORT</InlineCode> — host ports
           (default <InlineCode>5432</InlineCode> / <InlineCode>3000</InlineCode>).
         </Li>
+        <Li>
+          <InlineCode>CLARIL_ENCRYPTION_KEY</InlineCode> — <strong>optional</strong>. Used to encrypt
+          stored BYOK AI keys (AES-256-GCM). If unset, Claril falls back to{" "}
+          <InlineCode>BETTER_AUTH_SECRET</InlineCode>. Set a dedicated value if you want to rotate it
+          independently of the auth secret.
+        </Li>
       </Ul>
 
       <H2 id="external-postgres">Using an external Postgres (e.g. Neon)</H2>
@@ -128,6 +136,11 @@ docker compose up -d --build
         Outside Docker (local development), apply the schema directly with the workspace script:
       </P>
       <CodeBlock>{`pnpm --filter @claril/db db:migrate`}</CodeBlock>
+      <P>
+        Migrations are committed to <InlineCode>@claril/db</InlineCode> (currently through{" "}
+        <InlineCode>0011</InlineCode>) and applied in order. After pulling a new image or release, run
+        the migrate step again to pick up any new ones.
+      </P>
 
       <H2 id="operations">Operations</H2>
       <CodeBlock title="common commands">

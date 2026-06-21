@@ -20,22 +20,26 @@ export default function GettingStartedPage() {
       <P>
         On a hosted or self-hosted instance, open the app and choose{" "}
         <strong>Get started</strong> to sign up, or <strong>Sign in</strong> if you already have an
-        account. Your first organization is created for you; tenancy is nested as{" "}
-        <InlineCode>Org → Workspace → Project</InlineCode>.
+        account.
       </P>
 
-      <H2 id="project">2. Create a project</H2>
+      <H2 id="space">2. Choose a space</H2>
       <P>
-        From the dashboard, create a workspace (if you don&apos;t have one) and then a project inside
-        it. A project holds your diagrams and their version history.
+        You land in your <strong>Personal</strong> space — a solo area with your own BYOK AI (no
+        shared catalog). To collaborate, create an <strong>Organization</strong>: invite members
+        (owner / admin / member) and group work into <strong>Workspaces</strong> with their own roles
+        (admin / editor / viewer), a shared Asset Catalog, and shared AI. Switch between spaces any
+        time with the context switcher.
       </P>
 
       <H2 id="draw">3. Draw a diagram</H2>
       <P>
-        Create a new diagram and pick a kind — <strong>BPMN</strong>, <strong>Sequence</strong>, or{" "}
-        <strong>C4</strong>. The canvas is keyboard-first; press <InlineCode>⌘K</InlineCode> for the
-        command palette to reach any action quickly. Build your flow with events, tasks, and gateways
-        (for BPMN), wiring elements together with sequence flows.
+        From the dashboard, create a new diagram and pick a kind — <strong>BPMN</strong>,{" "}
+        <strong>Sequence</strong>, or <strong>C4</strong>. The canvas is keyboard-first; press{" "}
+        <InlineCode>⌘K</InlineCode> for the command palette to reach any action quickly. Build your
+        flow with events, tasks, and gateways (for BPMN), wiring elements together with sequence
+        flows. Every change is versioned automatically; you can also name a version, diff revisions,
+        and restore.
       </P>
 
       <H2 id="inspect">4. Run the inspector</H2>
@@ -57,25 +61,46 @@ export default function GettingStartedPage() {
 
       <H2 id="ai">5. (Optional) Connect an AI provider</H2>
       <P>
-        AI is progressive enhancement. To enable the AI co-editor — documentation generation, design
-        critique, conversational editing, and proposed edits — connect a provider with your own key
-        at the organization level.
+        AI is progressive enhancement. To enable the AI co-editor — generate BPMN from a prompt, chat
+        grounded on findings and the Asset Catalog, AI-proposed edits you review (approve, roll back,
+        or keep refining), and Markdown doc-gen — connect a provider with your own key in your current
+        space.
       </P>
       <Ol>
-        <Li>Open organization settings and find the AI providers / connections section.</Li>
+        <Li>
+          Open settings for your personal space or organization and find the AI providers /
+          connections section.
+        </Li>
         <Li>
           Choose a provider (Anthropic, OpenAI, Google, Mistral, Ollama, or OpenRouter) and paste
           your API key. Keys are encrypted at rest and never leave your instance.
         </Li>
         <Li>
-          Pick a default model. For local inference, point at <InlineCode>Ollama</InlineCode> — no
-          key required, just a reachable endpoint.
+          Your first connection becomes the default automatically. In the workbench, use the model
+          switcher to pick any connected model per session. For local inference, point at{" "}
+          <InlineCode>Ollama</InlineCode> — no key required, just a reachable endpoint.
         </Li>
       </Ol>
       <P>
         Once connected, a quiet <InlineCode>AI: connected</InlineCode> pill appears and{" "}
         <InlineCode>✦</InlineCode> affordances light up where AI can help. See{" "}
         <A href="/docs/ai-providers">AI providers</A> for the full list and how keys are stored.
+      </P>
+
+      <H2 id="collaborate">6. Comment &amp; @mention (organizations)</H2>
+      <P>
+        In an organization, leave threaded <strong>comments</strong> anchored to a specific element
+        or to the whole diagram, and <InlineCode>@mention</InlineCode> teammates to pull them in.
+        Mentions and replies surface in the in-app <strong>notification bell</strong>. Collaboration
+        is async — no realtime cursors — so it works across time zones. (Comments are available in
+        personal space too, just without teammates to mention.)
+      </P>
+
+      <H2 id="export">7. Export</H2>
+      <P>
+        From the workbench top bar, download the source <InlineCode>.bpmn</InlineCode> or export the
+        diagram as <strong>PNG</strong> or <strong>PDF</strong> to drop into docs, tickets, or
+        reviews.
       </P>
 
       <H2 id="self-host">Running it yourself</H2>
