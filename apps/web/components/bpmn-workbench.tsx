@@ -85,6 +85,15 @@ export function BpmnWorkbench({
   );
   // First selected canvas element (drives the Comments tab anchor; W16, Task 6).
   const [selectedElement, setSelectedElement] = useState<{ id: string; name: string } | null>(null);
+  // Compose-request signal: a right-click "Comment" asks the Comments tab to open
+  // a new-comment composer anchored to a specific element (decoupled from the
+  // bpmn-js selection, which the right-clicked element may not match). The nonce
+  // bumps on every request so re-commenting the same element re-fires.
+  const [composeRequest, setComposeRequest] = useState<{
+    id: string;
+    name: string;
+    nonce: number;
+  } | null>(null);
   // Live element id/label set from the canvas registry (anchors comment threads).
   const [liveElements, setLiveElements] = useState<{ id: string; name: string }[]>([]);
   // Doc-gen (Markdown), shown in its own slide-over; seeded from persisted doc.
@@ -358,6 +367,15 @@ export function BpmnWorkbench({
   const handleCommentedElementsChange = useCallback((ids: string[]) => {
     canvasApiRef.current?.setCommentedElements(ids);
   }, []);
+  // Right-click "Comment": open the drawer on the Comments tab and signal it to
+  // open a composer anchored to this element (also fly the camera to it).
+  function handleCommentElement(elementId: string) {
+    const name = elementNames[elementId] ?? "";
+    setComposeRequest((prev) => ({ id: elementId, name, nonce: (prev?.nonce ?? 0) + 1 }));
+    setInspectorOpen(true);
+    setActiveTab("comments");
+    canvasApiRef.current?.focusElement(elementId);
+  }
 
   return (
     <main
@@ -379,6 +397,7 @@ export function BpmnWorkbench({
           findings={allFindings}
           onShowProblems={handleShowProblems}
           onSelectionChange={setSelectedElement}
+          onCommentElement={isOrg ? handleCommentElement : undefined}
         />
         <TopBar
           diagramId={diagramId}
@@ -479,6 +498,7 @@ export function BpmnWorkbench({
         selectedElement={selectedElement}
         liveElementIds={liveElementIds}
         elementNames={elementNames}
+        composeRequest={composeRequest}
         canResolveComments={canResolveComments}
         initialThreadId={initialThreadId}
         onFocusElement={handleFocusElement}

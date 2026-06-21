@@ -34,6 +34,8 @@ export interface AiDrawerProps {
   selectedElement: { id: string; name: string } | null;
   liveElementIds: string[];
   elementNames?: Record<string, string>;
+  /** Right-click "Comment" signal: open a composer anchored to {id,name}; nonce re-fires it. */
+  composeRequest?: { id: string; name: string; nonce: number } | null;
   canResolveComments?: boolean;
   initialThreadId?: string;
   onFocusElement: (elementId: string) => void;
@@ -158,6 +160,7 @@ export function AiDrawer(props: AiDrawerProps) {
                   selectedElement={props.selectedElement}
                   liveElementIds={props.liveElementIds}
                   elementNames={props.elementNames}
+                  composeRequest={props.composeRequest}
                   initialThreadId={props.initialThreadId}
                   onFocusElement={props.onFocusElement}
                   onCommentedElementsChange={props.onCommentedElementsChange}

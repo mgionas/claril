@@ -16,6 +16,7 @@ import {
   Hand,
   Info,
   Maximize2,
+  MessageSquare,
   Move,
   Pencil,
   Plus,
@@ -64,6 +65,8 @@ interface CanvasContextMenuProps {
   modeler: ModelerServices;
   findings: Finding[];
   onShowProblems: (elementId: string) => void;
+  /** Open the Comments tab with a new-comment composer anchored to the element (org only). */
+  onComment?: (elementId: string) => void;
   /** Name of the asset bound to the selected element, if any. */
   boundAssetName?: string;
   /** Open the asset picker to bind the selected element. */
@@ -85,6 +88,7 @@ export function CanvasContextMenu({
   modeler,
   findings,
   onShowProblems,
+  onComment,
   boundAssetName,
   onBindAsset,
   onUnbindAsset,
@@ -209,6 +213,16 @@ export function CanvasContextMenu({
               />
             ))}
             <MenuItem icon={Pencil} label="Rename" onClick={rename} />
+            {menu.elementId && onComment && (
+              <MenuItem
+                icon={MessageSquare}
+                label="Comment"
+                onClick={() => {
+                  onComment(menu.elementId as string);
+                  onClose();
+                }}
+              />
+            )}
             {elementFindings.length > 0 && menu.elementId && (
               <MenuItem
                 icon={Info}

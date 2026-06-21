@@ -87,6 +87,8 @@ interface BpmnCanvasProps {
   onShowProblems?: (elementId: string) => void;
   /** Emits the first selected element ({id,name}) or null when nothing is selected. */
   onSelectionChange?: (selected: { id: string; name: string } | null) => void;
+  /** Open the Comments tab with a composer anchored to this element. Undefined ⇒ no Comment menu item (e.g. personal diagrams). */
+  onCommentElement?: (elementId: string) => void;
 }
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
@@ -103,6 +105,7 @@ export default function BpmnCanvas({
   findings,
   onShowProblems,
   onSelectionChange,
+  onCommentElement,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
@@ -669,6 +672,14 @@ export default function BpmnCanvas({
             setMenu(null);
             onShowProblems?.(id);
           }}
+          onComment={
+            onCommentElement
+              ? (id) => {
+                  setMenu(null);
+                  onCommentElement(id);
+                }
+              : undefined
+          }
           boundAssetName={
             menu.elementId
               ? boundAssets.find((b) => b.elementId === menu.elementId)?.asset.name
