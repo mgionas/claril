@@ -23,6 +23,7 @@ import {
   getOrgAiConfig,
   getUserOrgId,
   listOrgConnections,
+  listUserConnections,
   repointDefault,
   type AiContext,
   type AiOverride,
@@ -288,6 +289,93 @@ export async function getAiSettings(): Promise<AiSettingsView> {
     ? { provider: defRows[0].provider as AiProvider, model: defRows[0].model }
     : undefined;
   return { canEdit, connections, orgDefault };
+}
+
+/* ---- AI (multi-provider, user/personal-level) ---- */
+
+export interface ConnectUserAiProviderInput {
+  provider: AiProvider;
+  apiKey?: string;
+  baseUrl?: string;
+  defaultModel?: string;
+}
+
+export async function connectUserAiProvider(input: ConnectUserAiProviderInput): Promise<void> {
+  const userId = await requireUserId();
+  const existing = (
+    await db.select().from(schema.userAiConnection)
+      .where(and(eq(schema.userAiConnection.userId, userId), eq(schema.userAiConnection.provider, input.provider)))
+      .limit(1)
+  )[0];
+  const encryptedKey =
+    input.apiKey && input.apiKey.length > 0 ? encryptSecret(input.apiKey) : (existing?.encryptedKey ?? null);
+  const defaultModel =
+    (input.defaultModel && input.defaultModel.length > 0 ? input.defaultModel : null) ??
+    existing?.defaultModel ?? DEFAULT_MODELS[input.provider];
+  const baseUrl = input.baseUrl && input.baseUrl.length > 0 ? input.baseUrl : null;
+  if (existing) {
+    await db.update(schema.userAiConnection)
+      .set({ encryptedKey, baseUrl, defaultModel, updatedAt: new Date() })
+      .where(and(eq(schema.userAiConnection.userId, userId), eq(schema.userAiConnection.provider, input.provider)));
+  } else {
+    await db.insert(schema.userAiConnection).values({
+      id: crypto.randomUUID(), userId, provider: input.provider, encryptedKey, baseUrl, defaultModel,
+    });
+  }
+}
+
+export async function removeUserAiProvider(provider: AiProvider): Promise<void> {
+  const userId = await requireUserId();
+  await db.delete(schema.userAiConnection)
+    .where(and(eq(schema.userAiConnection.userId, userId), eq(schema.userAiConnection.provider, provider)));
+  const def = (
+    await db.select().from(schema.userAiDefault).where(eq(schema.userAiDefault.userId, userId)).limit(1)
+  )[0];
+  if (!def || def.provider !== provider) return;
+  const remaining = await db.select().from(schema.userAiConnection).where(eq(schema.userAiConnection.userId, userId));
+  const next = repointDefault(
+    remaining.map((c) => ({ provider: c.provider, encryptedKey: c.encryptedKey, defaultModel: c.defaultModel, baseUrl: c.baseUrl })),
+  );
+  if (!next) {
+    await db.delete(schema.userAiDefault).where(eq(schema.userAiDefault.userId, userId));
+  } else {
+    const nextConn = remaining.find((c) => c.provider === next)!;
+    await db.update(schema.userAiDefault)
+      .set({ provider: next, model: nextConn.defaultModel ?? DEFAULT_MODELS[next as AiProvider], updatedAt: new Date() })
+      .where(eq(schema.userAiDefault.userId, userId));
+  }
+}
+
+export async function setUserDefaultModel(input: { provider: AiProvider; model: string }): Promise<void> {
+  const userId = await requireUserId();
+  const conn = (
+    await db.select().from(schema.userAiConnection)
+      .where(and(eq(schema.userAiConnection.userId, userId), eq(schema.userAiConnection.provider, input.provider)))
+      .limit(1)
+  )[0];
+  const usable = conn && (Boolean(conn.encryptedKey) || conn.provider === "ollama");
+  if (!usable) throw new Error("That provider isn't connected.");
+  const existing = (
+    await db.select().from(schema.userAiDefault).where(eq(schema.userAiDefault.userId, userId)).limit(1)
+  )[0];
+  if (existing) {
+    await db.update(schema.userAiDefault)
+      .set({ provider: input.provider, model: input.model, updatedAt: new Date() })
+      .where(eq(schema.userAiDefault.userId, userId));
+  } else {
+    await db.insert(schema.userAiDefault).values({ userId, provider: input.provider, model: input.model });
+  }
+}
+
+/** Personal AI settings for the connections manager (always editable — own keys). */
+export async function getUserAiSettings(): Promise<AiSettingsView> {
+  const userId = await requireUserId();
+  const connections = await listUserConnections(userId);
+  const defRows = await db.select().from(schema.userAiDefault).where(eq(schema.userAiDefault.userId, userId)).limit(1);
+  const orgDefault = defRows[0]
+    ? { provider: defRows[0].provider as AiProvider, model: defRows[0].model }
+    : undefined;
+  return { canEdit: true, connections, orgDefault };
 }
 
 /**

@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import {
   MODEL_CATALOG,
   getModelInfo,
@@ -8,25 +7,22 @@ import {
   type AiProvider,
   type ModelInfo,
 } from "@claril/ai-advisor";
-import { auth } from "@/lib/auth";
-import { getOrgAiConfig, getUserOrgId } from "@/lib/ai";
+import { getActiveContext } from "@/lib/context";
+import { getAiConfig } from "@/lib/ai";
 
 /**
- * Fall back to the org's already-saved (decrypted) credential when the caller
- * didn't pass one — e.g. testing/refreshing on the settings page where the key
- * field is intentionally blank because a key is already stored. Server-only;
- * the key is never returned to the client.
+ * Fall back to the already-saved (decrypted) credential for the active context
+ * (personal or org) when the caller didn't pass one — e.g. testing/refreshing
+ * on the settings page where the key field is intentionally blank because a key
+ * is already stored. Server-only; the key is never returned to the client.
  */
 async function savedCredential(
   provider: AiProvider,
 ): Promise<{ apiKey?: string; baseUrl?: string }> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    const userId = session?.user?.id;
-    if (!userId) return {};
-    const orgId = await getUserOrgId(userId);
-    if (!orgId) return {};
-    const cfg = await getOrgAiConfig(orgId, { provider });
+    const ctx = await getActiveContext();
+    if (!ctx) return {};
+    const cfg = await getAiConfig(ctx, { provider });
     if (cfg && cfg.provider === provider) return { apiKey: cfg.apiKey, baseUrl: cfg.baseUrl };
     return {};
   } catch {
