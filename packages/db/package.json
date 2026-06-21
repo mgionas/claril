@@ -14,7 +14,7 @@
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate-personal": "tsx src/migrate-personal-orgs.ts",
+    "db:migrate-personal": "tsx --env-file=../../apps/web/.env.local src/migrate-personal-orgs.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
