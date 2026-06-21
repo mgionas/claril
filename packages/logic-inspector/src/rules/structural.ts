@@ -22,7 +22,11 @@ export const missingStartEvent: Rule = {
         severity: "error",
         message: "Process has no start event.",
         quickFix: "Add a start event and connect it to the first activity.",
-        ...(source ? { fix: { kind: "prependStartEvent", elementId: source.id } } : {}),
+        // Anchor to the would-be first node so the problem shows on the canvas
+        // (and clicking the finding focuses where the start should attach).
+        ...(source
+          ? { elementId: source.id, fix: { kind: "prependStartEvent", elementId: source.id } }
+          : {}),
       },
     ];
   },
@@ -40,7 +44,10 @@ export const missingEndEvent: Rule = {
         severity: "error",
         message: "Process has no end event.",
         quickFix: "Add an end event so the process can complete.",
-        ...(sink ? { fix: { kind: "appendEndEvent", elementId: sink.id } } : {}),
+        // Anchor to the would-be last node so the problem shows on the canvas.
+        ...(sink
+          ? { elementId: sink.id, fix: { kind: "appendEndEvent", elementId: sink.id } }
+          : {}),
       },
     ];
   },
