@@ -166,11 +166,16 @@ export const chatMessage = pgTable(
     diagramId: text("diagram_id")
       .notNull()
       .references(() => diagram.id, { onDelete: "cascade" }),
+    // Owner of this chat turn. The transcript is PRIVATE per user — a diagram is
+    // the attachment point, but each user only ever sees their own messages.
+    // Nullable for legacy rows written before this column; those have no owner
+    // and are never returned (the per-user filter excludes them).
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     role: text("role").notNull(), // "user" | "assistant" | "system"
     parts: jsonb("parts").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [index("chat_message_diagram_idx").on(t.diagramId)],
+  (t) => [index("chat_message_diagram_user_idx").on(t.diagramId, t.userId)],
 );
 
 /**
