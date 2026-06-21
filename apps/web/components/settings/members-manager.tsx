@@ -16,6 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Avatar,
   RoleBadge,
   SettingsCard,
@@ -194,67 +202,90 @@ export function MembersManager({ view }: { view: MembersView }) {
           Members <span className="text-fg-subtle">({view.members.length})</span>
         </h3>
         <div className="overflow-hidden rounded-[10px] border border-hairline">
-          {view.members.map((m, i) => {
-            const rowBusy = busyId === m.id;
-            // Owners can't be demoted/removed through this UI; non-owners can't
-            // target the current viewer either (avoid self-lockout surprises).
-            const canEditRow = canManage && m.role !== "owner" && !m.isViewer;
-            return (
-              <div
-                key={m.id}
-                className={
-                  "flex items-center gap-3 px-4 py-3" +
-                  (i > 0 ? " border-t border-hairline" : "")
-                }
-              >
-                <Avatar name={m.name} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-fg">
-                    {m.name}
-                    {m.isViewer && (
-                      <span className="ml-1.5 text-xs font-normal text-fg-subtle">(you)</span>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="px-4">Member</TableHead>
+                <TableHead className="px-4">Role</TableHead>
+                {canManage && (
+                  <TableHead className="px-4 text-right">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {view.members.map((m) => {
+                const rowBusy = busyId === m.id;
+                // Owners can't be demoted/removed through this UI; non-owners can't
+                // target the current viewer either (avoid self-lockout surprises).
+                const canEditRow = canManage && m.role !== "owner" && !m.isViewer;
+                return (
+                  <TableRow key={m.id} className="hover:bg-transparent">
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={m.name} />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-fg">
+                            {m.name}
+                            {m.isViewer && (
+                              <span className="ml-1.5 text-xs font-normal text-fg-subtle">
+                                (you)
+                              </span>
+                            )}
+                          </div>
+                          <div className="truncate text-xs text-fg-subtle">{m.email}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      {canEditRow ? (
+                        <Select
+                          value={m.role}
+                          onValueChange={(v) => onChangeRole(m.id, v as OrgRole)}
+                          disabled={rowBusy}
+                        >
+                          <SelectTrigger
+                            size="sm"
+                            className="w-28 capitalize"
+                            aria-label="Role"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ROLES.filter((r) => r !== "owner").map((r) => (
+                              <SelectItem key={r} value={r} className="capitalize">
+                                {r}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <RoleBadge role={m.role} />
+                      )}
+                    </TableCell>
+                    {canManage && (
+                      <TableCell className="px-4 py-3 text-right">
+                        {canEditRow && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Remove ${m.name}`}
+                            disabled={rowBusy}
+                            onClick={() => onRemove(m.id, m.name)}
+                            className="text-fg-muted hover:text-error"
+                          >
+                            <Trash2 />
+                          </Button>
+                        )}
+                      </TableCell>
                     )}
-                  </div>
-                  <div className="truncate text-xs text-fg-subtle">{m.email}</div>
-                </div>
-
-                {canEditRow ? (
-                  <Select
-                    value={m.role}
-                    onValueChange={(v) => onChangeRole(m.id, v as OrgRole)}
-                    disabled={rowBusy}
-                  >
-                    <SelectTrigger size="sm" className="w-28 capitalize" aria-label="Role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLES.filter((r) => r !== "owner").map((r) => (
-                        <SelectItem key={r} value={r} className="capitalize">
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <RoleBadge role={m.role} />
-                )}
-
-                {canEditRow && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Remove ${m.name}`}
-                    disabled={rowBusy}
-                    onClick={() => onRemove(m.id, m.name)}
-                    className="text-fg-muted hover:text-error"
-                  >
-                    <Trash2 />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       </section>
 
@@ -265,42 +296,61 @@ export function MembersManager({ view }: { view: MembersView }) {
             <span className="text-fg-subtle">({view.invitations.length})</span>
           </h3>
           <div className="overflow-hidden rounded-[10px] border border-hairline">
-            {view.invitations.map((inv, i) => {
-              const rowBusy = busyId === inv.id;
-              return (
-                <div
-                  key={inv.id}
-                  className={
-                    "flex items-center gap-3 px-4 py-3" +
-                    (i > 0 ? " border-t border-hairline" : "")
-                  }
-                >
-                  <span
-                    className="grid size-8 shrink-0 place-items-center rounded-full border border-hairline bg-elevated text-fg-muted"
-                    aria-hidden
-                  >
-                    <Mail className="size-3.5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm text-fg">{inv.email}</div>
-                    <div className="text-xs text-fg-subtle">Invited as {inv.role}</div>
-                  </div>
-                  <RoleBadge role={inv.role} />
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="px-4">Email</TableHead>
+                  <TableHead className="px-4">Role</TableHead>
                   {canManage && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={rowBusy}
-                      onClick={() => onCancelInvite(inv.id, inv.email)}
-                      className="text-fg-muted hover:text-error"
-                    >
-                      {rowBusy ? "Cancelling…" : "Cancel"}
-                    </Button>
+                    <TableHead className="px-4 text-right">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   )}
-                </div>
-              );
-            })}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {view.invitations.map((inv) => {
+                  const rowBusy = busyId === inv.id;
+                  return (
+                    <TableRow key={inv.id} className="hover:bg-transparent">
+                      <TableCell className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="grid size-8 shrink-0 place-items-center rounded-full border border-hairline bg-elevated text-fg-muted"
+                            aria-hidden
+                          >
+                            <Mail className="size-3.5" />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm text-fg">{inv.email}</div>
+                            <div className="text-xs text-fg-subtle">
+                              Invited as {inv.role}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <RoleBadge role={inv.role} />
+                      </TableCell>
+                      {canManage && (
+                        <TableCell className="px-4 py-3 text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={rowBusy}
+                            onClick={() => onCancelInvite(inv.id, inv.email)}
+                            className="text-fg-muted hover:text-error"
+                          >
+                            {rowBusy ? "Cancelling…" : "Cancel"}
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         </section>
       )}
