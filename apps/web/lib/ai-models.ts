@@ -210,6 +210,17 @@ export async function listProviderModels(
         ids = (json.data ?? []).map((m) => m.id);
         break;
       }
+      case "openrouter": {
+        // OpenRouter exposes an OpenAI-compatible /models list.
+        const base = (baseUrl ?? "https://openrouter.ai/api/v1").replace(/\/$/, "");
+        const json = (await fetchJson(`${base}/models`, {
+          headers: { authorization: `Bearer ${apiKey!}` },
+        })) as { data?: { id: string }[] };
+        ids = (json.data ?? []).map((m) => m.id);
+        // The auto-router id isn't part of /models — surface it as a default.
+        if (!ids.includes("openrouter/auto")) ids.unshift("openrouter/auto");
+        break;
+      }
     }
 
     ids = ids.filter(isChatModel);

@@ -183,6 +183,38 @@ export const MODEL_CATALOG: Record<AiProvider, ModelInfo[]> = {
       capabilities: ["local"],
     },
   ],
+  // OpenRouter is an OpenAI-compatible gateway fronting many providers. Model
+  // ids are namespaced (e.g. "anthropic/claude-sonnet-4.5") and the live list
+  // is fetched from /models; pricing varies per upstream so we omit it here.
+  // "openrouter/auto" routes to a sensible model automatically — always valid.
+  openrouter: [
+    {
+      id: "openrouter/auto",
+      label: "Auto (OpenRouter picks)",
+      capabilities: ["reasoning", "tools", "structured-output"],
+      recommended: true,
+    },
+    {
+      id: "anthropic/claude-sonnet-4.5",
+      label: "Claude Sonnet 4.5",
+      capabilities: ["reasoning", "vision", "tools", "structured-output", "long-context"],
+    },
+    {
+      id: "openai/gpt-5.1",
+      label: "GPT-5.1",
+      capabilities: ["reasoning", "vision", "tools", "structured-output", "long-context"],
+    },
+    {
+      id: "google/gemini-2.5-pro",
+      label: "Gemini 2.5 Pro",
+      capabilities: ["reasoning", "vision", "tools", "structured-output", "long-context"],
+    },
+    {
+      id: "meta-llama/llama-3.3-70b-instruct",
+      label: "Llama 3.3 70B Instruct",
+      capabilities: ["tools", "long-context"],
+    },
+  ],
 };
 
 /**

@@ -22,6 +22,13 @@ export function createModel(config: LLMProviderConfig): LanguageModel {
       return createAnthropic({ apiKey: config.apiKey })(model);
     case "openai":
       return createOpenAI({ apiKey: config.apiKey })(model);
+    case "openrouter":
+      // OpenRouter is an OpenAI-compatible gateway: reuse the OpenAI SDK with
+      // OpenRouter's base URL (honoring an explicit override if provided).
+      return createOpenAI({
+        apiKey: config.apiKey,
+        baseURL: config.baseUrl ?? "https://openrouter.ai/api/v1",
+      })(model);
     case "google":
       return createGoogleGenerativeAI({ apiKey: config.apiKey })(model);
     case "mistral":

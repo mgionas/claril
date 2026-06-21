@@ -93,6 +93,24 @@ export const PROVIDER_META: ProviderMeta[] = [
     keyPlaceholder: "your Mistral API key",
   },
   {
+    value: "openrouter",
+    label: "OpenRouter",
+    needsKey: true,
+    description:
+      "Unified access to many models (Anthropic, OpenAI, Google, Llama, …) through one key.",
+    keyHint: "Create a key in OpenRouter → Keys.",
+    steps: [
+      "Sign in at openrouter.ai.",
+      "Open Keys → Create key.",
+      "Copy the key (starts with sk-or-) and paste it below.",
+    ],
+    keyUrl: "https://openrouter.ai/keys",
+    keyUrlLabel: "openrouter.ai",
+    keyPrefix: "sk-or-",
+    keyPlaceholder: "sk-or-…",
+    note: "One key, many models — usage billed by OpenRouter.",
+  },
+  {
     value: "ollama",
     label: "Ollama (local)",
     needsKey: false,
