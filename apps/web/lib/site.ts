@@ -8,4 +8,6 @@ export const SITE = {
   githubUrl: "https://github.com/mgionas/claril",
   /** Public docs entry point. */
   docsUrl: "/docs",
+  /** Where alpha users send feedback / file issues. */
+  feedbackUrl: "https://github.com/mgionas/claril/issues",
 } as const;

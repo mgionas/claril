@@ -1,3 +1,4 @@
+import { AlphaBanner } from "./alpha-banner";
 import { FeatureGrid } from "./feature-grid";
 import { FinalCta } from "./final-cta";
 import { Footer } from "./footer";
@@ -14,6 +15,7 @@ import { TrustStrip } from "./trust-strip";
 export function Landing() {
   return (
     <div className="min-h-screen bg-canvas text-fg">
+      <AlphaBanner />
       <MarketingNav />
       <main>
         <Hero />
