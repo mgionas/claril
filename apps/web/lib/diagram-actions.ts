@@ -10,9 +10,8 @@ import { defaultNameForKind, seedForKind, type DiagramKind } from "@/lib/default
 import {
   assertDiagramAccess,
   assertProjectAccess,
-  ensureWorkspaceForOrg,
+  requireWorkspaceRole,
 } from "@/lib/tenancy";
-import { requireActiveOrg } from "@/lib/context";
 
 async function requireUserId(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -35,10 +34,10 @@ export interface ProjectWithDiagrams {
   diagrams: DiagramSummary[];
 }
 
-/** List the active workspace's projects, each with its diagrams. */
-export async function listProjects(): Promise<ProjectWithDiagrams[]> {
-  const { userId, orgId } = await requireActiveOrg();
-  const workspaceId = await ensureWorkspaceForOrg(userId, orgId);
+/** List a workspace's projects, each with its diagrams. */
+export async function listProjects(workspaceId: string): Promise<ProjectWithDiagrams[]> {
+  const userId = await requireUserId();
+  await requireWorkspaceRole(userId, workspaceId, "view");
 
   const projects = await db
     .select()
@@ -80,9 +79,9 @@ export async function listProjects(): Promise<ProjectWithDiagrams[]> {
 
 /* ---- Project CRUD ---- */
 
-export async function createProject(name: string): Promise<{ id: string }> {
-  const { userId, orgId } = await requireActiveOrg();
-  const workspaceId = await ensureWorkspaceForOrg(userId, orgId);
+export async function createProject(workspaceId: string, name: string): Promise<{ id: string }> {
+  const userId = await requireUserId();
+  await requireWorkspaceRole(userId, workspaceId, "edit");
   const trimmed = name.trim() || "Untitled project";
   const id = randomUUID();
   await db.transaction(async (tx) => {
@@ -97,7 +96,8 @@ export async function createProject(name: string): Promise<{ id: string }> {
 
 export async function renameProject(projectId: string, name: string): Promise<void> {
   const userId = await requireUserId();
-  await assertProjectAccess(userId, projectId);
+  const workspaceId = await assertProjectAccess(userId, projectId);
+  await requireWorkspaceRole(userId, workspaceId, "edit");
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Name is required.");
   await db
@@ -109,7 +109,8 @@ export async function renameProject(projectId: string, name: string): Promise<vo
 
 export async function deleteProject(projectId: string): Promise<void> {
   const userId = await requireUserId();
-  await assertProjectAccess(userId, projectId);
+  const workspaceId = await assertProjectAccess(userId, projectId);
+  await requireWorkspaceRole(userId, workspaceId, "edit");
   // Diagrams/versions cascade via FK onDelete: "cascade".
   await db.delete(schema.project).where(eq(schema.project.id, projectId));
   revalidatePath("/");
@@ -129,7 +130,8 @@ export async function createDiagram(
   content?: string,
 ): Promise<{ id: string }> {
   const userId = await requireUserId();
-  await assertProjectAccess(userId, projectId);
+  const workspaceId = await assertProjectAccess(userId, projectId);
+  await requireWorkspaceRole(userId, workspaceId, "edit");
   const id = randomUUID();
   await db.transaction(async (tx) => {
     await tx.insert(schema.diagram).values({
@@ -150,7 +152,11 @@ export async function createDiagram(
 
 export async function renameDiagram(diagramId: string, name: string): Promise<void> {
   const userId = await requireUserId();
-  await assertDiagramAccess(userId, diagramId);
+  const access = await assertDiagramAccess(userId, diagramId);
+  // Personal diagrams stay owner-only; org diagrams require workspace edit.
+  if (access.kind === "org") {
+    await requireWorkspaceRole(userId, access.workspaceId, "edit");
+  }
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Name is required.");
   await db
@@ -162,7 +168,10 @@ export async function renameDiagram(diagramId: string, name: string): Promise<vo
 
 export async function deleteDiagram(diagramId: string): Promise<void> {
   const userId = await requireUserId();
-  await assertDiagramAccess(userId, diagramId);
+  const access = await assertDiagramAccess(userId, diagramId);
+  if (access.kind === "org") {
+    await requireWorkspaceRole(userId, access.workspaceId, "edit");
+  }
   await db.delete(schema.diagram).where(eq(schema.diagram.id, diagramId));
   revalidatePath("/");
 }

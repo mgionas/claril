@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import type { DiagramKind } from "@/lib/default-diagram";
 import {
-  createProject,
   deleteDiagram,
   deleteProject,
   renameDiagram,
@@ -83,7 +82,19 @@ function projectActions(context: ProjectsContext) {
         rename: renamePersonalProject,
         remove: deletePersonalProject,
       }
-    : { create: createProject, rename: renameProject, remove: deleteProject };
+    : {
+        // STOPGAP (W13 P4 Task 2): org `/projects` now redirects to the
+        // workspace dashboard, so this org create path is unreachable from the
+        // app. `createProject` now requires an explicit `workspaceId`, which
+        // this flat list doesn't carry; Task 3 routes org project creation
+        // through the per-workspace page (`/w/[id]`) with the real id. Until
+        // then this guard keeps the type uniform without silently mis-scoping.
+        create: (_name: string): Promise<{ id: string }> => {
+          throw new Error("Create projects from your workspace page.");
+        },
+        rename: renameProject,
+        remove: deleteProject,
+      };
 }
 
 const inputClass =
