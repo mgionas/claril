@@ -29,7 +29,9 @@ export default function DocsIndexPage() {
         Model <strong>BPMN</strong> processes, <strong>Sequence</strong> diagrams, and{" "}
         <strong>C4</strong> architecture in one place. A deterministic <strong>logic inspector</strong>{" "}
         catches structural defects in real time, and an <strong>AI co-editor</strong> (bring your own
-        key) documents, reviews, and proposes concrete edits you approve before they land.
+        key) generates, documents, and proposes concrete edits you approve before they land. Work solo
+        in a personal space or together in an organization — with comments, <InlineCode>@mentions</InlineCode>,
+        and <InlineCode>.bpmn</InlineCode> / PNG / PDF export built in.
       </P>
 
       <H2 id="principles">Core principles</H2>
@@ -67,16 +69,27 @@ export default function DocsIndexPage() {
           deterministic correctness.
         </Li>
         <Li>
-          <strong>Asset Catalog.</strong> An organization-level, CMDB-style catalog that binds
-          diagram elements to the real services that run, so your architecture stays grounded.
+          <strong>Asset Catalog.</strong> An organization-level, CMDB-style catalog of custom object
+          types and assets that binds diagram elements to the real services that run, so your
+          architecture stays grounded — and grounds the AI.
         </Li>
         <Li>
-          <strong>Versioning &amp; diff.</strong> Every change is versioned; compare revisions and
-          restore any point in time.
+          <strong>Collaboration.</strong> Threaded comments anchored to an element or the whole
+          diagram, <InlineCode>@mentions</InlineCode>, and an in-app notification bell. Async by
+          design — works in personal and org spaces.
         </Li>
         <Li>
-          <strong>Tenancy.</strong> Nested <InlineCode>Org → Workspace → Project</InlineCode> with
-          role-based access control.
+          <strong>Export.</strong> Download <InlineCode>.bpmn</InlineCode> or export{" "}
+          <strong>PNG</strong> / <strong>PDF</strong> straight from the workbench top bar.
+        </Li>
+        <Li>
+          <strong>Versioning &amp; diff.</strong> Auto and named versions; compare revisions visually
+          and restore any point in time.
+        </Li>
+        <Li>
+          <strong>Tenancy.</strong> Work solo in a <strong>Personal</strong> space, or in an{" "}
+          <strong>Organization</strong> with members and role-based{" "}
+          <InlineCode>Workspaces</InlineCode>, a shared catalog, and shared AI.
         </Li>
         <Li>
           <strong>CLI &amp; MCP.</strong> Run the same inspector outside the app — in CI, or wired
@@ -87,12 +100,12 @@ export default function DocsIndexPage() {
       <H2 id="tiers">The capability tiers</H2>
       <P>Claril splits features by whether they need an AI key:</P>
       <CodeBlock title="capability tiers">
-        {`T1 Core      no key    BPMN editing, import/export, full logic
-                       inspector, versioning/diff, catalog, MCP API
-T2 Enhanced  optional  AI explanation of findings, doc narrative,
-                       semantic search, smart naming
-T3 AI-only   yes       NL -> BPMN, conversational editing, advisor
-                       critique, Q&A, compliance checks`}
+        {`T1 Core      no key    BPMN/Sequence/C4 editing, .bpmn/PNG/PDF
+                       export, full logic inspector, versioning/diff,
+                       comments & @mentions, catalog, CLI & MCP
+T2 Enhanced  optional  AI explanation of findings, Markdown doc-gen
+T3 AI-only   yes       prompt -> BPMN, conversational editing,
+                       advisor critique, AI-proposed edits you review`}
       </CodeBlock>
 
       <H2 id="next">Keep reading</H2>

@@ -1,8 +1,10 @@
 import {
   Boxes,
+  FileDown,
   GitCompareArrows,
   KeyRound,
   type LucideIcon,
+  MessagesSquare,
   ScanSearch,
   Sparkles,
   TerminalSquare,
@@ -26,26 +28,38 @@ const features: Feature[] = [
     icon: Sparkles,
     title: "AI co-editor",
     description:
-      "Chat about the diagram, generate documentation, request a review, or have the AI propose concrete edits you approve before they land.",
+      "Generate a diagram from a prompt, chat grounded on the inspector findings, and have the AI propose concrete edits you review — approve, roll back, or keep refining.",
     accent: true,
+  },
+  {
+    icon: MessagesSquare,
+    title: "Collaboration",
+    description:
+      "Threaded comments anchored to any element or the whole diagram, @mentions of teammates, and an in-app notification bell. Works solo or across a team.",
   },
   {
     icon: KeyRound,
     title: "BYOK, provider-agnostic",
     description:
-      "Bring your own key for Anthropic, OpenAI, Google, Mistral, Ollama, or OpenRouter. Your keys, your data, no lock-in.",
+      "Bring your own key for Anthropic, OpenAI, Google, Mistral, Ollama, or OpenRouter. Switch models per session; your keys and data stay on your infra.",
   },
   {
     icon: Boxes,
     title: "Asset Catalog",
     description:
-      "A CMDB-style catalog binds diagram elements to real services, so your architecture stays grounded in what actually runs.",
+      "A CMDB-style catalog of custom object types and assets binds diagram elements to real services — and grounds the AI in what actually runs.",
   },
   {
     icon: GitCompareArrows,
     title: "Versioning & diff",
     description:
-      "Every change is versioned. Compare revisions with a visual diff on the canvas and restore any point in time.",
+      "Auto and named versions. Compare revisions with a visual diff on the canvas and restore any point in time.",
+  },
+  {
+    icon: FileDown,
+    title: "Export anywhere",
+    description:
+      "Download the diagram as portable .bpmn, or export a PNG or PDF from the top bar to drop into docs and reviews.",
   },
   {
     icon: TerminalSquare,
@@ -70,7 +84,7 @@ export function FeatureGrid() {
           </p>
         </div>
 
-        <ul className="mt-12 grid gap-px overflow-hidden rounded-[10px] border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-12 grid gap-px overflow-hidden rounded-[10px] border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-4">
           {features.map(({ icon: Icon, title, description, accent }) => (
             <li
               key={title}

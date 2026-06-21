@@ -41,7 +41,8 @@ export function Hero() {
           >
             Claril is an open-source AI architecture-intelligence workbench. Draw BPMN, Sequence,
             and C4 on a polished canvas; a deterministic inspector finds deadlocks and unreachable
-            steps; and an AI co-editor documents, reviews, and edits the diagram for you.
+            steps; an AI co-editor proposes edits you approve; and comments and @mentions keep your
+            team in the loop.
           </p>
 
           <div

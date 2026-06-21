@@ -4,7 +4,7 @@ import { A, Callout, DocHeader, H2, InlineCode, Li, Ol, P, Ul } from "../_compon
 export const metadata: Metadata = {
   title: "AI providers (BYOK)",
   description:
-    "Claril is provider-agnostic and bring-your-own-key. Connect Anthropic, OpenAI, Google, Mistral, Ollama, or OpenRouter; keys are encrypted per organization with an org default model and per-run switching.",
+    "Claril is provider-agnostic and bring-your-own-key. Connect Anthropic, OpenAI, Google, Mistral, Ollama, or OpenRouter; keys are encrypted at rest, with a default model in personal or organization space and per-session model switching.",
 };
 
 const providers: { name: string; note: string }[] = [
@@ -38,7 +38,7 @@ export default function AiProvidersPage() {
       </Callout>
 
       <H2 id="supported">Supported providers</H2>
-      <P>Connect any combination of these at the organization level:</P>
+      <P>Connect any combination of these six providers in your personal space or in an organization:</P>
       <ul className="mt-4 grid gap-px overflow-hidden rounded-[10px] border border-hairline bg-hairline sm:grid-cols-2">
         {providers.map((p) => (
           <li key={p.name} className="bg-canvas p-5">
@@ -48,15 +48,33 @@ export default function AiProvidersPage() {
         ))}
       </ul>
 
+      <H2 id="scope">Personal vs organization</H2>
+      <P>
+        Where you connect a provider matches where you&apos;re working (switch with the context
+        switcher):
+      </P>
+      <Ul>
+        <Li>
+          <strong>Personal space.</strong> Your own keys power AI in your solo projects. They&apos;re
+          scoped to you and never shared.
+        </Li>
+        <Li>
+          <strong>Organization.</strong> Owners and admins connect shared keys the whole org can use,
+          alongside the shared <A href="/docs/getting-started">Asset Catalog</A>. Each org connects
+          each provider at most once.
+        </Li>
+      </Ul>
+
       <H2 id="storage">How keys are stored</H2>
       <Ul>
         <Li>
-          Keys are configured at the <strong>organization</strong> level — each org connects each
-          provider at most once.
+          Keys are <strong>encrypted at rest</strong> with AES-256-GCM, using{" "}
+          <InlineCode>CLARIL_ENCRYPTION_KEY</InlineCode> (falling back to{" "}
+          <InlineCode>BETTER_AUTH_SECRET</InlineCode> if it&apos;s not set). They are never returned
+          to the client and never baked into any build.
         </Li>
         <Li>
-          Keys are <strong>encrypted at rest</strong> (AES-256-GCM) and strictly org-scoped. They are
-          never returned to the client and never baked into any build.
+          Keys are strictly scoped to the personal account or organization that added them.
         </Li>
         <Li>
           On a self-hosted instance, inference requests go from your server straight to your chosen
@@ -68,11 +86,12 @@ export default function AiProvidersPage() {
         </Li>
       </Ul>
 
-      <H2 id="defaults">Org default &amp; per-run switching</H2>
+      <H2 id="defaults">Default model &amp; per-session switching</H2>
       <P>
-        An organization picks <strong>one default model</strong> across its connected providers — the
-        model the advisor uses unless told otherwise. The default is an org-level property, so exactly
-        one default exists at a time.
+        Each space picks <strong>one default model</strong> across its connected providers — the
+        model the advisor uses unless told otherwise. There&apos;s a <strong>personal default</strong>{" "}
+        for your solo work and an <strong>org default</strong> for organization work; exactly one
+        default exists per space at a time.
       </P>
       <Ol>
         <Li>
@@ -80,32 +99,38 @@ export default function AiProvidersPage() {
           recommendation, changeable in settings).
         </Li>
         <Li>
-          The org-level <strong>default model</strong> selects which connected{" "}
-          <InlineCode>(provider, model)</InlineCode> the advisor uses by default.
+          The space&apos;s <strong>default model</strong> selects which connected{" "}
+          <InlineCode>(provider, model)</InlineCode> the advisor uses by default. Connecting your{" "}
+          <strong>first or only</strong> provider auto-sets the default for you.
         </Li>
         <Li>
           In the workbench, a compact selector lists every model across all connected providers so
-          you can switch the model <strong>per run</strong> — and optionally set your choice as the
-          new org default.
+          you can switch the model <strong>per session</strong> — and optionally set your choice as
+          the new default.
         </Li>
       </Ol>
 
       <H2 id="connect">Connecting a provider</H2>
       <Ol>
-        <Li>Open organization settings and find the AI providers / connections section.</Li>
+        <Li>
+          Open settings for your current space (personal settings, or organization settings) and find
+          the AI providers / connections section.
+        </Li>
         <Li>
           Add a provider, paste your API key (and an optional base URL for proxies or self-hosted
           endpoints), and choose a default model.
         </Li>
         <Li>
-          Use <strong>Test</strong> to verify the credentials reach the provider, then set or adjust
-          the org default model.
+          Use <strong>Test</strong> to verify the credentials reach the provider. Your first
+          connection becomes the default automatically; adjust it any time.
         </Li>
       </Ol>
       <P>
-        These controls require an org owner or admin. Once a usable connection exists, the AI
-        co-editor — documentation, review, conversational editing, and proposed edits — becomes
-        available. See <A href="/docs/getting-started">Getting started</A> for the end-to-end flow.
+        In an organization, these controls require an owner or admin; in your personal space they&apos;re
+        always yours. Once a usable connection exists, the AI co-editor — generate BPMN from a prompt,
+        chat grounded on findings and the catalog, AI-proposed edits you review, and Markdown doc-gen —
+        becomes available. See <A href="/docs/getting-started">Getting started</A> for the end-to-end
+        flow.
       </P>
     </article>
   );
