@@ -4,8 +4,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Boxes, LogOut, Settings, User } from "lucide-react";
-import { signOut } from "@/lib/auth-client";
+import { signOut, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { ContextSwitcher } from "@/components/context-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,6 +86,12 @@ function AppBar({
   active?: AppShellSection;
   actions?: ReactNode;
 }) {
+  // The active org id drives scope-aware chrome: in the personal scope (no
+  // active org) the Catalog — an org-only surface — is hidden.
+  const { data: session } = useSession();
+  const isPersonal = !session?.session?.activeOrganizationId;
+  const nav = isPersonal ? NAV.filter((item) => item.id !== "catalog") : NAV;
+
   return (
     <header className="sticky top-0 z-30 border-b border-hairline bg-canvas/80 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-2 px-6">
@@ -99,8 +106,10 @@ function AppBar({
           <span className="text-sm font-semibold tracking-tight">Claril</span>
         </Link>
 
-        <nav className="ml-4 hidden items-center gap-0.5 sm:flex" aria-label="Primary">
-          {NAV.map((item) => (
+        <ContextSwitcher />
+
+        <nav className="ml-2 hidden items-center gap-0.5 sm:flex" aria-label="Primary">
+          {nav.map((item) => (
             <NavLink key={item.id} item={item} active={active === item.id} />
           ))}
         </nav>

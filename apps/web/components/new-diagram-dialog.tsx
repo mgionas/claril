@@ -14,6 +14,7 @@ import {
 import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
 import type { DiagramKind } from "@/lib/default-diagram";
 import { createDiagram } from "@/lib/diagram-actions";
+import { createPersonalDiagram } from "@/lib/personal-actions";
 import { generateDiagramFromPrompt } from "@/lib/actions";
 import {
   Dialog,
@@ -45,6 +46,8 @@ interface NewDiagramDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   aiConnected: boolean;
+  /** Routes diagram creation to the personal vs org server action. */
+  context?: "personal" | "org";
 }
 
 export function NewDiagramDialog({
@@ -52,9 +55,14 @@ export function NewDiagramDialog({
   open,
   onOpenChange,
   aiConnected,
+  context = "org",
 }: NewDiagramDialogProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+
+  // Both creators share the (projectId, kind, name?, content?) signature; pick
+  // by scope so personal projects write to the personal-project tree.
+  const create = context === "personal" ? createPersonalDiagram : createDiagram;
 
   const [kind, setKind] = useState<DiagramKind>("bpmn");
   const [mode, setMode] = useState<Mode>("blank");
@@ -87,7 +95,7 @@ export function NewDiagramDialog({
     setError(null);
     startTransition(async () => {
       try {
-        const { id } = await createDiagram(projectId, kind, name);
+        const { id } = await create(projectId, kind, name);
         route(id);
       } catch (e) {
         setError(friendly(e, "Could not create the diagram."));
@@ -116,7 +124,7 @@ export function NewDiagramDialog({
     }
     startTransition(async () => {
       try {
-        const { id } = await createDiagram(projectId, "bpmn", name || file.name, xml);
+        const { id } = await create(projectId, "bpmn", name || file.name, xml);
         route(id);
       } catch (e) {
         setError(friendly(e, "Could not create the diagram."));
@@ -134,7 +142,7 @@ export function NewDiagramDialog({
     startTransition(async () => {
       try {
         const xml = await generateDiagramFromPrompt(description);
-        const { id } = await createDiagram(projectId, "bpmn", name, xml);
+        const { id } = await create(projectId, "bpmn", name, xml);
         route(id);
       } catch (e) {
         setError(friendly(e, "Generation failed. Try rephrasing your description."));

@@ -25,6 +25,11 @@ import {
   renameProject,
   type ProjectWithDiagrams,
 } from "@/lib/diagram-actions";
+import {
+  createPersonalProject,
+  deletePersonalProject,
+  renamePersonalProject,
+} from "@/lib/personal-actions";
 import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/app-shell";
 import { NewDiagramDialog } from "@/components/new-diagram-dialog";
@@ -44,12 +49,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+export type DashboardContext = "personal" | "org";
+
 interface DashboardProps {
   userName: string;
   userEmail?: string;
   projects: ProjectWithDiagrams[];
   /** Whether an AI provider is configured — gates the "Generate with AI" mode. */
   aiConnected: boolean;
+  /** The active scope; routes CRUD to personal vs org server actions. */
+  context: DashboardContext;
+}
+
+/** The project-level mutations, resolved per active scope. */
+function projectActions(context: DashboardContext) {
+  return context === "personal"
+    ? {
+        create: createPersonalProject,
+        rename: renamePersonalProject,
+        remove: deletePersonalProject,
+      }
+    : { create: createProject, rename: renameProject, remove: deleteProject };
 }
 
 const inputClass =
@@ -86,8 +106,15 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function Dashboard({ userName, userEmail, projects, aiConnected }: DashboardProps) {
+export function Dashboard({
+  userName,
+  userEmail,
+  projects,
+  aiConnected,
+  context,
+}: DashboardProps) {
   const [createOpen, setCreateOpen] = useState(false);
+  const isPersonal = context === "personal";
 
   const diagramCount = useMemo(
     () => projects.reduce((sum, p) => sum + p.diagrams.length, 0),
@@ -120,16 +147,21 @@ export function Dashboard({ userName, userEmail, projects, aiConnected }: Dashbo
       </div>
 
       {projects.length === 0 ? (
-        <EmptyState onCreate={() => setCreateOpen(true)} />
+        <EmptyState onCreate={() => setCreateOpen(true)} isPersonal={isPersonal} />
       ) : (
         <div className="flex flex-col gap-4">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} aiConnected={aiConnected} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              aiConnected={aiConnected}
+              context={context}
+            />
           ))}
         </div>
       )}
 
-      <NewProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+      <NewProjectDialog open={createOpen} onOpenChange={setCreateOpen} context={context} />
     </AppShell>
   );
 }
@@ -137,9 +169,11 @@ export function Dashboard({ userName, userEmail, projects, aiConnected }: Dashbo
 function NewProjectDialog({
   open,
   onOpenChange,
+  context,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  context: DashboardContext;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -153,7 +187,7 @@ function NewProjectDialog({
     setError(null);
     startTransition(async () => {
       try {
-        await createProject(trimmed);
+        await projectActions(context).create(trimmed);
         setName("");
         onOpenChange(false);
         router.refresh();
@@ -222,13 +256,15 @@ function NewProjectDialog({
   );
 }
 
-function EmptyState({ onCreate }: { onCreate: () => void }) {
+function EmptyState({ onCreate, isPersonal }: { onCreate: () => void; isPersonal: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-hairline bg-panel/40 px-6 py-20 text-center">
       <span className="grid size-12 place-items-center rounded-[10px] bg-elevated text-fg-subtle">
         <FolderPlus className="size-6" />
       </span>
-      <p className="mt-4 text-sm font-medium">No projects yet</p>
+      <p className="mt-4 text-sm font-medium">
+        {isPersonal ? "No personal projects yet" : "No projects yet"}
+      </p>
       <p className="mt-1 max-w-xs text-sm text-fg-muted">
         Create your first project to start designing BPMN, sequence, and C4 diagrams.
       </p>
@@ -243,11 +279,14 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
 function ProjectCard({
   project,
   aiConnected,
+  context,
 }: {
   project: ProjectWithDiagrams;
   aiConnected: boolean;
+  context: DashboardContext;
 }) {
   const router = useRouter();
+  const actions = projectActions(context);
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(true);
   const [renaming, setRenaming] = useState(false);
@@ -269,7 +308,7 @@ function ProjectCard({
     setRenameError(null);
     startTransition(async () => {
       try {
-        await renameProject(project.id, next);
+        await actions.rename(project.id, next);
         setRenaming(false);
         router.refresh();
       } catch (err) {
@@ -284,7 +323,7 @@ function ProjectCard({
     setDeleteError(null);
     startTransition(async () => {
       try {
-        await deleteProject(project.id);
+        await actions.remove(project.id);
         setConfirmDelete(false);
         router.refresh();
       } catch (err) {
@@ -356,6 +395,7 @@ function ProjectCard({
           open={newDiagramOpen}
           onOpenChange={setNewDiagramOpen}
           aiConnected={aiConnected}
+          context={context}
         />
 
         <DropdownMenu>
