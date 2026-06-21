@@ -93,6 +93,10 @@ interface BpmnCanvasProps {
   onSelectionChange?: (selected: { id: string; name: string } | null) => void;
   /** Open the Comments tab with a composer anchored to this element. Undefined ⇒ no Comment menu item (e.g. personal diagrams). */
   onCommentElement?: (elementId: string) => void;
+  /** Whether the Asset Catalog is available (org diagrams only). Gates the
+   *  bound-assets load + the bind/unbind context-menu items — personal diagrams
+   *  have no catalog, so those would error against the org-scoped actions. */
+  canUseCatalog?: boolean;
 }
 
 const severityRank: Record<Severity, number> = { error: 3, warning: 2, info: 1 };
@@ -110,6 +114,7 @@ export default function BpmnCanvas({
   onShowProblems,
   onSelectionChange,
   onCommentElement,
+  canUseCatalog,
 }: BpmnCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const modelerRef = useRef<BpmnModeler | null>(null);
@@ -133,12 +138,13 @@ export default function BpmnCanvas({
   );
 
   // Load the diagram's element→asset bindings (and a manual refresh after edits).
+  // Catalog is org-only, so skip entirely for personal diagrams.
   const refreshBoundAssets = useCallback(() => {
-    if (!diagramId) return;
+    if (!diagramId || !canUseCatalog) return;
     getDiagramBoundAssets(diagramId)
       .then(setBoundAssets)
       .catch(() => setBoundAssets([]));
-  }, [diagramId]);
+  }, [diagramId, canUseCatalog]);
 
   useEffect(() => {
     if (ready) refreshBoundAssets();
@@ -688,6 +694,7 @@ export default function BpmnCanvas({
           menu={menu}
           modeler={modelerRef.current}
           findings={findings ?? []}
+          canBindAssets={Boolean(canUseCatalog)}
           onShowProblems={(id) => {
             setMenu(null);
             onShowProblems?.(id);

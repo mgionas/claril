@@ -67,6 +67,9 @@ interface CanvasContextMenuProps {
   onShowProblems: (elementId: string) => void;
   /** Open the Comments tab with a new-comment composer anchored to the element (org only). */
   onComment?: (elementId: string) => void;
+  /** Whether asset binding is available (org diagrams only). Hides the bind/unbind
+   *  items in personal scope, where the Asset Catalog doesn't exist. */
+  canBindAssets?: boolean;
   /** Name of the asset bound to the selected element, if any. */
   boundAssetName?: string;
   /** Open the asset picker to bind the selected element. */
@@ -89,6 +92,7 @@ export function CanvasContextMenu({
   findings,
   onShowProblems,
   onComment,
+  canBindAssets,
   boundAssetName,
   onBindAsset,
   onUnbindAsset,
@@ -235,14 +239,14 @@ export function CanvasContextMenu({
                 onClick={() => onShowProblems(menu.elementId as string)}
               />
             )}
-            {menu.elementId && (
+            {canBindAssets && menu.elementId && (
               <MenuItem
                 icon={Boxes}
                 label={boundAssetName ? `Asset: ${boundAssetName}` : "Bind to asset…"}
                 onClick={() => onBindAsset(menu.elementId as string)}
               />
             )}
-            {boundAssetName && menu.elementId && (
+            {canBindAssets && boundAssetName && menu.elementId && (
               <MenuItem
                 icon={Unlink}
                 label="Unbind asset"

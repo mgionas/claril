@@ -399,6 +399,7 @@ export function BpmnWorkbench({
           onShowProblems={handleShowProblems}
           onSelectionChange={setSelectedElement}
           onCommentElement={handleCommentElement}
+          canUseCatalog={isOrg}
         />
         <TopBar
           diagramId={diagramId}
