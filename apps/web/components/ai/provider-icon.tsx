@@ -69,12 +69,34 @@ function OllamaMark({ className }: IconProps) {
   );
 }
 
+function OpenRouterMark({ className }: IconProps) {
+  // Gateway/router glyph — a single source branching to multiple models.
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={cn("size-4", className)}
+    >
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="19" cy="5" r="2" />
+      <circle cx="19" cy="19" r="2" />
+      <path d="M7 12c4 0 6-7 10-7M7 12c4 0 6 7 10 7" />
+    </svg>
+  );
+}
+
 const MARKS: Record<AiProvider, (p: IconProps) => React.ReactElement> = {
   anthropic: AnthropicMark,
   openai: OpenAiMark,
   google: GoogleMark,
   mistral: MistralMark,
   ollama: OllamaMark,
+  openrouter: OpenRouterMark,
 };
 
 export function ProviderIcon({

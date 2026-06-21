@@ -1,5 +1,5 @@
 /** Supported, brand-agnostic LLM providers. All BYOK. */
-export type AiProvider = "anthropic" | "openai" | "google" | "mistral" | "ollama";
+export type AiProvider = "anthropic" | "openai" | "google" | "mistral" | "ollama" | "openrouter";
 
 export interface LLMProviderConfig {
   provider: AiProvider;
@@ -23,4 +23,5 @@ export const DEFAULT_MODELS: Record<AiProvider, string> = {
   google: "gemini-2.5-pro",
   mistral: "mistral-large-latest",
   ollama: "llama3.1",
+  openrouter: "openrouter/auto",
 };
