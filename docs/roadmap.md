@@ -47,9 +47,9 @@ The recent push turned the AI from advisor → **co-editor**: tabbed Chat/Proble
 
 1. **Confirm AI-editing quality live** — verify the Phase 5 scope + soundness guards actually stop the over-engineering on the real failing prompts; if layout still looks messy, decide whether the deferred **Phase 5.3 pool-safe relayout** is worth the risk.
 2. **W8 — AI provider connect.** Iterations 1 + 2 **deployed** (guided wizard, multi-provider switching, OpenRouter, compact tiles, workbench model switcher). Queued: AI Gateway, Google OAuth→Vertex, `DROP TABLE ai_provider_config` cleanup. *Note: consumer chat subs (ChatGPT/Claude/Gemini plans) can't power third-party API inference — use AI Gateway / BYOK / Vertex OAuth.*
-3. **P4 — Collaboration** (comments → review workflow → multiplayer) once the single-user editing loop is trustworthy.
+3. **P4 — Collaboration.** **W16 comments & @mentions shipped.** Next collaboration slices are **deprioritized** (see Deferred): the review/approval workflow (W17) and real-time multiplayer (W18) are parked at the bottom until there's a clear pull for them.
 
-*Deferred: W11 Phase 5.3 (pool-safe relayout — runtime-risky); user-task assignment + asset-binding-via-proposeEdit (Phase 4); the two Phase-4 minors (associate connection-hint, artifact ids in synopsis id table).*
+*Deferred (lowest priority, in order): **W17 — review/approval workflow** (design locked: version-snapshot + advisory record, assigned reviewers all-must-approve — `docs/superpowers/specs/2026-06-21-w16-comments-design.md` decomposition; not started, parked at user's request); **W18 — real-time multiplayer** (needs Liveblocks or self-hosted Yjs); W11 Phase 5.3 (pool-safe relayout — runtime-risky); user-task assignment + asset-binding-via-proposeEdit (Phase 4); the two Phase-4 minors (associate connection-hint, artifact ids in synopsis id table).*
 
 ## Backlog / follow-ups
 
