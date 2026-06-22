@@ -224,6 +224,13 @@ body {
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+/* The canvas <svg> is focusable (keyboard shortcuts); the browser draws a bold
+   blue focus ring around it on click. Suppress it — selection/hover already give
+   visual feedback. */
+.djs-container svg:focus,
+.djs-container svg:focus-visible {
+  outline: none !important;
+}
 .bjs-powered-by {
   display: none !important;
 }
@@ -241,6 +248,34 @@ body {
 .djs-element.drop-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
 .djs-element.drop-not-ok .djs-visual > :where(rect, circle, ellipse, polygon, path) {
   fill: #18181b !important;
+}
+
+/* Drag/drop feedback: bpmn-js paints the whole canvas (svg.new-parent /
+   svg.drop-not-ok) and the drop target with a near-white grey/red while
+   dragging — blinding on the dark canvas. Override the source variables
+   (defined by diagram-js on .djs-parent) with a doubled-class selector so we
+   win regardless of stylesheet load order, plus the bg rules for good measure. */
+.djs-parent.djs-parent {
+  --shape-drop-allowed-fill-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --shape-connect-allowed-fill-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --shape-drop-not-allowed-fill-color: color-mix(in srgb, var(--color-error) 12%, transparent);
+}
+.djs-container svg.new-parent.new-parent {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent) !important;
+}
+.djs-container svg.drop-not-ok.drop-not-ok {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent) !important;
+}
+.djs-shape.new-parent .djs-visual > :nth-child(1),
+.djs-shape.drop-ok .djs-visual > :nth-child(1),
+.djs-shape.connect-ok .djs-visual > :nth-child(1),
+.djs-element.attach-ok .djs-visual > :nth-child(1) {
+  fill: color-mix(in srgb, var(--color-accent) 12%, #18181b) !important;
+  stroke: var(--color-accent) !important;
+}
+.djs-shape.drop-not-ok .djs-visual > :nth-child(1),
+.djs-shape.connect-not-ok .djs-visual > :nth-child(1) {
+  fill: color-mix(in srgb, var(--color-error) 14%, #18181b) !important;
 }
 /* connections (override the shape fill above for edges) */
 .djs-connection .djs-visual > path {
@@ -358,6 +393,168 @@ body {
 }
 .djs-context-pad .entry.bpmn-icon-screw-wrench {
   --cp-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 8h12l-3-3'/><path d='M20 16H8l3 3'/></svg>");
+}
+
+/* ---- "Change element" replace popup (diagram-js popup-menu) ----
+   bpmn-js ships a light-themed popup; restyle the whole surface to the Claril
+   design system: dark frosted panel, hairline borders, accent selection. */
+.djs-popup {
+  min-width: 320px !important;
+  border-radius: 10px !important;
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--color-hairline) !important;
+  overflow: hidden;
+  font-family: inherit !important;
+}
+.djs-popup-header {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--color-hairline) !important;
+}
+.djs-popup-title {
+  color: var(--color-fg) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+/* Search */
+.djs-popup-search {
+  padding: 8px 10px !important;
+  border-bottom: 1px solid var(--color-hairline) !important;
+}
+.djs-popup-search input,
+.djs-popup-search-input {
+  background-color: var(--color-canvas) !important;
+  border: 1px solid var(--color-hairline) !important;
+  border-radius: 6px !important;
+  color: var(--color-fg) !important;
+  font-size: 13px !important;
+  padding: 6px 8px 6px 28px !important;
+}
+.djs-popup-search input::placeholder {
+  color: var(--color-fg-subtle) !important;
+}
+.djs-popup-search input:focus,
+.djs-popup-search-input:focus {
+  outline: none !important;
+  /* Neutral focus emphasis — no blue glow on open. */
+  border-color: var(--color-fg-subtle) !important;
+  box-shadow: none !important;
+}
+.djs-popup-search-icon {
+  color: var(--color-fg-subtle) !important;
+}
+.djs-popup-search-count {
+  color: var(--color-fg-subtle) !important;
+}
+/* Body + groups */
+.djs-popup-body {
+  background-color: transparent !important;
+  padding: 6px !important;
+}
+.djs-popup-body .entry-header,
+.djs-popup .entry-header {
+  color: var(--color-fg-subtle) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 8px 4px !important;
+}
+/* Entries */
+.djs-popup-body .entry,
+.djs-popup button.entry {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px !important;
+  border-radius: 6px !important;
+  color: var(--color-fg-muted) !important;
+  background: transparent !important;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.djs-popup-body .entry:hover,
+.djs-popup .entry.selected {
+  background-color: var(--color-elevated) !important;
+  color: var(--color-fg) !important;
+}
+.djs-popup .entry.disabled {
+  color: var(--color-fg-subtle) !important;
+  opacity: 0.5;
+}
+/* Entry icons (bpmn-font glyphs) follow the entry text color. */
+.djs-popup-entry-icon {
+  color: currentColor !important;
+  opacity: 0.9;
+}
+.djs-popup-entry-content {
+  min-width: 0;
+}
+.djs-popup-entry-name {
+  color: inherit !important;
+  font-size: 13px !important;
+}
+.djs-popup-entry-description {
+  color: var(--color-fg-subtle) !important;
+  font-size: 11px !important;
+}
+.djs-popup-no-results {
+  color: var(--color-fg-subtle) !important;
+  padding: 12px !important;
+  font-size: 13px !important;
+}
+/* Header tool toggles (e.g. show/hide) + breadcrumbs */
+.djs-popup-header .entry {
+  color: var(--color-fg-muted) !important;
+  border-radius: 6px !important;
+}
+.djs-popup-header .entry.active,
+.djs-popup-header .entry:hover {
+  color: var(--color-accent) !important;
+  background-color: var(--color-elevated) !important;
+}
+.djs-popup-breadcrumbs-item {
+  color: var(--color-fg-muted) !important;
+}
+.djs-popup-breadcrumbs-item:hover,
+.djs-popup-breadcrumbs-item--current {
+  color: var(--color-fg) !important;
+}
+
+/* Rename / direct-editing box: bpmn-js sets a white bg + dark text inline, which
+   is invisible on the dark canvas. Force the Claril dark surface. */
+.djs-direct-editing-parent {
+  background: var(--color-panel) !important;
+  border: 1px solid var(--color-accent) !important;
+  border-radius: 5px !important;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6) !important;
+}
+.djs-direct-editing-content {
+  background: transparent !important;
+  color: var(--color-fg) !important;
+  caret-color: var(--color-accent) !important;
+}
+
+/* Validation error tooltip ("flow elements must be children of pools…"):
+   bpmn-js ships a near-white red box; mute it to a dark error surface. */
+.djs-tooltip-error {
+  width: auto !important;
+  max-width: 220px !important;
+  padding: 8px 10px !important;
+  background: rgba(24, 24, 27, 0.97) !important;
+  border: 1px solid color-mix(in srgb, var(--color-error) 55%, var(--color-hairline)) !important;
+  border-left: 2px solid var(--color-error) !important;
+  border-radius: 8px !important;
+  color: var(--color-fg) !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6) !important;
+  opacity: 1 !important;
+}
+.djs-tooltip-error:hover {
+  opacity: 1 !important;
 }
 
 /* ---- logic-inspector finding overlays + markers ---- */

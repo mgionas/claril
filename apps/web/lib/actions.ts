@@ -13,8 +13,7 @@ import {
   type AiProvider,
   type EditPlan,
 } from "@claril/ai-advisor";
-import { parseBpmnXml, BpmnParseError } from "@claril/bpmn-parse";
-import { layoutProcess } from "bpmn-auto-layout";
+import { parseBpmnXml, BpmnParseError, layoutCollaboration } from "@claril/bpmn-parse";
 import {
   diagramContext,
   getAiConfig,
@@ -593,8 +592,9 @@ function countDiEdges(xml: string): number {
 /**
  * Generate a BPMN diagram from a natural-language description. Resolves the
  * org-level BYOK config (like {@link runDocGen}), asks the model for semantic
- * BPMN XML, strips any markdown fences, runs `bpmn-auto-layout` (DOM-free) to
- * add diagram interchange so it renders, then validates with the shared
+ * BPMN XML, strips any markdown fences, runs `layoutCollaboration` (DOM-free —
+ * wraps `bpmn-auto-layout`, adding multi-pool/message-flow layout) to add
+ * diagram interchange so it renders, then validates with the shared
  * `@claril/bpmn-parse`. Returns the laid-out, validated XML. Throws a friendly
  * error if the model's output cannot be turned into a valid diagram.
  *
@@ -631,7 +631,7 @@ export async function generateDiagramFromPrompt(
 
   let laidOut: string;
   try {
-    laidOut = await layoutProcess(semantic);
+    laidOut = await layoutCollaboration(semantic);
   } catch (cause) {
     throw new Error(
       "The AI produced BPMN that could not be laid out. Try rephrasing the description.",

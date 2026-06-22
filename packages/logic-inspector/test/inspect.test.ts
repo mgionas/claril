@@ -34,6 +34,9 @@ describe("logic inspector", () => {
     expect(ruleIds(graph)).toContain("structural/missing-start-event");
     // Should NOT also spam unreachable-node when there's no start at all.
     expect(ruleIds(graph)).not.toContain("structural/unreachable-node");
+    // Anchored to the would-be first node so the canvas can mark it.
+    const f = inspect(graph).find((x) => x.ruleId === "structural/missing-start-event");
+    expect(f?.elementId).toBe("task");
   });
 
   it("flags a missing end event", () => {
@@ -45,6 +48,9 @@ describe("logic inspector", () => {
       flows: [{ id: "f1", sourceRef: "start", targetRef: "task" }],
     };
     expect(ruleIds(graph)).toContain("structural/missing-end-event");
+    // Anchored to the would-be last node so the canvas can mark it.
+    const f = inspect(graph).find((x) => x.ruleId === "structural/missing-end-event");
+    expect(f?.elementId).toBe("task");
   });
 
   it("flags a dangling sequence flow", () => {
@@ -215,6 +221,9 @@ describe("logic inspector", () => {
       ],
     };
     expect(ruleIds(graph)).toContain("best-practice/multiple-start-events");
+    // Anchored to a start event so the hint shows on the canvas.
+    const f = inspect(graph).find((x) => x.ruleId === "best-practice/multiple-start-events");
+    expect(f?.elementId).toBe("s1");
   });
 
   it("attaches executable fixes to structural findings", () => {

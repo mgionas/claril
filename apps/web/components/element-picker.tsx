@@ -102,7 +102,7 @@ export function ElementPicker({ modeler, x, y, onClose }: ElementPickerProps) {
           ))}
         </div>
         <p className="border-t border-hairline px-3 py-1.5 text-[10px] text-fg-subtle">
-          Click an element, then click the canvas to place it.
+          Drag an element onto the canvas to place it.
         </p>
       </div>
     </div>

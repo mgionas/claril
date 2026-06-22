@@ -75,6 +75,8 @@ export const multipleStartEvents: Rule = {
       {
         ruleId: "best-practice/multiple-start-events",
         severity: "info",
+        // Anchor to a start event so the hint is visible on the canvas.
+        elementId: starts[0].id,
         message: `Process has ${starts.length} start events; consider a single explicit start.`,
       },
     ];
