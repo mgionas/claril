@@ -245,8 +245,16 @@ export default function BpmnCanvas({
         }
       }
       for (const id of markedRef.current) {
-        canvas.removeMarker(id, "claril-flagged-error");
-        canvas.removeMarker(id, "claril-flagged-warning");
+        // removeMarker throws if the element was deleted (diagram-js looks it up
+        // by id and dereferences undefined). Guard each call so cleaning up a
+        // just-deleted flagged element can't abort the re-render and wipe the
+        // markers for the remaining problems.
+        try {
+          canvas.removeMarker(id, "claril-flagged-error");
+          canvas.removeMarker(id, "claril-flagged-warning");
+        } catch {
+          /* element gone — nothing to unmark */
+        }
       }
 
       // Worst severity per element.
