@@ -243,13 +243,20 @@ body {
   fill: #18181b !important;
 }
 
-/* Drag/drop feedback: bpmn-js flashes a near-white fill on the whole canvas
-   (svg.new-parent) and on the drop target while dragging. Mute to subtle
-   accent/error tints so the dark canvas never goes bright. */
-.djs-container svg.new-parent {
+/* Drag/drop feedback: bpmn-js paints the whole canvas (svg.new-parent /
+   svg.drop-not-ok) and the drop target with a near-white grey/red while
+   dragging — blinding on the dark canvas. Override the source variables
+   (defined by diagram-js on .djs-parent) with a doubled-class selector so we
+   win regardless of stylesheet load order, plus the bg rules for good measure. */
+.djs-parent.djs-parent {
+  --shape-drop-allowed-fill-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --shape-connect-allowed-fill-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  --shape-drop-not-allowed-fill-color: color-mix(in srgb, var(--color-error) 12%, transparent);
+}
+.djs-container svg.new-parent.new-parent {
   background: color-mix(in srgb, var(--color-accent) 8%, transparent) !important;
 }
-.djs-container svg.drop-not-ok {
+.djs-container svg.drop-not-ok.drop-not-ok {
   background: color-mix(in srgb, var(--color-error) 10%, transparent) !important;
 }
 .djs-shape.new-parent .djs-visual > :nth-child(1),
