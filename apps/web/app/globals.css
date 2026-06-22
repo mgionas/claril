@@ -224,6 +224,13 @@ body {
   background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+/* The canvas <svg> is focusable (keyboard shortcuts); the browser draws a bold
+   blue focus ring around it on click. Suppress it — selection/hover already give
+   visual feedback. */
+.djs-container svg:focus,
+.djs-container svg:focus-visible {
+  outline: none !important;
+}
 .bjs-powered-by {
   display: none !important;
 }
