@@ -412,13 +412,13 @@ export function BpmnWorkbench({
             onRestored: handleRestored,
             onShowDiff: handleShowDiff,
           }}
-          onExport={async (fmt) => {
+          onExport={async (fmt, theme) => {
             const api = canvasApiRef.current;
             if (!api) return;
             try {
               if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
-              else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName);
-              else await downloadPdf(await api.exportSvg(), diagramName);
+              else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName, theme);
+              else await downloadPdf(await api.exportSvg(), diagramName, theme);
             } catch (e) {
               console.error("Export failed", e);
             }
