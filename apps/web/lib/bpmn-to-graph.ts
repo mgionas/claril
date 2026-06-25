@@ -14,7 +14,7 @@ interface DiElement {
   businessObject?: { name?: string; text?: string; flowNodeRef?: Array<{ id?: string }> };
   source?: { id: string } | null;
   target?: { id: string } | null;
-  parent?: { type?: string; businessObject?: { name?: string } } | null;
+  parent?: { id?: string; type?: string; businessObject?: { name?: string } } | null;
   // Diagram bounds (present on shapes) — used for geometric lane membership.
   x?: number;
   y?: number;
@@ -52,6 +52,18 @@ interface LaneShape {
   id: string;
   name?: string;
   pool?: string;
+  /** Id of the participant (pool) this lane belongs to, when resolvable. */
+  poolId?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  area: number;
+}
+
+interface PoolShape {
+  id: string;
+  name?: string;
   x: number;
   y: number;
   width: number;
@@ -64,6 +76,21 @@ const hasBounds = (el: DiElement): boolean =>
   typeof el.y === "number" &&
   typeof el.width === "number" &&
   typeof el.height === "number";
+
+/** Smallest-area shape whose bounds contain (cx, cy). Deepest container wins. */
+function smallestContaining<T extends { x: number; y: number; width: number; height: number; area: number }>(
+  shapes: readonly T[],
+  cx: number,
+  cy: number,
+): T | undefined {
+  let best: T | undefined;
+  for (const s of shapes) {
+    if (cx >= s.x && cx <= s.x + s.width && cy >= s.y && cy <= s.y + s.height) {
+      if (!best || s.area < best.area) best = s;
+    }
+  }
+  return best;
+}
 
 /**
  * Convert a bpmn-js elementRegistry into the framework-free ProcessGraph the
@@ -90,6 +117,7 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
   // First pass: pools, lane shapes (with bounds), semantic flowNodeRef map, and
   // message flows.
   const laneShapes: LaneShape[] = [];
+  const poolShapes: PoolShape[] = [];
   const laneIdByNode = new Map<string, string>(); // nodeId -> lane id (from flowNodeRef)
   for (const el of all) {
     const type = el.type;
@@ -97,15 +125,30 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
 
     if (type === "bpmn:Participant") {
       pools.push({ id: el.id, name: el.businessObject?.name });
+      if (hasBounds(el)) {
+        poolShapes.push({
+          id: el.id,
+          name: el.businessObject?.name,
+          x: el.x!,
+          y: el.y!,
+          width: el.width!,
+          height: el.height!,
+          area: el.width! * el.height!,
+        });
+      }
       continue;
     }
     if (type === "bpmn:Lane") {
       if (hasBounds(el)) {
+        const parentIsPool = el.parent?.type === "bpmn:Participant";
         laneShapes.push({
           id: el.id,
           name: el.businessObject?.name,
-          pool:
-            el.parent?.type === "bpmn:Participant" ? el.parent.businessObject?.name : undefined,
+          pool: parentIsPool ? el.parent?.businessObject?.name : undefined,
+          // A top-level lane's parent is the Participant; record its id so the
+          // lane is bound to its OWN pool (not whatever pool its centre happens
+          // to fall in after a messy drag).
+          poolId: parentIsPool ? el.parent?.id : undefined,
           x: el.x!,
           y: el.y!,
           width: el.width!,
@@ -131,19 +174,44 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
     }
   }
 
+  const poolNameById = new Map(poolShapes.map((P) => [P.id, P.name]));
+
+  // The participant (pool) whose bounds contain a point. Used both to scope a
+  // node's lane search to its OWN pool and to resolve the pool for nested
+  // sub-lanes (whose immediate parent is a Lane, not the Participant).
+  const poolShapeAt = (cx: number, cy: number): PoolShape | undefined =>
+    smallestContaining(poolShapes, cx, cy);
+
+  // Resolve each lane's owning participant geometrically ONLY when the
+  // parent-based binding is missing (nested sub-lanes, whose parent is a Lane
+  // rather than the Participant) — fixes lane.pool being undefined for them
+  // without overriding the authoritative parent binding of top-level lanes.
+  for (const L of laneShapes) {
+    if (L.poolId) {
+      if (!L.pool) L.pool = poolNameById.get(L.poolId);
+      continue;
+    }
+    const owner = poolShapeAt(L.x + L.width / 2, L.y + L.height / 2);
+    if (owner) {
+      L.poolId = owner.id;
+      if (!L.pool) L.pool = owner.name;
+    }
+  }
+
   // Smallest lane whose bounds contain the element's centre (deepest lane wins
-  // for nested lanes). Used when flowNodeRef doesn't name the node.
+  // for nested lanes). SCOPED to the lanes of the node's own pool so a smaller,
+  // overlapping lane from a DIFFERENT pool cannot steal the node (multi-pool
+  // layouts often overlap). Falls back to all lanes when the node isn't inside
+  // any participant. Used when flowNodeRef doesn't name the node.
   const laneByGeometry = (el: DiElement): LaneShape | undefined => {
     if (!hasBounds(el)) return undefined;
     const cx = el.x! + el.width! / 2;
     const cy = el.y! + el.height! / 2;
-    let best: LaneShape | undefined;
-    for (const L of laneShapes) {
-      if (cx >= L.x && cx <= L.x + L.width && cy >= L.y && cy <= L.y + L.height) {
-        if (!best || L.area < best.area) best = L;
-      }
-    }
-    return best;
+    const ownPool = poolShapeAt(cx, cy);
+    const candidates = ownPool
+      ? laneShapes.filter((L) => L.poolId === ownPool.id)
+      : laneShapes;
+    return smallestContaining(candidates, cx, cy);
   };
 
   const laneById = new Map(laneShapes.map((L) => [L.id, L]));
@@ -187,6 +255,17 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
       laneMembers.set(lane.id, list);
     }
 
+    // Resolve the pool: prefer the lane's pool, else the participant whose
+    // bounds contain the node (so a node placed directly in a pool without
+    // lanes, or outside its pool's lanes, still gets the right pool), else the
+    // sole pool when there's exactly one.
+    let pool = lane?.pool;
+    if (!pool && hasBounds(el)) {
+      const owner = poolShapeAt(el.x! + el.width! / 2, el.y! + el.height! / 2);
+      pool = owner ? poolNameById.get(owner.id) : undefined;
+    }
+    pool = pool ?? solePool;
+
     // "bpmn:StartEvent" -> "startEvent", "bpmn:ExclusiveGateway" -> "exclusiveGateway"
     const kind = type.slice("bpmn:".length);
     const nodeType = kind.charAt(0).toLowerCase() + kind.slice(1);
@@ -195,7 +274,7 @@ export function bpmnRegistryToGraph(registry: ElementRegistryLike): ProcessGraph
       type: nodeType,
       name: el.businessObject?.name,
       lane: lane?.name,
-      pool: lane?.pool ?? solePool,
+      pool,
     });
   }
 
