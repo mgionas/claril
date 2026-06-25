@@ -17,6 +17,7 @@ import { signOut, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { ContextSwitcher } from "@/components/context-switcher";
 import { NotificationBell } from "@/components/notification-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Collapsible,
   CollapsibleContent,
@@ -98,6 +99,7 @@ export function AppShell({
           )}
           <div className="ml-auto flex items-center gap-2">
             {actions}
+            <ThemeToggle />
             {/* Shown for everyone — personal accounts still receive org invitations. */}
             <NotificationBell />
           </div>

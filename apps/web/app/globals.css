@@ -4,25 +4,81 @@
 @source "../components";
 @source "../lib";
 
-/* ---- Design tokens (Linear-minimal, dark-first) ---- */
-@theme {
-  --color-canvas: #0b0b0d;
-  --color-panel: #18181b;
-  --color-elevated: #1f1f23;
-  --color-hairline: rgba(255, 255, 255, 0.08);
+/* Drive Tailwind's `dark:` variant from the `.dark` class (set by next-themes)
+   instead of the default prefers-color-scheme media query, so dark: utilities
+   track the chosen theme — not just the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  --color-fg: #fafafa;
-  --color-fg-muted: #a1a1aa;
-  --color-fg-subtle: #71717a;
+/* ---- Design tokens (Linear-minimal) ----
+   Theme-aware: the literal values live in the :root,.dark (dark) and .light
+   blocks below; this @theme inline block surfaces them to Tailwind utilities
+   (bg-canvas, text-fg, …) via intermediate --c-* vars so the whole palette
+   flips with the theme class on <html>. */
+@theme inline {
+  --color-canvas: var(--c-canvas);
+  --color-panel: var(--c-panel);
+  --color-elevated: var(--c-elevated);
+  --color-hairline: var(--c-hairline);
 
-  --color-accent: #4d8dff;
+  --color-fg: var(--c-fg);
+  --color-fg-muted: var(--c-fg-muted);
+  --color-fg-subtle: var(--c-fg-subtle);
 
-  --color-error: #f87171;
-  --color-warning: #fbbf24;
-  --color-info: #60a5fa;
-  --color-success: #34d399;
-  --color-ai-edit: #a78bfa;
-  --color-comment: #f59e0b;
+  --color-accent: var(--c-accent);
+
+  --color-error: var(--c-error);
+  --color-warning: var(--c-warning);
+  --color-info: var(--c-info);
+  --color-success: var(--c-success);
+  --color-ai-edit: var(--c-ai-edit);
+  --color-comment: var(--c-comment);
+
+  /* canvas-only (bpmn-js) tokens */
+  --color-canvas-stroke: var(--c-canvas-stroke);
+  --color-canvas-grid: var(--c-canvas-grid);
+}
+
+/* DARK — the default look, also applied before next-themes resolves. */
+:root,
+.dark {
+  color-scheme: dark;
+  --c-canvas: #0b0b0d;
+  --c-panel: #18181b;
+  --c-elevated: #1f1f23;
+  --c-hairline: rgba(255, 255, 255, 0.08);
+  --c-fg: #fafafa;
+  --c-fg-muted: #a1a1aa;
+  --c-fg-subtle: #71717a;
+  --c-accent: #4d8dff;
+  --c-error: #f87171;
+  --c-warning: #fbbf24;
+  --c-info: #60a5fa;
+  --c-success: #34d399;
+  --c-ai-edit: #a78bfa;
+  --c-comment: #f59e0b;
+  --c-canvas-stroke: #3f3f46;
+  --c-canvas-grid: rgba(255, 255, 255, 0.04);
+}
+
+/* LIGHT */
+.light {
+  color-scheme: light;
+  --c-canvas: #ffffff;
+  --c-panel: #f7f7f8;
+  --c-elevated: #ededf0;
+  --c-hairline: rgba(0, 0, 0, 0.1);
+  --c-fg: #18181b;
+  --c-fg-muted: #52525b;
+  --c-fg-subtle: #8a8a93;
+  --c-accent: #2563eb;
+  --c-error: #dc2626;
+  --c-warning: #d97706;
+  --c-info: #2563eb;
+  --c-success: #059669;
+  --c-ai-edit: #7c3aed;
+  --c-comment: #d97706;
+  --c-canvas-stroke: #c4c4cc;
+  --c-canvas-grid: rgba(0, 0, 0, 0.06);
 }
 
 /* ------------------------------------------------------------------
@@ -115,9 +171,7 @@
   --color-sidebar: var(--sidebar);
 }
 
-:root {
-  color-scheme: dark;
-}
+/* color-scheme is set per-theme in the :root,.dark / .light blocks above. */
 
 /*
  * Tailwind v4 defaults a bare `border` utility's color to `currentColor`, so
@@ -221,7 +275,7 @@ body {
    ============================================================ */
 .djs-container {
   background-color: var(--color-canvas) !important;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-image: radial-gradient(var(--color-canvas-grid) 1px, transparent 1px);
   background-size: 22px 22px;
 }
 /* The canvas <svg> is focusable (keyboard shortcuts); the browser draws a bold
@@ -239,15 +293,15 @@ body {
    previews (incl. big pool/participant rects) are never white */
 .djs-element .djs-visual > :where(rect, circle, ellipse, polygon, path),
 .djs-dragger .djs-visual :where(rect, circle, ellipse, polygon, path) {
-  stroke: #3f3f46 !important;
-  fill: #18181b !important;
+  stroke: var(--color-canvas-stroke) !important;
+  fill: var(--color-panel) !important;
 }
 .djs-element.djs-hover .djs-visual > :where(rect, circle, ellipse, polygon, path),
 .djs-element.connect-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
 .djs-element.connect-not-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
 .djs-element.drop-ok .djs-visual > :where(rect, circle, ellipse, polygon, path),
 .djs-element.drop-not-ok .djs-visual > :where(rect, circle, ellipse, polygon, path) {
-  fill: #18181b !important;
+  fill: var(--color-panel) !important;
 }
 
 /* Drag/drop feedback: bpmn-js paints the whole canvas (svg.new-parent /
@@ -270,26 +324,26 @@ body {
 .djs-shape.drop-ok .djs-visual > :nth-child(1),
 .djs-shape.connect-ok .djs-visual > :nth-child(1),
 .djs-element.attach-ok .djs-visual > :nth-child(1) {
-  fill: color-mix(in srgb, var(--color-accent) 12%, #18181b) !important;
+  fill: color-mix(in srgb, var(--color-accent) 12%, var(--color-panel)) !important;
   stroke: var(--color-accent) !important;
 }
 .djs-shape.drop-not-ok .djs-visual > :nth-child(1),
 .djs-shape.connect-not-ok .djs-visual > :nth-child(1) {
-  fill: color-mix(in srgb, var(--color-error) 14%, #18181b) !important;
+  fill: color-mix(in srgb, var(--color-error) 14%, var(--color-panel)) !important;
 }
 /* connections (override the shape fill above for edges) */
 .djs-connection .djs-visual > path {
-  stroke: #71717a !important;
+  stroke: var(--color-fg-subtle) !important;
   fill: none !important;
 }
 .djs-connection .djs-visual > path[marker-end] {
-  fill: #71717a !important;
+  fill: var(--color-fg-subtle) !important;
 }
 
 /* labels */
 .djs-label,
 .djs-visual text {
-  fill: #fafafa !important;
+  fill: var(--color-fg) !important;
   font-family: ui-sans-serif, system-ui, sans-serif !important;
 }
 
@@ -305,7 +359,7 @@ body {
 .djs-popup,
 .djs-popup-body,
 .djs-popup-header {
-  background-color: rgba(24, 24, 27, 0.95) !important;
+  background-color: color-mix(in srgb, var(--color-panel) 95%, transparent) !important;
   color: var(--color-fg) !important;
   border-color: var(--color-hairline) !important;
 }
@@ -334,7 +388,7 @@ body {
 /* Context pad (contextual actions next to an element) + popups: dark frosted. */
 .djs-context-pad .group,
 .djs-popup {
-  background-color: rgba(24, 24, 27, 0.92) !important;
+  background-color: color-mix(in srgb, var(--color-panel) 92%, transparent) !important;
   border: 1px solid var(--color-hairline) !important;
   color: var(--color-fg) !important;
   backdrop-filter: blur(8px);
@@ -542,7 +596,7 @@ body {
   width: auto !important;
   max-width: 220px !important;
   padding: 8px 10px !important;
-  background: rgba(24, 24, 27, 0.97) !important;
+  background: color-mix(in srgb, var(--color-panel) 97%, transparent) !important;
   border: 1px solid color-mix(in srgb, var(--color-error) 55%, var(--color-hairline)) !important;
   border-left: 2px solid var(--color-error) !important;
   border-radius: 8px !important;
@@ -664,7 +718,7 @@ body {
   left: auto !important;
   border: 1px solid var(--color-hairline) !important;
   border-radius: 10px !important;
-  background-color: rgba(24, 24, 27, 0.85) !important;
+  background-color: color-mix(in srgb, var(--color-panel) 85%, transparent) !important;
   backdrop-filter: blur(8px);
   overflow: hidden;
 }

@@ -72,7 +72,9 @@ export async function listVersions(diagramId: string): Promise<VersionSummary[]>
       label: schema.version.label,
       source: schema.version.source,
       createdAt: schema.version.createdAt,
-      author: schema.user.name,
+      createdBy: schema.version.createdBy,
+      authorName: schema.user.name,
+      authorEmail: schema.user.email,
     })
     .from(schema.version)
     .leftJoin(schema.user, eq(schema.user.id, schema.version.createdBy))
@@ -84,7 +86,12 @@ export async function listVersions(diagramId: string): Promise<VersionSummary[]>
     label: r.label,
     source: (r.source ?? "manual") as VersionSource,
     createdAt: r.createdAt.toISOString(),
-    author: r.author ?? null,
+    // Legacy rows have no author (null createdBy) → null. Otherwise prefer the
+    // display name, fall back to the email prefix, then "Unknown" if the user
+    // row was removed (set-null FK) but the version still records an authorId.
+    author: r.createdBy
+      ? (r.authorName ?? r.authorEmail?.split("@")[0] ?? "Unknown")
+      : null,
   }));
 }
 

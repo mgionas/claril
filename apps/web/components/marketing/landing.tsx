@@ -14,7 +14,9 @@ import { TrustStrip } from "./trust-strip";
  */
 export function Landing() {
   return (
-    <div className="min-h-screen bg-canvas text-fg">
+    // Marketing is dark-only for now — force the dark token scope regardless of
+    // the user's app theme.
+    <div className="dark min-h-screen bg-canvas text-fg">
       <AlphaBanner />
       <MarketingNav />
       <main>

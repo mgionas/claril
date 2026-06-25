@@ -178,6 +178,11 @@ export function HistoryMenu({ diagramId, getCurrentXml, onRestored, onShowDiff }
                         {relativeTime(v.createdAt)}
                       </span>
                     </div>
+                    {v.author && (
+                      <p className="mt-0.5 truncate text-[11px] text-fg-subtle">
+                        by {v.author}
+                      </p>
+                    )}
                     <div className="mt-2 flex items-center gap-1.5">
                       <button
                         type="button"
