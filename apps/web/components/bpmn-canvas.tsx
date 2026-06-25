@@ -213,11 +213,13 @@ export default function BpmnCanvas({
       container,
       additionalModules: [minimapModule],
       minimap: { open: true },
-      // Custom renderer colors (themed at the source — also fixes drag/minimap).
+      // Custom renderer colors as CSS variables so they resolve live and flip
+      // with the theme — covers both the main canvas and the minimap (whose
+      // cloned shapes aren't reached by our .djs-element CSS overrides).
       bpmnRenderer: {
-        defaultFillColor: "#18181b",
-        defaultStrokeColor: "#3f3f46",
-        defaultLabelColor: "#fafafa",
+        defaultFillColor: "var(--color-panel)",
+        defaultStrokeColor: "var(--color-canvas-stroke)",
+        defaultLabelColor: "var(--color-fg)",
       },
     } as ConstructorParameters<typeof BpmnModeler>[0]);
     modelerRef.current = modeler;

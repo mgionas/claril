@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
+import { AppearanceForm } from "@/components/settings/appearance-form";
 
 /**
  * Account profile — edit display name and avatar URL; email is read-only
@@ -21,6 +22,7 @@ export default async function ProfileSettingsPage() {
           image: session.user.image ?? "",
         }}
       />
+      <AppearanceForm />
       <ChangePasswordForm />
     </div>
   );
