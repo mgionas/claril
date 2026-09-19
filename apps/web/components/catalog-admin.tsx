@@ -1,5 +1,6 @@
 "use client";
 
+import { isNextControlError } from "@/lib/action-feedback";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -110,10 +111,16 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
     startTransition(async () => {
       try {
         await fn();
-        router.refresh();
       } catch (e) {
+        if (isNextControlError(e)) throw e;
         setError(e instanceof Error ? e.message : "Action failed.");
+        return;
       }
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
+        router.refresh();
+      });
     });
   }
 
