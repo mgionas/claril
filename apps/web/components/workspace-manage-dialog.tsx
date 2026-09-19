@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
 import {
@@ -78,6 +79,7 @@ export function WorkspaceManageDialog({
   onOpenChange,
 }: WorkspaceManageDialogProps) {
   const router = useRouter();
+  const [, startNavigation] = useTransition();
 
   const [status, setStatus] = useState<Status>(null);
 
@@ -226,8 +228,13 @@ export function WorkspaceManageDialog({
     setStatus(null);
     try {
       await deleteWorkspace(workspaceId);
-      onOpenChange(false);
-      router.push("/");
+      toast.success("Workspace deleted");
+      // Keep the dialog (and its "deleting" spinner) up until the dashboard's
+      // loading skeleton takes over, then close in the same commit.
+      startNavigation(() => {
+        onOpenChange(false);
+        router.push("/");
+      });
     } catch (err) {
       setStatus({ kind: "error", message: errorMessage(err) });
       setDeleting(false);
