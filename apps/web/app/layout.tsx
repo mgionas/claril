@@ -3,6 +3,7 @@ import NextTopLoader from "nextjs-toploader";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             shadow="0 0 10px #4d8dff,0 0 5px #4d8dff"
           />
           {children}
+          <Toaster />
           <Analytics />
         </ThemeProvider>
       </body>
