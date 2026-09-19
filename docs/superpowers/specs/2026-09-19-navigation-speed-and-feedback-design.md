@@ -35,9 +35,9 @@ Clicking around the signed-in app feels stuck: after a nav click or a create/ren
 - Signed in → renders the frame (today's `AppShell`: `SidebarProvider`, `AppSidebar`, header with `SidebarTrigger`, title, `ThemeToggle`, `NotificationBell`) around `children`.
 - Signed out → renders `children` bare. Only `/` handles this (it returns `<Landing />`); every other page in the group keeps its own `redirect("/sign-in")` guard, since layouts do not re-run on client navigation and must not be the only auth check.
 
-**Header title.** A client `HeaderTitle` in the frame derives the title from the pathname (`/`→Dashboard, `/projects`→Projects, `/workspaces`→Workspaces, `/w/*`→Workspace, `/catalog*`→Catalog, `/settings*`→Settings). Pages can override it with a client `<PageTitle>{text}</PageTitle>` that writes to a small React context in the frame (used by `/w/[workspaceId]` for the workspace name). The unused `actions` prop is dropped; `fullBleed`/`contentClassName` move to per-page wrappers if still needed.
+**Header title.** A client `HeaderTitle` in the frame derives the title from the pathname (`/`→Dashboard, `/projects`→Projects, `/workspaces`→Workspaces, `/w/*`→Workspace, `/catalog*`→Catalog, `/settings*`→Settings). Pages can override it with a client `<PageHeader title={…} actions={…} />` that writes both into a small React context the frame's header reads, and clears them on unmount. `/w/[workspaceId]` uses it for the workspace name and its `WorkspaceManageButton` (the only current `actions` user). The unused `fullBleed`/`contentClassName` props are removed.
 
-**Cleanup.** Pages drop their `<AppShell>` wrappers; `app/settings/layout.tsx` no longer renders a shell (kept only if it still needs its own guard/sub-nav). `AppShell` is reduced to the layout frame.
+**Cleanup.** Pages drop their `<AppShell>` wrappers. `app/settings/layout.tsx` (moved to `app/(app)/settings/layout.tsx`) stops rendering a shell and keeps only its `redirect("/sign-in")` guard. `AppShell` is reduced to the layout frame.
 
 **Skeletons.** One `loading.tsx` per content route, composed from `components/ui/skeleton.tsx`, mirroring the real layout so content does not jump:
 
