@@ -1,14 +1,12 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { listPersonalProjects } from "@/lib/personal-actions";
-import { getAiConfig } from "@/lib/ai";
-import { AppShell } from "@/components/app-shell";
+import { getAiConfigFor } from "@/lib/ai";
 import { ProjectsList } from "@/components/projects-list";
 
 export default async function ProjectsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }
@@ -22,15 +20,17 @@ export default async function ProjectsPage() {
   }
 
   // Personal scope keeps the flat projects listing.
-  const projects = await listPersonalProjects();
-
   // Gate the "Generate with AI" creation mode on a configured provider, resolved
   // for the active scope (personal here).
-  const aiConnected = ctx ? Boolean(await getAiConfig(ctx)) : false;
+  const [projects, aiConfig] = await Promise.all([
+    listPersonalProjects(),
+    ctx ? getAiConfigFor(ctx) : Promise.resolve(null),
+  ]);
+  const aiConnected = Boolean(aiConfig);
 
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email} title="Projects">
+    <>
       <ProjectsList projects={projects} aiConnected={aiConnected} context="personal" />
-    </AppShell>
+    </>
   );
 }

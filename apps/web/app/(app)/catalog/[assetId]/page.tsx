@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 import type { Asset, AssetLink, FieldDef } from "@claril/db";
-import { auth } from "@/lib/auth";
 import {
   getAsset,
   listAssetTypes,
@@ -10,7 +9,6 @@ import {
   getAssetUsage,
   canManageCatalog,
 } from "@/lib/catalog-actions";
-import { AppShell } from "@/components/app-shell";
 import { AssetDetail } from "@/components/catalog/asset-detail";
 
 /**
@@ -25,7 +23,7 @@ export default async function AssetDetailPage({
   params: Promise<{ assetId: string }>;
 }) {
   const { assetId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }
@@ -71,7 +69,7 @@ export default async function AssetDetailPage({
     .filter((a): a is Asset => Boolean(a));
 
   return (
-    <AppShell active="catalog" userName={session.user.name} userEmail={session.user.email}>
+    <>
       <AssetDetail
         asset={asset}
         assetType={assetType}
@@ -80,6 +78,6 @@ export default async function AssetDetailPage({
         referenced={referenced}
         canManage={canManage}
       />
-    </AppShell>
+    </>
   );
 }

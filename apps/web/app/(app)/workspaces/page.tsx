@@ -1,15 +1,13 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { listWorkspaces } from "@/lib/workspace-actions";
-import { AppShell } from "@/components/app-shell";
 import { WorkspacesGrid } from "@/components/workspaces-grid";
 
 export default async function WorkspacesPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }
@@ -39,8 +37,8 @@ export default async function WorkspacesPage() {
   const canCreate = orgRole === "owner" || orgRole === "admin";
 
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email} title="Workspaces">
+    <>
       <WorkspacesGrid workspaces={workspaces} canCreate={canCreate} />
-    </AppShell>
+    </>
   );
 }

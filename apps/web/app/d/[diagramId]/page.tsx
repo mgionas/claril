@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { getDiagram } from "@/lib/diagram-actions";
-import { diagramContext, getAiConfig } from "@/lib/ai";
+import { diagramContext, getAiConfigFor } from "@/lib/ai";
 import { assertDiagramAccess, canDo, requireWorkspaceRole } from "@/lib/tenancy";
 import { getDiagramDoc } from "@/lib/actions";
 import { getChatMessages } from "@/lib/chat-actions";
@@ -15,7 +14,7 @@ export default async function DiagramPage({
   params: Promise<{ diagramId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }
@@ -30,25 +29,14 @@ export default async function DiagramPage({
   // AI for an open diagram reflects THAT diagram's context: an org diagram uses
   // its org's AI, a personal diagram uses the user's personal AI.
   const { ctx } = await diagramContext(session.user.id, diagram.id);
-  const aiConfig = await getAiConfig(ctx);
-  const initialDoc = aiConfig ? await getDiagramDoc(diagram.id) : null;
-  const initialChatMessages = await getChatMessages(diagram.id);
 
-  // Comments are available in both scopes. On a personal diagram the solo owner
-  // can resolve their own threads; on org diagrams editors+ can resolve any
-  // thread (resolved from the viewer's workspace role). The server enforces both.
-  let canResolveComments = ctx.kind === "personal";
-  if (ctx.kind === "org") {
-    try {
-      const access = await assertDiagramAccess(session.user.id, diagram.id);
-      if (access.kind === "org") {
-        const role = await requireWorkspaceRole(session.user.id, access.workspaceId, "view");
-        canResolveComments = canDo(role, "edit");
-      }
-    } catch {
-      canResolveComments = false;
-    }
-  }
+  // Independent reads run together; the doc only when AI is configured.
+  const [aiConfig, initialChatMessages, canResolveComments] = await Promise.all([
+    getAiConfigFor(ctx),
+    getChatMessages(diagram.id),
+    resolveCanResolveComments(session.user.id, diagram.id, ctx.kind),
+  ]);
+  const initialDoc = aiConfig ? await getDiagramDoc(diagram.id) : null;
 
   const threadParam = sp.thread;
   const initialThreadId = Array.isArray(threadParam) ? threadParam[0] : threadParam;
@@ -70,4 +58,25 @@ export default async function DiagramPage({
       initialChatMessages={initialChatMessages}
     />
   );
+}
+
+/**
+ * Comments are available in both scopes. On a personal diagram the solo owner
+ * can resolve their own threads; on org diagrams editors+ can resolve any
+ * thread (resolved from the viewer's workspace role). The server enforces both.
+ */
+async function resolveCanResolveComments(
+  userId: string,
+  diagramId: string,
+  kind: "personal" | "org",
+): Promise<boolean> {
+  if (kind === "personal") return true;
+  try {
+    const access = await assertDiagramAccess(userId, diagramId);
+    if (access.kind !== "org") return false;
+    const role = await requireWorkspaceRole(userId, access.workspaceId, "view");
+    return canDo(role, "edit");
+  } catch {
+    return false;
+  }
 }

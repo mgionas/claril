@@ -1,10 +1,8 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Library } from "lucide-react";
-import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { listAssetTypes, listAssets, getAssetUsageCounts } from "@/lib/catalog-actions";
-import { AppShell } from "@/components/app-shell";
 import { CatalogAdmin } from "@/components/catalog-admin";
 
 /**
@@ -16,7 +14,7 @@ import { CatalogAdmin } from "@/components/catalog-admin";
  * render a "not available" state and never fetch org data.
  */
 export default async function CatalogPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }
@@ -25,7 +23,7 @@ export default async function CatalogPage() {
 
   if (ctx?.kind !== "org") {
     return (
-      <AppShell active="catalog" userName={session.user.name} userEmail={session.user.email}>
+      <>
         <div className="flex h-full w-full items-center justify-center p-8">
           <div className="w-full max-w-md rounded-[10px] border border-border bg-card/60 p-8 text-center backdrop-blur">
             <div className="mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-[10px] border border-border bg-muted/40">
@@ -41,7 +39,7 @@ export default async function CatalogPage() {
             </p>
           </div>
         </div>
-      </AppShell>
+      </>
     );
   }
 
@@ -52,8 +50,8 @@ export default async function CatalogPage() {
   ]);
 
   return (
-    <AppShell active="catalog" userName={session.user.name} userEmail={session.user.email}>
+    <>
       <CatalogAdmin initialTypes={types} initialAssets={assets} usageCounts={usageCounts} />
-    </AppShell>
+    </>
   );
 }

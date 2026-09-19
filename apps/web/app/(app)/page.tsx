@@ -1,15 +1,13 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { getActiveContext } from "@/lib/context";
-import { getAiConfig } from "@/lib/ai";
+import { getAiConfigFor } from "@/lib/ai";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import type { DashboardStats } from "@/lib/dashboard-stats-core";
-import { AppShell } from "@/components/app-shell";
 import { DashboardOverview } from "@/components/dashboard-overview";
 import { Landing } from "@/components/marketing/landing";
 
 export default async function Home() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     return <Landing />;
   }
@@ -17,8 +15,11 @@ export default async function Home() {
   // Aggregate stats for the active scope. Gate AI chrome on a configured
   // provider, resolved for the active context (org -> decrypted BYOK, personal).
   const ctx = await getActiveContext();
-  const stats = await getDashboardStats();
-  const aiConnected = ctx ? Boolean(await getAiConfig(ctx)) : false;
+  const [stats, aiConfig] = await Promise.all([
+    getDashboardStats(),
+    ctx ? getAiConfigFor(ctx) : Promise.resolve(null),
+  ]);
+  const aiConnected = Boolean(aiConfig);
 
   // `getDashboardStats` returns null when there is no resolvable scope; render a
   // friendly empty overview rather than failing the page.
@@ -34,12 +35,12 @@ export default async function Home() {
   // Both scopes render the stats overview at the root. Org workspaces live under
   // their own `/workspaces` route (per-workspace project pages under `/w/[id]`).
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email} title="Dashboard">
+    <>
       <DashboardOverview
         stats={safeStats}
         userName={session.user.name}
         aiConnected={aiConnected}
       />
-    </AppShell>
+    </>
   );
 }

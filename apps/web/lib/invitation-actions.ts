@@ -1,9 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { and, eq, gt } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
 
 /**
  * Pending organization invitations addressed to the current user, surfaced in
@@ -22,7 +21,7 @@ export interface InvitationView {
 }
 
 export async function listMyInvitations(): Promise<InvitationView[]> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   const email = session?.user?.email;
   if (!email) return [];
 

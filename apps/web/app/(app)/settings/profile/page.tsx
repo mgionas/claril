@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
 import { AppearanceForm } from "@/components/settings/appearance-form";
@@ -10,7 +9,7 @@ import { AppearanceForm } from "@/components/settings/appearance-form";
  * (Better Auth's change-email flow is verification-gated and not enabled here).
  */
 export default async function ProfileSettingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) redirect("/sign-in");
 
   return (

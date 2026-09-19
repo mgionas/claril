@@ -3,13 +3,12 @@ import { ArrowLeft, SearchX } from "lucide-react";
 
 /**
  * Catalog route not-found boundary. Rendered when `notFound()` fires inside a
- * catalog page (e.g. a missing or cross-org asset id). This boundary may render
- * outside AppShell, so it carries its own minimal centered chrome built from the
- * shared dark tokens.
+ * catalog page (e.g. a missing or cross-org asset id). It renders inside the persistent
+ * (app) frame, so it only centers its card in the content area.
  */
 export default function CatalogNotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-6 py-16">
+    <div className="flex min-h-[60vh] items-center justify-center py-16">
       <div className="w-full max-w-md rounded-[10px] border border-hairline bg-panel p-8 text-center">
         <div className="mx-auto mb-5 flex size-11 items-center justify-center rounded-full border border-hairline bg-elevated text-fg-muted">
           <SearchX className="size-5" />
@@ -27,6 +26,6 @@ export default function CatalogNotFound() {
           Back to Asset Catalog
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

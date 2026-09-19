@@ -1,5 +1,6 @@
 "use client";
 
+import { isNextControlError } from "@/lib/action-feedback";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -86,9 +87,14 @@ export function NewDiagramDialog({
   const showModes = kind === "bpmn";
   const busy = pending;
 
+  // Called after an `await`, so the navigation is re-wrapped in the transition:
+  // the dialog stays open (spinner) until the diagram's loading skeleton takes
+  // over, then closes in the same commit.
   function route(id: string) {
-    onOpenChange(false);
-    router.push(`/d/${id}`);
+    startTransition(() => {
+      onOpenChange(false);
+      router.push(`/d/${id}`);
+    });
   }
 
   function handleBlank() {
@@ -98,6 +104,7 @@ export function NewDiagramDialog({
         const { id } = await create(projectId, kind, name);
         route(id);
       } catch (e) {
+        if (isNextControlError(e)) throw e;
         setError(friendly(e, "Could not create the diagram."));
       }
     });
@@ -127,6 +134,7 @@ export function NewDiagramDialog({
         const { id } = await create(projectId, "bpmn", name || file.name, xml);
         route(id);
       } catch (e) {
+        if (isNextControlError(e)) throw e;
         setError(friendly(e, "Could not create the diagram."));
       }
     });
@@ -145,6 +153,7 @@ export function NewDiagramDialog({
         const { id } = await create(projectId, "bpmn", name, xml);
         route(id);
       } catch (e) {
+        if (isNextControlError(e)) throw e;
         setError(friendly(e, "Generation failed. Try rephrasing your description."));
       }
     });
@@ -303,7 +312,7 @@ export function NewDiagramDialog({
             Cancel
           </button>
           {(!showModes || mode === "blank") && (
-            <PrimaryButton busy={busy} onClick={handleBlank}>
+            <PrimaryButton busy={busy} busyLabel="Creating…" onClick={handleBlank}>
               Create
             </PrimaryButton>
           )}
@@ -314,7 +323,7 @@ export function NewDiagramDialog({
             </PrimaryButton>
           )}
           {showModes && mode === "import" && (
-            <PrimaryButton busy={busy} onClick={() => fileInputRef.current?.click()}>
+            <PrimaryButton busy={busy} busyLabel="Importing…" onClick={() => fileInputRef.current?.click()}>
               <Upload className="size-4" />
               Choose file
             </PrimaryButton>

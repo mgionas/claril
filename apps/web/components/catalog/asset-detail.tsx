@@ -1,5 +1,7 @@
 "use client";
 
+import { isNextControlError } from "@/lib/action-feedback";
+import { toast } from "sonner";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -80,12 +82,19 @@ export function AssetDetail({
     startTransition(async () => {
       try {
         await deleteAsset(asset.id);
-        router.push("/catalog");
-        router.refresh();
       } catch (e) {
+        if (isNextControlError(e)) throw e;
         setError(e instanceof Error ? e.message : "Delete failed.");
         setConfirmDelete(false);
+        return;
       }
+      toast.success("Asset deleted");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
+        router.push("/catalog");
+        router.refresh();
+      });
     });
   }
 
@@ -232,11 +241,18 @@ export function AssetDetail({
             startTransition(async () => {
               try {
                 await updateAsset(asset.id, input);
+              } catch (e) {
+                if (isNextControlError(e)) throw e;
+                setError(e instanceof Error ? e.message : "Save failed.");
+                return;
+              }
+              toast.success("Asset saved");
+              // Re-wrap post-await updates so `pending` spans the refresh and the UI
+              // swaps in one commit once the new data is on screen.
+              startTransition(() => {
                 setEditing(false);
                 router.refresh();
-              } catch (e) {
-                setError(e instanceof Error ? e.message : "Save failed.");
-              }
+              });
             });
           }}
         />

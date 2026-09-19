@@ -73,7 +73,8 @@ export function ContextSwitcher() {
       // only refresh on success so a failed switch doesn't show the wrong scope.
       const { error } = await authClient.organization.setActive({ organizationId });
       if (error) return;
-      router.refresh();
+      // Re-wrapped so the switcher spinner lasts until the new scope's data is on screen.
+      startSwitch(() => router.refresh());
     });
   }
 
@@ -82,7 +83,7 @@ export function ContextSwitcher() {
     startSwitch(async () => {
       const { error } = await authClient.organization.setActive({ organizationId: null });
       if (error) return;
-      router.refresh();
+      startSwitch(() => router.refresh());
     });
   }
 

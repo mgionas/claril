@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { getUsageSummary } from "@/lib/ai-usage";
 import { AiConnectionsManager } from "@/components/ai/ai-connections-manager";
@@ -14,7 +13,7 @@ import { SettingsHeader } from "@/components/settings/settings-ui";
  * (no usage panel). Rendered inside the shared settings layout (AppShell + sub-nav).
  */
 export default async function AiSettingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) redirect("/sign-in");
 
   const ctx = await getActiveContext();

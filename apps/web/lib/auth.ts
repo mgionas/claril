@@ -28,5 +28,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  // Serve session reads from a signed cookie for 5 minutes instead of a DB
+  // round-trip per call. Trade-off: a revoked session stays valid ≤5 min.
+  // Org switching (organization/set-active) rewrites this cookie, so the
+  // active org is never stale.
+  session: {
+    cookieCache: { enabled: true, maxAge: 5 * 60 },
+  },
   plugins: [organization()],
 });
