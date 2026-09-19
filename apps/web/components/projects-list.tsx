@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+import { errorMessage, isNextControlError } from "@/lib/action-feedback";
 import { NavLinkPending } from "@/components/nav-link-pending";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -12,7 +14,6 @@ import {
   FolderOpen,
   FolderPlus,
   GitBranch,
-  Loader2,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -121,11 +122,6 @@ const KIND_LABEL: Record<DiagramKind, string> = {
   c4: "C4",
 };
 
-function errorMessage(err: unknown): string {
-  if (err instanceof Error && err.message) return err.message;
-  if (typeof err === "string" && err) return err;
-  return "Something went wrong. Please try again.";
-}
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -234,12 +230,19 @@ function NewProjectDialog({
     startTransition(async () => {
       try {
         await projectActions(context, workspaceId).create(trimmed);
+      } catch (err) {
+        if (isNextControlError(err)) throw err;
+        setError(errorMessage(err));
+        return;
+      }
+      toast.success("Project created");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
         setName("");
         onOpenChange(false);
         router.refresh();
-      } catch (err) {
-        setError(errorMessage(err));
-      }
+      });
     });
   }
 
@@ -291,8 +294,7 @@ function NewProjectDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={pending || !name.trim()}>
-              {pending && <Loader2 className="size-4 animate-spin" />}
+            <Button type="submit" loading={pending} disabled={!name.trim()}>
               Create project
             </Button>
           </DialogFooter>
@@ -371,13 +373,20 @@ function ProjectFolder({
     startTransition(async () => {
       try {
         await actions.rename(project.id, next);
-        setRenaming(false);
-        router.refresh();
       } catch (err) {
+        if (isNextControlError(err)) throw err;
         setRenameError(errorMessage(err));
         setName(project.name);
         setRenaming(false);
+        return;
       }
+      toast.success("Project renamed");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
+        setRenaming(false);
+        router.refresh();
+      });
     });
   }
 
@@ -386,11 +395,18 @@ function ProjectFolder({
     startTransition(async () => {
       try {
         await actions.remove(project.id);
+      } catch (err) {
+        if (isNextControlError(err)) throw err;
+        setDeleteError(errorMessage(err));
+        return;
+      }
+      toast.success("Project deleted");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
         setConfirmDelete(false);
         router.refresh();
-      } catch (err) {
-        setDeleteError(errorMessage(err));
-      }
+      });
     });
   }
 
@@ -582,13 +598,20 @@ function DiagramRow({
     startTransition(async () => {
       try {
         await renameDiagram(id, next);
-        setRenaming(false);
-        router.refresh();
       } catch (err) {
+        if (isNextControlError(err)) throw err;
         setRenameError(errorMessage(err));
         setValue(name);
         setRenaming(false);
+        return;
       }
+      toast.success("Diagram renamed");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
+        setRenaming(false);
+        router.refresh();
+      });
     });
   }
 
@@ -597,11 +620,18 @@ function DiagramRow({
     startTransition(async () => {
       try {
         await deleteDiagram(id);
+      } catch (err) {
+        if (isNextControlError(err)) throw err;
+        setDeleteError(errorMessage(err));
+        return;
+      }
+      toast.success("Diagram deleted");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
         setConfirmDelete(false);
         router.refresh();
-      } catch (err) {
-        setDeleteError(errorMessage(err));
-      }
+      });
     });
   }
 
@@ -741,8 +771,7 @@ function ConfirmDialog({
           >
             Cancel
           </Button>
-          <Button type="button" variant="destructive" disabled={pending} onClick={onConfirm}>
-            {pending && <Loader2 className="size-4 animate-spin" />}
+          <Button type="button" variant="destructive" loading={pending} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </DialogFooter>
