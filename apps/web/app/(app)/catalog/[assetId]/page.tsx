@@ -10,7 +10,6 @@ import {
   getAssetUsage,
   canManageCatalog,
 } from "@/lib/catalog-actions";
-import { AppShell } from "@/components/app-shell";
 import { AssetDetail } from "@/components/catalog/asset-detail";
 
 /**
@@ -71,7 +70,7 @@ export default async function AssetDetailPage({
     .filter((a): a is Asset => Boolean(a));
 
   return (
-    <AppShell active="catalog" userName={session.user.name} userEmail={session.user.email}>
+    <>
       <AssetDetail
         asset={asset}
         assetType={assetType}
@@ -80,6 +79,6 @@ export default async function AssetDetailPage({
         referenced={referenced}
         canManage={canManage}
       />
-    </AppShell>
+    </>
   );
 }

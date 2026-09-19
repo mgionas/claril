@@ -9,7 +9,7 @@ import { AlertTriangle, ArrowLeft, RotateCw } from "lucide-react";
  * thrown by catalog pages — including the no-organization case (`requireOrg()`
  * throws) — and shows a friendly, on-brand fallback instead of an unstyled 500.
  *
- * Renders outside AppShell, so it carries its own minimal centered chrome from
+ * Renders inside the persistent (app) frame; it centers its own card using
  * the shared dark tokens. Raw error internals are never surfaced; we only show a
  * short, safe message.
  */
@@ -31,7 +31,7 @@ export default function CatalogError({
       : "The Asset Catalog couldn't be loaded. This is usually temporary.";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-6 py-16">
+    <div className="flex min-h-[60vh] items-center justify-center py-16">
       <div className="w-full max-w-md rounded-[10px] border border-hairline bg-panel p-8 text-center">
         <div className="mx-auto mb-5 flex size-11 items-center justify-center rounded-full border border-hairline bg-elevated text-warning">
           <AlertTriangle className="size-5" />
@@ -58,6 +58,6 @@ export default function CatalogError({
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

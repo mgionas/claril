@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { listPersonalProjects } from "@/lib/personal-actions";
 import { getAiConfig } from "@/lib/ai";
-import { AppShell } from "@/components/app-shell";
 import { ProjectsList } from "@/components/projects-list";
 
 export default async function ProjectsPage() {
@@ -29,8 +28,8 @@ export default async function ProjectsPage() {
   const aiConnected = ctx ? Boolean(await getAiConfig(ctx)) : false;
 
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email} title="Projects">
+    <>
       <ProjectsList projects={projects} aiConnected={aiConnected} context="personal" />
-    </AppShell>
+    </>
   );
 }

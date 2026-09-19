@@ -4,7 +4,6 @@ import { getActiveContext } from "@/lib/context";
 import { getAiConfig } from "@/lib/ai";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import type { DashboardStats } from "@/lib/dashboard-stats-core";
-import { AppShell } from "@/components/app-shell";
 import { DashboardOverview } from "@/components/dashboard-overview";
 import { Landing } from "@/components/marketing/landing";
 
@@ -34,12 +33,12 @@ export default async function Home() {
   // Both scopes render the stats overview at the root. Org workspaces live under
   // their own `/workspaces` route (per-workspace project pages under `/w/[id]`).
   return (
-    <AppShell userName={session.user.name} userEmail={session.user.email} title="Dashboard">
+    <>
       <DashboardOverview
         stats={safeStats}
         userName={session.user.name}
         aiConnected={aiConnected}
       />
-    </AppShell>
+    </>
   );
 }

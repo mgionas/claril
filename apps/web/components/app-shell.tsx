@@ -14,7 +14,8 @@ import {
   User,
 } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+import { titleForPath } from "@/lib/page-title";
+import { PageHeaderProvider, usePageHeader } from "@/components/page-header";
 import { ContextSwitcher } from "@/components/context-switcher";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -49,71 +50,52 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-/** Kept for back-compat with consumers that still pass `active`. */
-export type AppShellSection = "dashboard" | "catalog" | "settings";
-
 export interface AppShellProps {
   children: ReactNode;
   /** Display name for the user menu. */
   userName: string;
   /** Optional email shown under the name in the user menu. */
   userEmail?: string;
-  /**
-   * Back-compat: previously highlighted the matching primary-nav link. The
-   * active item now derives from the current pathname, so this is ignored.
-   */
-  active?: AppShellSection;
-  /** Right-aligned page actions rendered in the inset header (e.g. a primary CTA). */
-  actions?: ReactNode;
-  /** Render children full-bleed instead of inside the constrained container. */
-  fullBleed?: boolean;
-  /** Extra classes for the content container. */
-  contentClassName?: string;
-  /** Optional label shown next to the sidebar trigger in the inset header. */
-  title?: string;
 }
 
 /**
- * Shared shell for Claril's authenticated pages: a collapsible frosted sidebar
- * (a sidebar-07 team-switcher header for context switching, primary nav, a
- * collapsible Settings group, and a user menu) alongside an inset content area
- * with a sticky header. Reused by the dashboard, the Asset Catalog, and Settings.
+ * Persistent frame for Claril's signed-in management pages, rendered once by
+ * `app/(app)/layout.tsx`: collapsible sidebar + sticky header + content area.
+ * It stays mounted across navigations so only the content area swaps (to the
+ * route's loading.tsx skeleton, then the page). Pages override the header via <PageHeader>.
  */
-export function AppShell({
-  children,
-  userName,
-  userEmail,
-  actions,
-  fullBleed = false,
-  contentClassName,
-  title,
-}: AppShellProps) {
+export function AppShell({ children, userName, userEmail }: AppShellProps) {
   return (
-    <SidebarProvider>
-      <AppSidebar userName={userName} userEmail={userEmail} />
-      <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-hairline bg-canvas/80 px-4 backdrop-blur">
-          <SidebarTrigger />
-          {title && (
-            <span className="truncate text-sm font-semibold tracking-tight">{title}</span>
-          )}
-          <div className="ml-auto flex items-center gap-2">
-            {actions}
-            <ThemeToggle />
-            {/* Shown for everyone — personal accounts still receive org invitations. */}
-            <NotificationBell />
-          </div>
-        </header>
-        {fullBleed ? (
-          <main className="flex-1">{children}</main>
-        ) : (
-          <main className={cn("mx-auto w-full max-w-5xl px-6 py-8", contentClassName)}>
-            {children}
-          </main>
-        )}
-      </SidebarInset>
-    </SidebarProvider>
+    <PageHeaderProvider>
+      <SidebarProvider>
+        <AppSidebar userName={userName} userEmail={userEmail} />
+        <SidebarInset>
+          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-hairline bg-canvas/80 px-4 backdrop-blur">
+            <SidebarTrigger />
+            <HeaderTitle />
+            <div className="ml-auto flex items-center gap-2">
+              <HeaderActions />
+              <ThemeToggle />
+              {/* Shown for everyone — personal accounts still receive org invitations. */}
+              <NotificationBell />
+            </div>
+          </header>
+          <main className="mx-auto w-full max-w-5xl px-6 py-8">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
+    </PageHeaderProvider>
   );
+}
+
+function HeaderTitle() {
+  const pathname = usePathname();
+  const title = usePageHeader()?.title ?? titleForPath(pathname);
+  if (!title) return null;
+  return <span className="truncate text-sm font-semibold tracking-tight">{title}</span>;
+}
+
+function HeaderActions() {
+  return <>{usePageHeader()?.actions}</>;
 }
 
 interface NavLeaf {

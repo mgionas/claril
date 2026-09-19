@@ -6,9 +6,9 @@ import { auth } from "@/lib/auth";
 import { getAiConfig } from "@/lib/ai";
 import { listProjects } from "@/lib/diagram-actions";
 import { canDo, requireWorkspaceRole } from "@/lib/tenancy";
-import { AppShell } from "@/components/app-shell";
 import { ProjectsList } from "@/components/projects-list";
 import { WorkspaceManageButton } from "@/components/workspace-manage-button";
+import { PageHeader } from "@/components/page-header";
 
 /**
  * Per-workspace projects page (W13 P4). Role-gated: any workspace viewer may
@@ -52,16 +52,15 @@ export default async function WorkspacePage({
   const readOnly = !canDo(role, "edit");
 
   return (
-    <AppShell
-      userName={session.user.name}
-      userEmail={session.user.email}
-      title={ws.name}
-      actions={
-        canManage ? (
-          <WorkspaceManageButton workspaceId={workspaceId} workspaceName={ws.name} />
-        ) : undefined
-      }
-    >
+    <>
+      <PageHeader
+        title={ws.name}
+        actions={
+          canManage ? (
+            <WorkspaceManageButton workspaceId={workspaceId} workspaceName={ws.name} />
+          ) : undefined
+        }
+      />
       <ProjectsList
         context="org"
         workspaceId={workspaceId}
@@ -69,6 +68,6 @@ export default async function WorkspacePage({
         aiConnected={aiConnected}
         readOnly={readOnly}
       />
-    </AppShell>
+    </>
   );
 }
