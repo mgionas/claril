@@ -1,6 +1,6 @@
 import { getCurrentSession } from "@/lib/session";
 import { getActiveContext } from "@/lib/context";
-import { getAiConfig } from "@/lib/ai";
+import { getAiConfigFor } from "@/lib/ai";
 import { getDashboardStats } from "@/lib/dashboard-stats";
 import type { DashboardStats } from "@/lib/dashboard-stats-core";
 import { DashboardOverview } from "@/components/dashboard-overview";
@@ -15,8 +15,11 @@ export default async function Home() {
   // Aggregate stats for the active scope. Gate AI chrome on a configured
   // provider, resolved for the active context (org -> decrypted BYOK, personal).
   const ctx = await getActiveContext();
-  const stats = await getDashboardStats();
-  const aiConnected = ctx ? Boolean(await getAiConfig(ctx)) : false;
+  const [stats, aiConfig] = await Promise.all([
+    getDashboardStats(),
+    ctx ? getAiConfigFor(ctx) : Promise.resolve(null),
+  ]);
+  const aiConnected = Boolean(aiConfig);
 
   // `getDashboardStats` returns null when there is no resolvable scope; render a
   // friendly empty overview rather than failing the page.

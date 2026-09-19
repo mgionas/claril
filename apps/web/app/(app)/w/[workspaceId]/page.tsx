@@ -2,7 +2,7 @@ import { getCurrentSession } from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { getAiConfig } from "@/lib/ai";
+import { getAiConfigFor } from "@/lib/ai";
 import { listProjects } from "@/lib/diagram-actions";
 import { canDo, requireWorkspaceRole } from "@/lib/tenancy";
 import { ProjectsList } from "@/components/projects-list";
@@ -27,25 +27,27 @@ export default async function WorkspacePage({
   }
   const userId = session.user.id;
 
-  const role = await requireWorkspaceRole(userId, workspaceId, "view").catch(() => null);
-  if (!role) notFound();
-
-  // Workspace name + org id, read directly here (no per-workspace fetch action
-  // exists; this single row is cheap and keeps the page self-contained).
-  const ws = (
-    await db
+  // Role check + workspace row (name, org id) together. The name is only
+  // rendered once the role check passes, so this never leaks existence across
+  // tenants.
+  const [role, ws] = await Promise.all([
+    requireWorkspaceRole(userId, workspaceId, "view").catch(() => null),
+    db
       .select({ name: schema.workspace.name, orgId: schema.workspace.organizationId })
       .from(schema.workspace)
       .where(eq(schema.workspace.id, workspaceId))
       .limit(1)
-  )[0];
-  if (!ws) notFound();
-
-  const projects = await listProjects(workspaceId);
+      .then((rows) => rows[0]),
+  ]);
+  if (!role || !ws) notFound();
 
   // Gate the "Generate with AI" creation mode on a provider configured for the
   // workspace's org (mirrors how the dashboard resolves AI chrome).
-  const aiConnected = Boolean(await getAiConfig({ kind: "org", orgId: ws.orgId }));
+  const [projects, aiConfig] = await Promise.all([
+    listProjects(workspaceId),
+    getAiConfigFor({ kind: "org", orgId: ws.orgId }),
+  ]);
+  const aiConnected = Boolean(aiConfig);
 
   const canManage = canDo(role, "manage");
   const readOnly = !canDo(role, "edit");

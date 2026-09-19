@@ -2,7 +2,7 @@ import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getActiveContext } from "@/lib/context";
 import { listPersonalProjects } from "@/lib/personal-actions";
-import { getAiConfig } from "@/lib/ai";
+import { getAiConfigFor } from "@/lib/ai";
 import { ProjectsList } from "@/components/projects-list";
 
 export default async function ProjectsPage() {
@@ -20,11 +20,13 @@ export default async function ProjectsPage() {
   }
 
   // Personal scope keeps the flat projects listing.
-  const projects = await listPersonalProjects();
-
   // Gate the "Generate with AI" creation mode on a configured provider, resolved
   // for the active scope (personal here).
-  const aiConnected = ctx ? Boolean(await getAiConfig(ctx)) : false;
+  const [projects, aiConfig] = await Promise.all([
+    listPersonalProjects(),
+    ctx ? getAiConfigFor(ctx) : Promise.resolve(null),
+  ]);
+  const aiConnected = Boolean(aiConfig);
 
   return (
     <>
