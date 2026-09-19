@@ -206,16 +206,19 @@ export function ProjectsList({
   );
 }
 
-function NewProjectDialog({
+export function NewProjectDialog({
   open,
   onOpenChange,
   context,
   workspaceId,
+  redirectTo,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   context: ProjectsContext;
   workspaceId?: string;
+  /** Navigate here after creating (e.g. from the dashboard); default: refresh in place. */
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -241,7 +244,8 @@ function NewProjectDialog({
       startTransition(() => {
         setName("");
         onOpenChange(false);
-        router.refresh();
+        if (redirectTo) router.push(redirectTo);
+        else router.refresh();
       });
     });
   }

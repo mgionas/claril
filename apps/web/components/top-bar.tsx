@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Download, LogOut, Settings, Sparkles } from "lucide-react";
+import { AlertCircle, Check, Download, Loader2, LogOut, Settings, Sparkles } from "lucide-react";
+import { NavLinkPending } from "@/components/nav-link-pending";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
@@ -15,26 +16,25 @@ import { cn } from "@/lib/utils";
 
 export type ExportFormat = "bpmn" | "png" | "pdf";
 
-export type SaveState = "saved" | "saving" | "error";
+import type { SaveState } from "@/lib/autosaver";
 
-const saveLabel: Record<SaveState, string> = {
-  saved: "Saved",
-  saving: "Saving…",
-  error: "Save failed",
-};
+export type { SaveState };
+
 
 interface TopBarProps {
   diagramId: string;
   diagramName: string;
   userName: string;
   saveState: SaveState;
+  /** Retry the last failed save (shown next to "Save failed"). */
+  onRetrySave?: () => void;
   aiConnected: boolean;
   aiProvider?: string;
   onOpenAiSettings: () => void;
   /** History menu wiring (BPMN workbench only; omit elsewhere). */
   history?: {
     getCurrentXml: () => string | null;
-    onRestored: (xml: string) => void;
+    onRestored: (xml: string) => Promise<void> | void;
     onShowDiff: (
       marks: DiffMarks | null,
     ) => void;
@@ -43,7 +43,7 @@ interface TopBarProps {
   modelSwitcher?: ModelSwitcherProps;
   /** Diagram export (BPMN workbench only; omit ⇒ no Export menu). PNG/PDF take a
    *  theme so the user can download a light or dark render. */
-  onExport?: (format: ExportFormat, theme?: ExportTheme) => void;
+  onExport?: (format: ExportFormat, theme?: ExportTheme) => Promise<void> | void;
 }
 
 export function TopBar({
@@ -51,6 +51,7 @@ export function TopBar({
   diagramName,
   userName,
   saveState,
+  onRetrySave,
   aiConnected,
   aiProvider,
   onOpenAiSettings,
@@ -77,11 +78,12 @@ export function TopBar({
         >
           <span className="size-2 rounded-full bg-accent" />
           <span className="text-sm font-medium">Claril</span>
+          <NavLinkPending className="ml-0" />
         </Link>
         <span className="text-fg-subtle">/</span>
         <span className="text-sm text-fg-muted">{diagramName}</span>
         <span className="text-fg-subtle">·</span>
-        <span className="text-xs text-fg-subtle">{saveLabel[saveState]}</span>
+        <SaveStatus state={saveState} onRetry={onRetrySave} />
       </div>
 
       <div className="pointer-events-auto flex items-center gap-2">
@@ -142,5 +144,40 @@ export function TopBar({
         </button>
       </div>
     </header>
+  );
+}
+
+/** Autosave status: spinner while saving, check when saved, red + Retry on failure. */
+function SaveStatus({ state, onRetry }: { state: SaveState; onRetry?: () => void }) {
+  if (state === "saving") {
+    return (
+      <span role="status" className="flex items-center gap-1 text-xs text-fg-subtle">
+        <Loader2 className="size-3 animate-spin" aria-hidden />
+        Saving…
+      </span>
+    );
+  }
+  if (state === "error") {
+    return (
+      <span role="alert" className="flex items-center gap-1 text-xs text-destructive">
+        <AlertCircle className="size-3" aria-hidden />
+        Save failed
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="ml-1 rounded-[4px] px-1 font-medium underline underline-offset-2 hover:text-fg"
+          >
+            Retry
+          </button>
+        )}
+      </span>
+    );
+  }
+  return (
+    <span role="status" className="flex items-center gap-1 text-xs text-fg-subtle">
+      <Check className="size-3" aria-hidden />
+      Saved
+    </span>
   );
 }

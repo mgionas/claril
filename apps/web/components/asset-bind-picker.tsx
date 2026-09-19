@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Boxes, Search } from "lucide-react";
+import { Boxes, Search, Loader2 } from "lucide-react";
 import { listAssets, listAssetTypes } from "@/lib/catalog-actions";
 import type { Asset, AssetType } from "@claril/db";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ export function AssetBindPicker({ x, y, currentAssetId, onPick, onClose }: Asset
   const [assets, setAssets] = useState<Asset[]>([]);
   const [types, setTypes] = useState<AssetType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,7 +37,7 @@ export function AssetBindPicker({ x, y, currentAssetId, onPick, onClose }: Asset
         setTypes(t);
       })
       .catch(() => {
-        /* surfaced as empty state */
+        if (alive) setLoadFailed(true);
       })
       .finally(() => alive && setLoading(false));
     return () => {
@@ -96,7 +97,17 @@ export function AssetBindPicker({ x, y, currentAssetId, onPick, onClose }: Asset
 
         <div className="min-h-0 flex-1 overflow-y-auto p-1">
           {loading ? (
-            <p className="px-2 py-6 text-center text-xs text-fg-subtle">Loading catalog…</p>
+            <p
+              role="status"
+              className="flex items-center justify-center gap-1.5 px-2 py-6 text-xs text-fg-subtle"
+            >
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              Loading catalog…
+            </p>
+          ) : loadFailed ? (
+            <p role="alert" className="px-2 py-6 text-center text-xs text-error">
+              Couldn&apos;t load the catalog. Close and try again.
+            </p>
           ) : assets.length === 0 ? (
             <p className="px-2 py-6 text-center text-xs text-fg-subtle">
               No assets yet. Create some in the Catalog.

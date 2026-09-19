@@ -2,10 +2,13 @@
 
 import { NavLinkPending } from "@/components/nav-link-pending";
 import Link from "next/link";
+import { useState } from "react";
+import { NewProjectDialog } from "@/components/projects-list";
 import {
   Boxes,
   FileText,
   FolderKanban,
+  FolderPlus,
   GitBranch,
   Sparkles,
   Workflow,
@@ -78,6 +81,7 @@ const numberFmt = new Intl.NumberFormat("en-US");
 export function DashboardOverview({ stats, userName, aiConnected }: DashboardOverviewProps) {
   const isOrg = stats.scope === "org";
   const { bpmn, sequence, c4 } = stats.diagramsByType;
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
 
   // Derive which optional panels render so each grid's column count matches its
   // item count (otherwise fixed 3-col grids leave empty/oddly-wrapped slots).
@@ -104,16 +108,34 @@ export function DashboardOverview({ stats, userName, aiConnected }: DashboardOve
             )}
           </p>
         </div>
-        <Button asChild size="sm">
-          <Link href="/projects">
-            <FolderKanban className="size-4" />
-            {stats.projectCount === 0 ? "New project" : "Go to projects"}
-          </Link>
-        </Button>
+        {isOrg ? (
+          // Org projects live inside workspaces — pick one there.
+          <Button asChild size="sm">
+            <Link href="/workspaces">
+              <FolderKanban className="size-4" />
+              Go to workspaces
+              <NavLinkPending className="ml-0" />
+            </Link>
+          </Button>
+        ) : (
+          <Button size="sm" onClick={() => setNewProjectOpen(true)}>
+            <FolderPlus className="size-4" />
+            New project
+          </Button>
+        )}
       </div>
 
+      {!isOrg && (
+        <NewProjectDialog
+          open={newProjectOpen}
+          onOpenChange={setNewProjectOpen}
+          context="personal"
+          redirectTo="/projects"
+        />
+      )}
+
       {stats.projectCount === 0 ? (
-        <WholeEmptyState />
+        <WholeEmptyState isOrg={isOrg} onCreate={() => setNewProjectOpen(true)} />
       ) : (
         <>
           {/* Stat cards — grid columns match the card count so there's no empty slot */}
@@ -148,7 +170,7 @@ export function DashboardOverview({ stats, userName, aiConnected }: DashboardOve
           </div>
 
           {/* Recent diagrams */}
-          <RecentDiagrams recent={stats.recent} />
+          <RecentDiagrams recent={stats.recent} viewAllHref={isOrg ? "/workspaces" : "/projects"} />
         </>
       )}
     </div>
@@ -295,14 +317,20 @@ function UsageByModelChart({ byModel }: { byModel: NonNullable<DashboardStats["u
   );
 }
 
-function RecentDiagrams({ recent }: { recent: DashboardStats["recent"] }) {
+function RecentDiagrams({
+  recent,
+  viewAllHref,
+}: {
+  recent: DashboardStats["recent"];
+  viewAllHref: string;
+}) {
   return (
     <Card className="py-5">
       <CardHeader className="pb-0">
         <CardTitle className="text-sm font-medium">Recent diagrams</CardTitle>
         <CardAction>
           <Button asChild variant="ghost" size="sm" className="text-fg-muted">
-            <Link href="/projects">View all</Link>
+            <Link href={viewAllHref}>View all</Link>
           </Button>
         </CardAction>
       </CardHeader>
@@ -359,7 +387,7 @@ function RecentDiagrams({ recent }: { recent: DashboardStats["recent"] }) {
   );
 }
 
-function WholeEmptyState() {
+function WholeEmptyState({ isOrg, onCreate }: { isOrg: boolean; onCreate: () => void }) {
   return (
     <Card className="items-center py-16 text-center">
       <CardContent className="flex flex-col items-center">
@@ -368,14 +396,24 @@ function WholeEmptyState() {
         </span>
         <p className="mt-4 text-sm font-medium">No projects yet</p>
         <p className="mt-1 max-w-xs text-sm text-fg-muted">
-          Create your first project to start designing BPMN, sequence, and C4 diagrams.
+          {isOrg
+            ? "Open a workspace to create your first project and start designing BPMN, sequence, and C4 diagrams."
+            : "Create your first project to start designing BPMN, sequence, and C4 diagrams."}
         </p>
-        <Button asChild className="mt-5">
-          <Link href="/projects">
-            <FolderKanban className="size-4" />
-            Go to projects
-          </Link>
-        </Button>
+        {isOrg ? (
+          <Button asChild className="mt-5">
+            <Link href="/workspaces">
+              <FolderKanban className="size-4" />
+              Go to workspaces
+              <NavLinkPending className="ml-0" />
+            </Link>
+          </Button>
+        ) : (
+          <Button className="mt-5" onClick={onCreate}>
+            <FolderPlus className="size-4" />
+            Create project
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

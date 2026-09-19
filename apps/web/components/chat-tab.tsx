@@ -3,7 +3,8 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Send, Wand2, FileText, Trash2 } from "lucide-react";
+import { Send, Square, Wand2, FileText, RotateCcw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Finding } from "@claril/shared";
 import type { ProcessGraph } from "@claril/logic-inspector";
 import type { EditPlan } from "@claril/ai-advisor";
@@ -35,12 +36,14 @@ interface ChatTabProps {
   pendingProposalId: string | null;
   resolutions: Record<string, "approved" | "rolledback">;
   onApplyPlan: (toolCallId: string) => void;
-  onDiscardPlan: (toolCallId: string) => void;
+  onDiscardPlan: (toolCallId: string) => Promise<void> | void;
   onKeepRefining: (toolCallId: string) => void;
   onGenerateDocs: () => void;
   onReview: () => void;
   /** Select + fly to an element on the canvas (from a chat element chip). */
   onSelectElement: (elementId: string) => void;
+  /** Reports whether a reply is in flight (drives the command bar's Ask AI spinner). */
+  onBusyChange?: (busy: boolean) => void;
 }
 
 export function ChatTab(props: ChatTabProps) {
@@ -58,10 +61,24 @@ export function ChatTab(props: ChatTabProps) {
     el.style.height = `${Math.min(el.scrollHeight, 192)}px`;
   };
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, setMessages, error, stop, regenerate } = useChat({
     transport: new DefaultChatTransport({ api: "/api/ai/chat" }),
     messages: (props.initialMessages as never) ?? undefined,
   });
+  const busy = status === "submitted" || status === "streaming";
+  const onBusyChange = props.onBusyChange;
+  useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
+
+  // Per-request context the chat route grounds on (fresh graph/findings each call).
+  const requestBody = () => {
+    const ctx = props.getContext();
+    return {
+      graph: ctx.graph,
+      findings: ctx.findings,
+      diagramId: ctx.diagramId,
+      override: ctx.override,
+    };
+  };
 
   const persistedIds = useRef<Set<string>>(new Set());
   // Seed with hydrated ids so we never re-insert them, and seed seenProposals
@@ -95,18 +112,7 @@ export function ChatTab(props: ChatTabProps) {
   const send = (text: string) => {
     const t = text.trim();
     if (!t) return;
-    const ctx = props.getContext();
-    void sendMessage(
-      { text: t },
-      {
-        body: {
-          graph: ctx.graph,
-          findings: ctx.findings,
-          diagramId: ctx.diagramId,
-          override: ctx.override,
-        },
-      },
-    );
+    void sendMessage({ text: t }, { body: requestBody() });
   };
 
   const submit = () => {
@@ -118,7 +124,15 @@ export function ChatTab(props: ChatTabProps) {
   };
 
   useImperativeHandle(props.handleRef, () => ({
-    ask: (text) => send(text),
+    ask: (text) => {
+      // Shortcuts (Review, "Ask AI about this problem") must not interleave with a
+      // reply that is still streaming.
+      if (busy) {
+        toast.info("The AI is still answering — stop it or wait to send another request.");
+        return;
+      }
+      send(text);
+    },
     focusComposer: () => {
       requestAnimationFrame(() => {
         const el = textareaRef.current;
@@ -162,7 +176,11 @@ export function ChatTab(props: ChatTabProps) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, status]);
 
-  const busy = status === "submitted" || status === "streaming";
+  // While streaming, show a status unless a proposal is already showing "Drawing changes…".
+  const lastParts = (messages[messages.length - 1]?.parts ?? []) as Array<{ type?: string; state?: string }>;
+  const drawing = lastParts.some(
+    (p) => p.type === "tool-proposeEdit" && p.state !== "output-available",
+  );
 
   // Resolve element chips in assistant messages against the live graph/findings.
   const ctx = props.getContext();
@@ -230,20 +248,37 @@ export function ChatTab(props: ChatTabProps) {
           </div>
         ))}
         {status === "submitted" && <PhasePill label="Analyzing…" />}
+        {status === "streaming" && !drawing && <PhasePill label="Responding…" />}
         {status === "error" && (
-          <p className="px-2 text-xs text-error">The AI request failed. Try again.</p>
+          <div
+            role="alert"
+            className="mx-2 flex items-start gap-2 rounded-[8px] border border-error/30 bg-error/10 px-2.5 py-2 text-xs text-error"
+          >
+            <span className="min-w-0 flex-1">
+              The AI request failed{error?.message ? `: ${error.message}` : "."}
+            </span>
+            <button
+              type="button"
+              onClick={() => void regenerate({ body: requestBody() })}
+              className="flex shrink-0 items-center gap-1 font-medium underline-offset-2 hover:underline"
+            >
+              <RotateCcw className="size-3" />
+              Retry
+            </button>
+          </div>
         )}
       </div>
 
       <div className="border-t border-hairline p-3">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
-            <Chip icon={Wand2} label="Review" onClick={props.onReview} />
+            <Chip icon={Wand2} label="Review" onClick={props.onReview} disabled={busy} />
             <Chip icon={FileText} label="Document" onClick={props.onGenerateDocs} />
             {messages.length > 0 && (
               <Chip
                 icon={Trash2}
                 label="Clear"
+                disabled={busy}
                 onClick={() => {
                   setMessages([]);
                   persistedIds.current.clear();
@@ -276,15 +311,27 @@ export function ChatTab(props: ChatTabProps) {
             placeholder="Ask a question or describe a change…"
             className="block min-h-[84px] max-h-48 w-full resize-none rounded-[12px] bg-transparent py-2.5 pl-3 pr-11 text-sm leading-relaxed placeholder:text-fg-subtle focus:outline-none"
           />
-          <button
-            type="button"
-            onClick={submit}
-            disabled={busy || input.trim().length === 0}
-            title="Send"
-            className="absolute bottom-1.5 right-1.5 flex size-7 items-center justify-center rounded-[8px] bg-accent text-white transition-colors hover:bg-accent/90 disabled:opacity-30 disabled:hover:bg-accent"
-          >
-            <Send className="size-3.5" />
-          </button>
+          {busy ? (
+            <button
+              type="button"
+              onClick={() => void stop()}
+              title="Stop generating"
+              aria-label="Stop generating"
+              className="absolute bottom-1.5 right-1.5 flex size-7 items-center justify-center rounded-[8px] border border-hairline bg-elevated text-fg transition-colors hover:bg-elevated/70"
+            >
+              <Square className="size-3 fill-current" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={submit}
+              disabled={input.trim().length === 0}
+              title="Send"
+              className="absolute bottom-1.5 right-1.5 flex size-7 items-center justify-center rounded-[8px] bg-accent text-white transition-colors hover:bg-accent/90 disabled:opacity-30 disabled:hover:bg-accent"
+            >
+              <Send className="size-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -308,16 +355,19 @@ function Chip({
   icon: Icon,
   label,
   onClick,
+  disabled,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1 rounded-full border border-hairline px-2 py-0.5 text-[11px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
+      disabled={disabled}
+      className="flex items-center gap-1 rounded-full border border-hairline px-2 py-0.5 text-[11px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent disabled:pointer-events-none disabled:opacity-40"
     >
       <Icon className="size-3" />
       {label}

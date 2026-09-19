@@ -7,9 +7,10 @@ interface ModelerServices {
 /**
  * Execute a declarative QuickFix against a bpmn-js modeler. All changes go
  * through `modeling` so they're a single, undoable command and trigger
- * re-inspection automatically.
+ * re-inspection automatically. Returns false when the target element no longer
+ * exists (nothing was changed).
  */
-export function applyQuickFix(modeler: ModelerServices, fix: QuickFix): void {
+export function applyQuickFix(modeler: ModelerServices, fix: QuickFix): boolean {
   const elementRegistry = modeler.get("elementRegistry");
   const modeling = modeler.get("modeling");
   const elementFactory = modeler.get("elementFactory");
@@ -17,19 +18,20 @@ export function applyQuickFix(modeler: ModelerServices, fix: QuickFix): void {
   switch (fix.kind) {
     case "removeElement": {
       const element = elementRegistry.get(fix.elementId);
-      if (element) modeling.removeElements([element]);
-      return;
+      if (!element) return false;
+      modeling.removeElements([element]);
+      return true;
     }
     case "appendEndEvent": {
       const element = elementRegistry.get(fix.elementId);
-      if (!element) return;
+      if (!element) return false;
       const end = elementFactory.createShape({ type: "bpmn:EndEvent" });
       modeler.get("autoPlace").append(element, end);
-      return;
+      return true;
     }
     case "prependStartEvent": {
       const element = elementRegistry.get(fix.elementId);
-      if (!element) return;
+      if (!element) return false;
       const canvas = modeler.get("canvas");
       const start = elementFactory.createShape({ type: "bpmn:StartEvent" });
       const position = {
@@ -42,11 +44,12 @@ export function applyQuickFix(modeler: ModelerServices, fix: QuickFix): void {
         element.parent ?? canvas.getRootElement(),
       );
       modeling.connect(created, element);
-      return;
+      return true;
     }
     default: {
       const exhaustive: never = fix;
       void exhaustive;
+      return false;
     }
   }
 }

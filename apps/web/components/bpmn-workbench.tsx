@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+import { errorMessage } from "@/lib/action-feedback";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChevronLeft } from "lucide-react";
@@ -19,7 +21,8 @@ import type { VersionSource } from "@/lib/actions";
 import type { DiffMarks } from "@/lib/bpmn-diff";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
-import { TopBar, type SaveState } from "@/components/top-bar";
+import { TopBar } from "@/components/top-bar";
+import { useAutosave } from "@/hooks/use-autosave";
 import { downloadBpmn, downloadPdf, downloadPng } from "@/lib/diagram-export";
 import { AiDrawer, type DrawerTab } from "@/components/ai-drawer";
 import type { ChatTabHandle } from "@/components/chat-tab";
@@ -72,9 +75,9 @@ export function BpmnWorkbench({
   initialChatMessages,
 }: BpmnWorkbenchProps) {
   const [findings, setFindings] = useState<Finding[]>([]);
-  const [saveState, setSaveState] = useState<SaveState>("saved");
   const [focus, setFocus] = useState<{ id: string; nonce: number }>({ id: "", nonce: 0 });
   const [aiBusy, setAiBusy] = useState(false);
+  const [chatBusy, setChatBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isOrg = diagramScope === "org";
   const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
@@ -113,7 +116,11 @@ export function BpmnWorkbench({
   // How each resolved proposal ended up (keyed by toolCallId).
   const [resolutions, setResolutions] = useState<Record<string, "approved" | "rolledback">>({});
 
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveContent = useCallback(
+    (xml: string) => saveDiagramContent(diagramId, xml),
+    [diagramId],
+  );
+  const { saveState, schedule: scheduleSave, retry: retrySave } = useAutosave(saveContent);
   const graphRef = useRef<ProcessGraph | null>(null);
   const findingsRef = useRef<Finding[]>([]);
   const canvasApiRef = useRef<CanvasApi | null>(null);
@@ -187,7 +194,13 @@ export function BpmnWorkbench({
   );
 
   const handleApplyFix = useCallback((fix: QuickFix) => {
-    canvasApiRef.current?.applyFix(fix);
+    try {
+      const applied = canvasApiRef.current?.applyFix(fix) ?? false;
+      if (applied) toast.success("Fix applied");
+      else toast.info("Nothing to fix: that element is no longer on the canvas.");
+    } catch (err) {
+      toast.error("Couldn't apply the fix", { description: errorMessage(err) });
+    }
   }, []);
 
   const handleFindings = useCallback((next: Finding[]) => {
@@ -217,15 +230,9 @@ export function BpmnWorkbench({
       coalescerRef.current?.onChange();
       // Element set may have changed (add/remove/rename) — refresh comment anchors.
       refreshLiveElements();
-      setSaveState("saving");
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        saveDiagramContent(diagramId, xml)
-          .then(() => setSaveState("saved"))
-          .catch(() => setSaveState("error"));
-      }, 800);
+      scheduleSave(xml);
     },
-    [diagramId, refreshLiveElements],
+    [refreshLiveElements, scheduleSave],
   );
 
   // "Ask AI" opens the conversational assistant and lets the user ask — it does
@@ -258,9 +265,9 @@ export function BpmnWorkbench({
   // History: read the freshest XML for diffing.
   const getCurrentXml = useCallback(() => currentXmlRef.current ?? null, []);
 
-  const handleRestored = useCallback((xml: string) => {
+  const handleRestored = useCallback(async (xml: string) => {
     currentXmlRef.current = xml;
-    void canvasApiRef.current?.reloadXml(xml);
+    await canvasApiRef.current?.reloadXml(xml);
   }, []);
 
   const handleShowDiff = useCallback(
@@ -307,9 +314,17 @@ export function BpmnWorkbench({
   const handleProposal = useCallback((proposed: EditPlan, toolCallId: string) => {
     if (proposed.ops.length === 0) return;
     preEditXmlRef.current = currentXmlRef.current;
-    const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
-    canvasApiRef.current?.markAiEdit(changed);
-    setPendingProposalId(toolCallId); // this proposal is now the one awaiting review
+    try {
+      const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
+      canvasApiRef.current?.markAiEdit(changed);
+      setPendingProposalId(toolCallId); // this proposal is now the one awaiting review
+    } catch (err) {
+      // A plan that fails midway would leave a half-applied canvas: restore the
+      // pre-edit diagram and mark the proposal rolled back instead of "applied".
+      void canvasApiRef.current?.reloadXml(preEditXmlRef.current).catch(() => {});
+      setResolutions((r) => ({ ...r, [toolCallId]: "rolledback" }));
+      toast.error("Couldn't apply the AI's changes", { description: errorMessage(err) });
+    }
   }, []);
 
   const handleApplyPlan = useCallback((toolCallId: string) => {
@@ -319,9 +334,15 @@ export function BpmnWorkbench({
     forceSnapshot("ai", "AI edit"); // change already applied to the model; snapshot it
   }, [forceSnapshot]);
 
-  const handleDiscardPlan = useCallback((toolCallId: string) => {
+  const handleDiscardPlan = useCallback(async (toolCallId: string) => {
     canvasApiRef.current?.clearAiEdit();
-    void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
+    try {
+      await canvasApiRef.current?.reloadXml(preEditXmlRef.current);
+    } catch (err) {
+      toast.error("Couldn't roll back the AI's changes", { description: errorMessage(err) });
+      return;
+    }
+    // Only report "Rolled back" once the canvas actually shows the previous diagram.
     setResolutions((r) => ({ ...r, [toolCallId]: "rolledback" }));
     setPendingProposalId(null);
   }, []);
@@ -404,6 +425,7 @@ export function BpmnWorkbench({
           diagramName={diagramName}
           userName={userName}
           saveState={saveState}
+          onRetrySave={retrySave}
           aiConnected={aiConnected}
           aiProvider={aiProvider}
           onOpenAiSettings={() => setSettingsOpen(true)}
@@ -414,14 +436,11 @@ export function BpmnWorkbench({
           }}
           onExport={async (fmt, theme) => {
             const api = canvasApiRef.current;
-            if (!api) return;
-            try {
-              if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
-              else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName, theme);
-              else await downloadPdf(await api.exportSvg(), diagramName, theme);
-            } catch (e) {
-              console.error("Export failed", e);
-            }
+            if (!api) throw new Error("The canvas isn't ready yet.");
+            // Errors propagate to the export dialog, which shows them inline.
+            if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
+            else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName, theme);
+            else await downloadPdf(await api.exportSvg(), diagramName, theme);
           }}
           modelSwitcher={
             aiSettings
@@ -448,7 +467,8 @@ export function BpmnWorkbench({
         <CommandBar
           onAskAi={handleAskAi}
           onGenerateDocs={handleGenerateDocs}
-          aiBusy={aiBusy}
+          chatBusy={chatBusy}
+          docsBusy={docBusy}
           aiConnected={aiConnected}
         />
 
@@ -500,6 +520,7 @@ export function BpmnWorkbench({
         focusedElementId={focus.id}
         focusNonce={focus.nonce}
         aiBusy={aiBusy}
+        onChatBusyChange={setChatBusy}
         chatHandleRef={chatHandleRef}
         activeTab={activeTab}
         onTabChange={setActiveTab}

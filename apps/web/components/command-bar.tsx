@@ -15,7 +15,10 @@ interface CommandBarProps {
   onAskAi: () => void;
   /** Doc-gen: produce Markdown documentation of the process. */
   onGenerateDocs: () => void;
-  aiBusy: boolean;
+  /** The chat assistant is answering (spinner on Ask AI; it stays clickable). */
+  chatBusy: boolean;
+  /** Documentation is being generated (spinner on Docs). */
+  docsBusy: boolean;
   aiConnected: boolean;
 }
 
@@ -56,7 +59,13 @@ const SHORTCUT_GROUPS: { title: string; items: { keys: string[]; label: string }
   },
 ];
 
-export function CommandBar({ onAskAi, onGenerateDocs, aiBusy, aiConnected }: CommandBarProps) {
+export function CommandBar({
+  onAskAi,
+  onGenerateDocs,
+  chatBusy,
+  docsBusy,
+  aiConnected,
+}: CommandBarProps) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [isMac, setIsMac] = useState(true);
 
@@ -101,28 +110,32 @@ export function CommandBar({ onAskAi, onGenerateDocs, aiBusy, aiConnected }: Com
             <button
               type="button"
               onClick={onAskAi}
-              disabled={aiBusy}
               title={
                 aiConnected ? "Ask the AI advisor to critique this diagram" : "Set up an AI provider"
               }
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-accent transition-colors hover:bg-elevated disabled:opacity-60"
             >
-              {aiBusy ? (
+              {chatBusy ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
                 <Sparkles className="size-3.5" />
               )}
-              {aiBusy ? "Asking…" : "Ask AI"}
+              {chatBusy ? "Answering…" : "Ask AI"}
             </button>
             <button
               type="button"
               onClick={onGenerateDocs}
-              disabled={aiBusy}
+              disabled={docsBusy}
+              aria-busy={docsBusy || undefined}
               title={aiConnected ? "Generate Markdown documentation" : "Set up an AI provider"}
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-fg-muted transition-colors hover:bg-elevated hover:text-fg disabled:opacity-60"
             >
-              <FileText className="size-3.5" />
-              Docs
+              {docsBusy ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <FileText className="size-3.5" />
+              )}
+              {docsBusy ? "Generating…" : "Docs"}
             </button>
           </div>
         </div>

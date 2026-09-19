@@ -1,5 +1,7 @@
 "use client";
 
+import { errorMessage, runAction } from "@/lib/action-feedback";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
@@ -30,7 +32,8 @@ export interface DiffMarks {
 }
 
 export interface CanvasApi {
-  applyFix: (fix: QuickFix) => void;
+  /** Returns false when the target element of the fix no longer exists. */
+  applyFix: (fix: QuickFix) => boolean;
   /**
    * Reload the canvas with new XML (e.g. after a version restore) and re-run
    * inspection/persistence. Resolves once imported.
@@ -185,6 +188,7 @@ export default function BpmnCanvas({
   onSelectionChangeRef.current = onSelectionChange;
   const connectHandleRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [picker, setPicker] = useState<{ x: number; y: number } | null>(null);
   const [boundAssets, setBoundAssets] = useState<BoundAsset[]>([]);
@@ -194,15 +198,19 @@ export default function BpmnCanvas({
 
   // Load the diagram's element→asset bindings (and a manual refresh after edits).
   // Catalog is org-only, so skip entirely for personal diagrams.
-  const refreshBoundAssets = useCallback(() => {
+  // Resolves once the bound-asset overlays have the fresh list (bind/unbind
+  // wait on it so their toast lands when the canvas shows the change).
+  const refreshBoundAssets = useCallback(async () => {
     if (!diagramId || !canUseCatalog) return;
-    getDiagramBoundAssets(diagramId)
-      .then(setBoundAssets)
-      .catch(() => setBoundAssets([]));
+    try {
+      setBoundAssets(await getDiagramBoundAssets(diagramId));
+    } catch {
+      setBoundAssets([]);
+    }
   }, [diagramId, canUseCatalog]);
 
   useEffect(() => {
-    if (ready) refreshBoundAssets();
+    if (ready) void refreshBoundAssets();
   }, [ready, refreshBoundAssets]);
 
   useEffect(() => {
@@ -612,9 +620,8 @@ export default function BpmnCanvas({
 
         setReady(true);
         onReady?.({
-          applyFix: (fix) => {
-            if (modelerRef.current) applyQuickFix(modelerRef.current, fix);
-          },
+          applyFix: (fix) =>
+            modelerRef.current ? applyQuickFix(modelerRef.current, fix) : false,
           reloadXml,
           showDiff: applyDiff,
           clearDiff: clearDiffMarks,
@@ -631,7 +638,10 @@ export default function BpmnCanvas({
           exportSvg,
         });
       } catch (err) {
-        if (!disposed) console.error("Failed to import diagram", err);
+        if (!disposed) {
+          console.error("Failed to import diagram", err);
+          setLoadError(errorMessage(err));
+        }
       }
     })();
 
@@ -721,9 +731,13 @@ export default function BpmnCanvas({
       if (!bindTarget || !diagramId) return;
       const { elementId } = bindTarget;
       setBindTarget(null);
-      bindElementToAsset(diagramId, elementId, assetId)
-        .then(refreshBoundAssets)
-        .catch((err) => console.warn("Bind failed", err));
+      void runAction(
+        async () => {
+          await bindElementToAsset(diagramId, elementId, assetId);
+          await refreshBoundAssets();
+        },
+        { loading: "Binding asset…", success: "Asset bound", error: "Couldn't bind the asset" },
+      );
     },
     [bindTarget, diagramId, refreshBoundAssets],
   );
@@ -731,9 +745,13 @@ export default function BpmnCanvas({
   const handleUnbind = useCallback(
     (elementId: string) => {
       if (!diagramId) return;
-      unbindElement(diagramId, elementId)
-        .then(refreshBoundAssets)
-        .catch((err) => console.warn("Unbind failed", err));
+      void runAction(
+        async () => {
+          await unbindElement(diagramId, elementId);
+          await refreshBoundAssets();
+        },
+        { loading: "Unbinding asset…", success: "Asset unbound", error: "Couldn't unbind the asset" },
+      );
     },
     [diagramId, refreshBoundAssets],
   );
@@ -753,6 +771,33 @@ export default function BpmnCanvas({
     >
       {/* Dedicated, React-untouched node for bpmn-js to render into. */}
       <div ref={containerRef} className="absolute inset-0" />
+      {!ready && !loadError && (
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        >
+          <span className="flex items-center gap-2 text-sm text-fg-muted">
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            Loading diagram…
+          </span>
+        </div>
+      )}
+      {loadError && (
+        <div role="alert" className="absolute inset-0 flex items-center justify-center p-6">
+          <div className="max-w-sm rounded-[10px] border border-hairline bg-panel p-6 text-center">
+            <AlertTriangle className="mx-auto size-6 text-error" aria-hidden />
+            <p className="mt-3 text-sm font-medium text-fg">Couldn&apos;t open this diagram</p>
+            <p className="mt-1 break-words text-xs text-fg-muted">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-[6px] bg-accent px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      )}
       {ready && modelerRef.current && (
         <CanvasPalette modeler={modelerRef.current} onMore={(x, y) => setPicker({ x, y })} />
       )}

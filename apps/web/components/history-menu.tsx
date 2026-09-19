@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useCallback, useEffect, useState } from "react";
 import {
   Clock,
@@ -28,7 +29,8 @@ interface HistoryMenuProps {
   /** Live current XML, read fresh per diff. */
   getCurrentXml: () => string | null;
   /** Reload the canvas with restored content. */
-  onRestored: (xml: string) => void;
+  /** Load the restored XML onto the canvas; resolves once it has rendered. */
+  onRestored: (xml: string) => Promise<void> | void;
   /** Color the canvas with the active diff (null clears it). */
   onShowDiff: (
     marks: DiffMarks | null,
@@ -86,8 +88,10 @@ export function HistoryMenu({ diagramId, getCurrentXml, onRestored, onShowDiff }
       try {
         const xml = await restoreVersion(diagramId, v.id);
         onShowDiff(null);
-        onRestored(xml);
+        // Keep the Restore spinner until the canvas has actually re-rendered.
+        await onRestored(xml);
         await refresh();
+        toast.success(`Restored “${v.label ?? "version"}”`);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to restore.");
       } finally {
