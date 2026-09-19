@@ -1,5 +1,6 @@
 "use client";
 
+import { NavLinkPending } from "@/components/nav-link-pending";
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -121,6 +122,7 @@ function WorkspaceCard({ workspace }: { workspace: WorkspaceSummary }) {
           <Badge variant="outline" className="capitalize text-fg-muted">
             {workspace.role === "member" ? "editor" : workspace.role}
           </Badge>
+          <NavLinkPending className="absolute bottom-5 right-5" />
         </Link>
 
         {isAdmin && (

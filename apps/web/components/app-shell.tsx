@@ -1,5 +1,6 @@
 "use client";
 
+import { NavLinkPending } from "@/components/nav-link-pending";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -167,6 +168,7 @@ function AppSidebar({
                   <Link href={item.href} aria-current={isActive(item.href) ? "page" : undefined}>
                     <item.icon />
                     <span>{item.label}</span>
+                    <NavLinkPending />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -195,6 +197,7 @@ function AppSidebar({
                             aria-current={isActive(item.href) ? "page" : undefined}
                           >
                             <span>{item.label}</span>
+                            <NavLinkPending />
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

@@ -1,5 +1,6 @@
 "use client";
 
+import { NavLinkPending } from "@/components/nav-link-pending";
 import Link from "next/link";
 import {
   Boxes,
@@ -340,6 +341,7 @@ function RecentDiagrams({ recent }: { recent: DashboardStats["recent"] }) {
                         <span className="shrink-0 text-[11px] text-fg-subtle">
                           {KIND_LABEL[d.type] ?? d.type}
                         </span>
+                        <NavLinkPending className="ml-0" />
                       </Link>
                     </TableCell>
                     <TableCell className="text-fg-muted">{d.projectName}</TableCell>

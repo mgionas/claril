@@ -1,5 +1,6 @@
 "use client";
 
+import { NavLinkPending } from "@/components/nav-link-pending";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -629,10 +630,11 @@ function DiagramRow({
                 />
               </form>
             ) : (
-              <Link href={`/d/${id}`} className="min-w-0">
+              <Link href={`/d/${id}`} className="flex min-w-0 items-center gap-2">
                 <span className="truncate text-sm text-fg transition-colors group-hover:text-accent">
                   {name}
                 </span>
+                <NavLinkPending className="ml-0" />
               </Link>
             )}
           </div>
