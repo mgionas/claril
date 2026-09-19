@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+import { isNextControlError } from "@/lib/action-feedback";
 import { NavLinkPending } from "@/components/nav-link-pending";
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -191,14 +193,21 @@ function CreateWorkspaceDialog({
     if (!trimmed) return;
     setError(null);
     startTransition(async () => {
+      let id: string;
       try {
-        const { id } = await createWorkspace(trimmed);
+        ({ id } = await createWorkspace(trimmed));
+      } catch (err) {
+        if (isNextControlError(err)) throw err;
+        setError(errorMessage(err));
+        return;
+      }
+      // Re-wrap post-await updates so the dialog stays pending until the new
+      // workspace's loading skeleton takes over, then closes in the same commit.
+      startTransition(() => {
         setName("");
         onOpenChange(false);
         router.push(`/w/${id}`);
-      } catch (err) {
-        setError(errorMessage(err));
-      }
+      });
     });
   }
 
@@ -286,11 +295,18 @@ function RenameWorkspaceDialog({
     startTransition(async () => {
       try {
         await renameWorkspace(workspace.id, trimmed);
+      } catch (err) {
+        if (isNextControlError(err)) throw err;
+        setError(errorMessage(err));
+        return;
+      }
+      toast.success("Workspace renamed");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
         onOpenChange(false);
         router.refresh();
-      } catch (err) {
-        setError(errorMessage(err));
-      }
+      });
     });
   }
 
@@ -370,11 +386,18 @@ function DeleteWorkspaceDialog({
     startTransition(async () => {
       try {
         await deleteWorkspace(workspace.id);
+      } catch (err) {
+        if (isNextControlError(err)) throw err;
+        setError(errorMessage(err));
+        return;
+      }
+      toast.success("Workspace deleted");
+      // Re-wrap post-await updates so `pending` spans the refresh and the UI
+      // swaps in one commit once the new data is on screen.
+      startTransition(() => {
         onOpenChange(false);
         router.refresh();
-      } catch (err) {
-        setError(errorMessage(err));
-      }
+      });
     });
   }
 
