@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
 import { DEFAULT_MODELS, type AiProvider, type LLMProviderConfig } from "@claril/ai-advisor";
@@ -228,6 +229,20 @@ export function getAiConfig(ctx: AiContext, opts?: AiOverride): Promise<LLMProvi
   return ctx.kind === "personal"
     ? getUserAiConfig(ctx.userId, opts)
     : getOrgAiConfig(ctx.orgId, opts);
+}
+
+const getAiConfigByKey = cache((kind: AiContext["kind"], id: string) =>
+  getAiConfig(kind === "personal" ? { kind, userId: id } : { kind, orgId: id }),
+);
+
+/**
+ * Per-request memoized `getAiConfig` for page renders (no per-run override) —
+ * layouts and pages that both need it resolve + decrypt the key only once.
+ */
+export function getAiConfigFor(ctx: AiContext): Promise<LLMProviderConfig | null> {
+  return ctx.kind === "personal"
+    ? getAiConfigByKey("personal", ctx.userId)
+    : getAiConfigByKey("org", ctx.orgId);
 }
 
 /**

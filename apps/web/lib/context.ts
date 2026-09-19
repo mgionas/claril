@@ -1,7 +1,7 @@
-import { headers } from "next/headers";
+import { cache } from "react";
+import { getCurrentSession } from "@/lib/session";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
 
 /** Which scope the current request resolves against (personal vs an active org). */
 export type ActiveContext =
@@ -27,8 +27,8 @@ export function resolveActiveContext(
  * Reads the session's `activeOrganizationId` and validates it against live
  * org memberships.
  */
-export async function getActiveContext(): Promise<ActiveContext | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
+export const getActiveContext = cache(async (): Promise<ActiveContext | null> => {
+  const session = await getCurrentSession();
   const userId = session?.user?.id;
   if (!userId) return null;
   const activeOrgId = session.session?.activeOrganizationId ?? null;
@@ -41,14 +41,14 @@ export async function getActiveContext(): Promise<ActiveContext | null> {
     activeOrgId,
     memberships.map((m) => m.organizationId),
   );
-}
+});
 
 /**
  * Require an active org context. Throws when unauthenticated or when the user
  * is in the personal scope (no active organization).
  */
 export async function requireActiveOrg(): Promise<{ userId: string; orgId: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Unauthorized");
   const activeOrgId = session.session?.activeOrganizationId ?? null;

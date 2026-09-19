@@ -1,8 +1,7 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { auth } from "@/lib/auth";
 import { getAiConfig } from "@/lib/ai";
 import { listProjects } from "@/lib/diagram-actions";
 import { canDo, requireWorkspaceRole } from "@/lib/tenancy";
@@ -22,7 +21,7 @@ export default async function WorkspacePage({
   params: Promise<{ workspaceId: string }>;
 }) {
   const { workspaceId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }

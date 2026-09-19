@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import {
   streamText,
   convertToModelMessages,
@@ -7,7 +7,6 @@ import {
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { diagramContext, getAiConfig, getUserAiConfig } from "@/lib/ai";
 import {
   createModel,
@@ -53,7 +52,7 @@ You are given a structured summary of the process — its shape, sequence flows,
 When the user asks you to CHANGE the model (add/remove/connect/rename steps, fix a finding), call the proposeEdit tool with a precise natural-language instruction instead of describing the change in prose. Do not invent steps, systems, or relationships not present.`;
 
 export async function POST(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) return new Response("Unauthorized", { status: 401 });
   const userId = session.user.id;
 

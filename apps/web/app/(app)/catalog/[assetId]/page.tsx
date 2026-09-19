@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
 import type { Asset, AssetLink, FieldDef } from "@claril/db";
-import { auth } from "@/lib/auth";
 import {
   getAsset,
   listAssetTypes,
@@ -24,7 +23,7 @@ export default async function AssetDetailPage({
   params: Promise<{ assetId: string }>;
 }) {
   const { assetId } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }

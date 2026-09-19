@@ -1,7 +1,6 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Library } from "lucide-react";
-import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { listAssetTypes, listAssets, getAssetUsageCounts } from "@/lib/catalog-actions";
 import { CatalogAdmin } from "@/components/catalog-admin";
@@ -15,7 +14,7 @@ import { CatalogAdmin } from "@/components/catalog-admin";
  * render a "not available" state and never fetch org data.
  */
 export default async function CatalogPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }

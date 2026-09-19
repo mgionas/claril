@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { getDiagram } from "@/lib/diagram-actions";
 import { diagramContext, getAiConfig } from "@/lib/ai";
 import { assertDiagramAccess, canDo, requireWorkspaceRole } from "@/lib/tenancy";
@@ -15,7 +14,7 @@ export default async function DiagramPage({
   params: Promise<{ diagramId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }

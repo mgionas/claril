@@ -1,5 +1,4 @@
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getCurrentSession } from "@/lib/session";
 import { getActiveContext } from "@/lib/context";
 import { getAiConfig } from "@/lib/ai";
 import { getDashboardStats } from "@/lib/dashboard-stats";
@@ -8,7 +7,7 @@ import { DashboardOverview } from "@/components/dashboard-overview";
 import { Landing } from "@/components/marketing/landing";
 
 export default async function Home() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     return <Landing />;
   }

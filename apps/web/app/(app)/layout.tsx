@@ -1,6 +1,5 @@
+import { getCurrentSession } from "@/lib/session";
 import type { ReactNode } from "react";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 
 /**
@@ -10,7 +9,7 @@ import { AppShell } from "@/components/app-shell";
  * client navigation).
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) return <>{children}</>;
   return (
     <AppShell userName={session.user.name} userEmail={session.user.email}>

@@ -1,13 +1,12 @@
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { getActiveContext } from "@/lib/context";
 import { listPersonalProjects } from "@/lib/personal-actions";
 import { getAiConfig } from "@/lib/ai";
 import { ProjectsList } from "@/components/projects-list";
 
 export default async function ProjectsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) {
     redirect("/sign-in");
   }
