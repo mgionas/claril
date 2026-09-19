@@ -34,7 +34,7 @@ interface TopBarProps {
   /** History menu wiring (BPMN workbench only; omit elsewhere). */
   history?: {
     getCurrentXml: () => string | null;
-    onRestored: (xml: string) => void;
+    onRestored: (xml: string) => Promise<void> | void;
     onShowDiff: (
       marks: DiffMarks | null,
     ) => void;

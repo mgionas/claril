@@ -36,7 +36,7 @@ interface ChatTabProps {
   pendingProposalId: string | null;
   resolutions: Record<string, "approved" | "rolledback">;
   onApplyPlan: (toolCallId: string) => void;
-  onDiscardPlan: (toolCallId: string) => void;
+  onDiscardPlan: (toolCallId: string) => Promise<void> | void;
   onKeepRefining: (toolCallId: string) => void;
   onGenerateDocs: () => void;
   onReview: () => void;

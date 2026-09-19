@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, ArrowRight, Move, Pencil, Trash2, Check, RotateCcw, MessageCirclePlus } from "lucide-react";
+import { useState } from "react";
+import { Plus, ArrowRight, Move, Pencil, Trash2, Check, Loader2, RotateCcw, MessageCirclePlus } from "lucide-react";
 import type { EditPlan, Op } from "@claril/ai-advisor";
 
 export interface OpGroups {
@@ -65,9 +66,10 @@ export function ProposalCard({
   status: "pending" | "approved" | "rolledback";
   busy?: boolean;
   onApply: () => void;
-  onDiscard: () => void;
+  onDiscard: () => Promise<void> | void;
   onKeepRefining: () => void;
 }) {
+  const [rollingBack, setRollingBack] = useState(false);
   const groups = groupOps(plan.ops);
   const empty = plan.ops.length === 0;
 
@@ -106,7 +108,7 @@ export function ProposalCard({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || rollingBack}
                 onClick={onApply}
                 className="flex items-center gap-1 rounded-[6px] bg-accent px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-accent/90 disabled:opacity-40"
               >
@@ -115,11 +117,24 @@ export function ProposalCard({
               </button>
               <button
                 type="button"
-                onClick={onDiscard}
-                className="flex items-center gap-1 rounded-[6px] border border-hairline px-3 py-1 text-[12px] text-fg-muted transition-colors hover:bg-elevated"
+                disabled={busy || rollingBack}
+                aria-busy={rollingBack || undefined}
+                onClick={async () => {
+                  setRollingBack(true);
+                  try {
+                    await onDiscard();
+                  } finally {
+                    setRollingBack(false);
+                  }
+                }}
+                className="flex items-center gap-1 rounded-[6px] border border-hairline px-3 py-1 text-[12px] text-fg-muted transition-colors hover:bg-elevated disabled:opacity-40"
               >
-                <RotateCcw className="size-3.5" />
-                Roll back
+                {rollingBack ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <RotateCcw className="size-3.5" />
+                )}
+                {rollingBack ? "Rolling back…" : "Roll back"}
               </button>
               <button
                 type="button"

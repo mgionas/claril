@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+import { errorMessage } from "@/lib/action-feedback";
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { ChevronLeft } from "lucide-react";
@@ -257,9 +259,9 @@ export function BpmnWorkbench({
   // History: read the freshest XML for diffing.
   const getCurrentXml = useCallback(() => currentXmlRef.current ?? null, []);
 
-  const handleRestored = useCallback((xml: string) => {
+  const handleRestored = useCallback(async (xml: string) => {
     currentXmlRef.current = xml;
-    void canvasApiRef.current?.reloadXml(xml);
+    await canvasApiRef.current?.reloadXml(xml);
   }, []);
 
   const handleShowDiff = useCallback(
@@ -306,9 +308,17 @@ export function BpmnWorkbench({
   const handleProposal = useCallback((proposed: EditPlan, toolCallId: string) => {
     if (proposed.ops.length === 0) return;
     preEditXmlRef.current = currentXmlRef.current;
-    const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
-    canvasApiRef.current?.markAiEdit(changed);
-    setPendingProposalId(toolCallId); // this proposal is now the one awaiting review
+    try {
+      const changed = canvasApiRef.current?.applyEditPlan(proposed) ?? [];
+      canvasApiRef.current?.markAiEdit(changed);
+      setPendingProposalId(toolCallId); // this proposal is now the one awaiting review
+    } catch (err) {
+      // A plan that fails midway would leave a half-applied canvas: restore the
+      // pre-edit diagram and mark the proposal rolled back instead of "applied".
+      void canvasApiRef.current?.reloadXml(preEditXmlRef.current).catch(() => {});
+      setResolutions((r) => ({ ...r, [toolCallId]: "rolledback" }));
+      toast.error("Couldn't apply the AI's changes", { description: errorMessage(err) });
+    }
   }, []);
 
   const handleApplyPlan = useCallback((toolCallId: string) => {
@@ -318,9 +328,15 @@ export function BpmnWorkbench({
     forceSnapshot("ai", "AI edit"); // change already applied to the model; snapshot it
   }, [forceSnapshot]);
 
-  const handleDiscardPlan = useCallback((toolCallId: string) => {
+  const handleDiscardPlan = useCallback(async (toolCallId: string) => {
     canvasApiRef.current?.clearAiEdit();
-    void canvasApiRef.current?.reloadXml(preEditXmlRef.current);
+    try {
+      await canvasApiRef.current?.reloadXml(preEditXmlRef.current);
+    } catch (err) {
+      toast.error("Couldn't roll back the AI's changes", { description: errorMessage(err) });
+      return;
+    }
+    // Only report "Rolled back" once the canvas actually shows the previous diagram.
     setResolutions((r) => ({ ...r, [toolCallId]: "rolledback" }));
     setPendingProposalId(null);
   }, []);
