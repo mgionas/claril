@@ -194,7 +194,13 @@ export function BpmnWorkbench({
   );
 
   const handleApplyFix = useCallback((fix: QuickFix) => {
-    canvasApiRef.current?.applyFix(fix);
+    try {
+      const applied = canvasApiRef.current?.applyFix(fix) ?? false;
+      if (applied) toast.success("Fix applied");
+      else toast.info("Nothing to fix: that element is no longer on the canvas.");
+    } catch (err) {
+      toast.error("Couldn't apply the fix", { description: errorMessage(err) });
+    }
   }, []);
 
   const handleFindings = useCallback((next: Finding[]) => {

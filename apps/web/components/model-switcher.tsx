@@ -1,5 +1,6 @@
 "use client";
 
+import { runAction } from "@/lib/action-feedback";
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Cpu, Star } from "lucide-react";
 import type { AiProvider } from "@claril/ai-advisor";
@@ -19,7 +20,7 @@ export interface ModelSwitcherProps {
   value: AiOverride | null;
   onChange: (value: AiOverride | null) => void;
   canSetDefault: boolean;
-  onSetDefault: (v: { provider: AiProvider; model: string }) => void;
+  onSetDefault: (v: { provider: AiProvider; model: string }) => Promise<void> | void;
 }
 
 interface Entry {
@@ -168,8 +169,17 @@ export function ModelSwitcher({
             <button
               type="button"
               onClick={() => {
-                onSetDefault({ provider: selected.provider, model: selected.model });
                 setOpen(false);
+                void runAction(
+                  async () => {
+                    await onSetDefault({ provider: selected.provider, model: selected.model });
+                  },
+                  {
+                    loading: "Setting org default…",
+                    success: `Org default set to ${selected.model}`,
+                    error: "Couldn't set the org default",
+                  },
+                );
               }}
               className="flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-xs text-accent transition-colors hover:bg-accent/10"
             >
