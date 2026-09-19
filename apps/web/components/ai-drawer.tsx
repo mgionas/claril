@@ -55,6 +55,7 @@ export interface AiDrawerProps {
   onKeepRefining: (toolCallId: string) => void;
   onGenerateDocs: () => void;
   onReview: () => void;
+  onChatBusyChange?: (busy: boolean) => void;
   // problems wiring
   onSelect?: (elementId: string) => void;
   onApplyFix?: (fix: QuickFix) => void;
@@ -149,6 +150,7 @@ export function AiDrawer(props: AiDrawerProps) {
                   onKeepRefining={props.onKeepRefining}
                   onGenerateDocs={props.onGenerateDocs}
                   onReview={props.onReview}
+                  onBusyChange={props.onChatBusyChange}
                   onSelectElement={props.onSelect ?? (() => {})}
                 />
               </TabsContent>

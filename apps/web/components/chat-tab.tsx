@@ -42,6 +42,8 @@ interface ChatTabProps {
   onReview: () => void;
   /** Select + fly to an element on the canvas (from a chat element chip). */
   onSelectElement: (elementId: string) => void;
+  /** Reports whether a reply is in flight (drives the command bar's Ask AI spinner). */
+  onBusyChange?: (busy: boolean) => void;
 }
 
 export function ChatTab(props: ChatTabProps) {
@@ -64,6 +66,8 @@ export function ChatTab(props: ChatTabProps) {
     messages: (props.initialMessages as never) ?? undefined,
   });
   const busy = status === "submitted" || status === "streaming";
+  const onBusyChange = props.onBusyChange;
+  useEffect(() => onBusyChange?.(busy), [busy, onBusyChange]);
 
   // Per-request context the chat route grounds on (fresh graph/findings each call).
   const requestBody = () => {

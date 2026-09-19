@@ -75,6 +75,7 @@ export function BpmnWorkbench({
   const [findings, setFindings] = useState<Finding[]>([]);
   const [focus, setFocus] = useState<{ id: string; nonce: number }>({ id: "", nonce: 0 });
   const [aiBusy, setAiBusy] = useState(false);
+  const [chatBusy, setChatBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isOrg = diagramScope === "org";
   const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
@@ -444,7 +445,8 @@ export function BpmnWorkbench({
         <CommandBar
           onAskAi={handleAskAi}
           onGenerateDocs={handleGenerateDocs}
-          aiBusy={aiBusy}
+          chatBusy={chatBusy}
+          docsBusy={docBusy}
           aiConnected={aiConnected}
         />
 
@@ -496,6 +498,7 @@ export function BpmnWorkbench({
         focusedElementId={focus.id}
         focusNonce={focus.nonce}
         aiBusy={aiBusy}
+        onChatBusyChange={setChatBusy}
         chatHandleRef={chatHandleRef}
         activeTab={activeTab}
         onTabChange={setActiveTab}
