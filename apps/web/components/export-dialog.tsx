@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { FileImage, FileText, FileType, Moon, Sun } from "lucide-react";
+import { FileImage, FileText, FileType, Loader2, Moon, Sun } from "lucide-react";
+import { toast } from "sonner";
+import { errorMessage } from "@/lib/action-feedback";
 import type { ExportTheme } from "@/lib/diagram-export";
 import {
   Dialog,
@@ -32,19 +34,41 @@ export function ExportDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onExport: (format: ExportFormat, theme?: ExportTheme) => void;
+  /** Resolves once the file has been handed to the browser; rejects on failure. */
+  onExport: (format: ExportFormat, theme?: ExportTheme) => Promise<void> | void;
 }) {
   const [format, setFormat] = useState<ExportFormat>("png");
   const [theme, setTheme] = useState<ExportTheme>("light");
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const needsTheme = format !== "bpmn";
+  const label = format === "bpmn" ? ".bpmn" : format.toUpperCase();
 
-  function handleDownload() {
-    onExport(format, needsTheme ? theme : undefined);
-    onOpenChange(false);
+  // Stay open (spinner) until the file is generated — PNG/PDF rasterize and PDF
+  // lazy-loads its renderer, so this can take a few seconds.
+  async function handleDownload() {
+    setExporting(true);
+    setError(null);
+    try {
+      await onExport(format, needsTheme ? theme : undefined);
+      toast.success(`Exported ${label}`);
+      onOpenChange(false);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (exporting) return;
+        if (!o) setError(null);
+        onOpenChange(o);
+      }}
+    >
       <DialogContent className="border-hairline bg-panel/95 text-fg backdrop-blur sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Export diagram</DialogTitle>
@@ -103,13 +127,24 @@ export function ExportDialog({
           </div>
         </fieldset>
 
+        {error && (
+          <p role="alert" className="text-xs text-destructive">
+            Export failed: {error}
+          </p>
+        )}
+
         <DialogFooter>
           <button
             type="button"
-            onClick={handleDownload}
-            className="rounded-[6px] bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            onClick={() => void handleDownload()}
+            disabled={exporting}
+            aria-busy={exporting || undefined}
+            className="flex items-center gap-2 rounded-[6px] bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            Download {format === "bpmn" ? ".bpmn" : `${format.toUpperCase()} (${theme})`}
+            {exporting && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            {exporting
+              ? `Exporting ${label}…`
+              : `Download ${format === "bpmn" ? ".bpmn" : `${label} (${theme})`}`}
           </button>
         </DialogFooter>
       </DialogContent>

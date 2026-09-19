@@ -19,7 +19,8 @@ import type { VersionSource } from "@/lib/actions";
 import type { DiffMarks } from "@/lib/bpmn-diff";
 import type { CanvasApi } from "@/components/bpmn-canvas";
 import type { EditPlan } from "@claril/ai-advisor";
-import { TopBar, type SaveState } from "@/components/top-bar";
+import { TopBar } from "@/components/top-bar";
+import { useAutosave } from "@/hooks/use-autosave";
 import { downloadBpmn, downloadPdf, downloadPng } from "@/lib/diagram-export";
 import { AiDrawer, type DrawerTab } from "@/components/ai-drawer";
 import type { ChatTabHandle } from "@/components/chat-tab";
@@ -72,7 +73,6 @@ export function BpmnWorkbench({
   initialChatMessages,
 }: BpmnWorkbenchProps) {
   const [findings, setFindings] = useState<Finding[]>([]);
-  const [saveState, setSaveState] = useState<SaveState>("saved");
   const [focus, setFocus] = useState<{ id: string; nonce: number }>({ id: "", nonce: 0 });
   const [aiBusy, setAiBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -113,7 +113,11 @@ export function BpmnWorkbench({
   // How each resolved proposal ended up (keyed by toolCallId).
   const [resolutions, setResolutions] = useState<Record<string, "approved" | "rolledback">>({});
 
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveContent = useCallback(
+    (xml: string) => saveDiagramContent(diagramId, xml),
+    [diagramId],
+  );
+  const { saveState, schedule: scheduleSave, retry: retrySave } = useAutosave(saveContent);
   const graphRef = useRef<ProcessGraph | null>(null);
   const findingsRef = useRef<Finding[]>([]);
   const canvasApiRef = useRef<CanvasApi | null>(null);
@@ -217,15 +221,9 @@ export function BpmnWorkbench({
       coalescerRef.current?.onChange();
       // Element set may have changed (add/remove/rename) — refresh comment anchors.
       refreshLiveElements();
-      setSaveState("saving");
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        saveDiagramContent(diagramId, xml)
-          .then(() => setSaveState("saved"))
-          .catch(() => setSaveState("error"));
-      }, 800);
+      scheduleSave(xml);
     },
-    [diagramId, refreshLiveElements],
+    [refreshLiveElements, scheduleSave],
   );
 
   // "Ask AI" opens the conversational assistant and lets the user ask — it does
@@ -404,6 +402,7 @@ export function BpmnWorkbench({
           diagramName={diagramName}
           userName={userName}
           saveState={saveState}
+          onRetrySave={retrySave}
           aiConnected={aiConnected}
           aiProvider={aiProvider}
           onOpenAiSettings={() => setSettingsOpen(true)}
@@ -414,14 +413,11 @@ export function BpmnWorkbench({
           }}
           onExport={async (fmt, theme) => {
             const api = canvasApiRef.current;
-            if (!api) return;
-            try {
-              if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
-              else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName, theme);
-              else await downloadPdf(await api.exportSvg(), diagramName, theme);
-            } catch (e) {
-              console.error("Export failed", e);
-            }
+            if (!api) throw new Error("The canvas isn't ready yet.");
+            // Errors propagate to the export dialog, which shows them inline.
+            if (fmt === "bpmn") downloadBpmn(await api.exportXml(), diagramName);
+            else if (fmt === "png") await downloadPng(await api.exportSvg(), diagramName, theme);
+            else await downloadPdf(await api.exportSvg(), diagramName, theme);
           }}
           modelSwitcher={
             aiSettings

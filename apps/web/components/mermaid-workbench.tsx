@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { saveDiagramContent } from "@/lib/actions";
-import { TopBar, type SaveState } from "@/components/top-bar";
+import { TopBar } from "@/components/top-bar";
+import { useAutosave } from "@/hooks/use-autosave";
 import { AiSettingsDialog } from "@/components/ai-settings-dialog";
 import type { DiagramKind } from "@/lib/default-diagram";
 
@@ -35,28 +36,12 @@ export function MermaidWorkbench({
   aiConnected,
   aiProvider,
 }: MermaidWorkbenchProps) {
-  const [saveState, setSaveState] = useState<SaveState>("saved");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleChange = useCallback(
-    (content: string) => {
-      setSaveState("saving");
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        saveDiagramContent(diagramId, content)
-          .then(() => setSaveState("saved"))
-          .catch(() => setSaveState("error"));
-      }, 800);
-    },
+  const saveContent = useCallback(
+    (content: string) => saveDiagramContent(diagramId, content),
     [diagramId],
   );
-
-  useEffect(() => {
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
-  }, []);
+  const { saveState, schedule: handleChange, retry: retrySave } = useAutosave(saveContent);
 
   return (
     <main className="flex h-screen w-screen flex-col overflow-hidden bg-canvas text-fg">
@@ -66,6 +51,7 @@ export function MermaidWorkbench({
           diagramName={diagramName}
           userName={userName}
           saveState={saveState}
+          onRetrySave={retrySave}
           aiConnected={aiConnected}
           aiProvider={aiProvider}
           onOpenAiSettings={() => setSettingsOpen(true)}
