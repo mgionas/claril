@@ -35,12 +35,22 @@ describe("parseBpmnXml", () => {
     expect(types).not.toContain("laneSet");
     expect(types).not.toContain("collaboration");
 
+    // Nodes carry their lane + pool so AI grounding sees POOLS & LANES.
     expect(graph.nodes).toEqual([
-      { id: "Start_c", type: "startEvent", name: "Begin" },
-      { id: "Task_c", type: "userTask", name: "Handle" },
-      { id: "End_c", type: "endEvent", name: "Finish" },
+      { id: "Start_c", type: "startEvent", name: "Begin", lane: "Role A", pool: "Team" },
+      { id: "Task_c", type: "userTask", name: "Handle", lane: "Role A", pool: "Team" },
+      { id: "End_c", type: "endEvent", name: "Finish", lane: "Role A", pool: "Team" },
     ]);
     expect(graph.flows.map((f) => f.id)).toEqual(["Fc1", "Fc2"]);
+    expect(graph.pools).toEqual([{ id: "Participant_1", name: "Team" }]);
+    expect(graph.lanes).toEqual([
+      {
+        id: "Lane_1",
+        name: "Role A",
+        pool: "Team",
+        nodeIds: ["Start_c", "Task_c", "End_c"],
+      },
+    ]);
   });
 
   it("surfaces sequence flows with both endpoints only", async () => {
