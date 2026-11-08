@@ -743,6 +743,30 @@ export default function BpmnCanvas({
     }
   }, [focusElementId, focusNonce]);
 
+  // Re-fit the viewport on device rotation (Task 9). The browser fires
+  // `orientationchange` before layout (safe-area insets, Sheet panels, etc.)
+  // has settled, so the fit is deferred a tick; the modeler is read live via
+  // the ref rather than captured, since it may be re-created across effect
+  // runs this listener doesn't depend on.
+  useEffect(() => {
+    let timer: number | null = null;
+    const refit = () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        const canvas = modelerRef.current?.get("canvas") as
+          | { zoom: (v: string) => void }
+          | undefined;
+        canvas?.zoom("fit-viewport");
+      }, 150);
+    };
+    window.addEventListener("orientationchange", refit);
+    return () => {
+      window.removeEventListener("orientationchange", refit);
+      if (timer !== null) clearTimeout(timer);
+    };
+  }, []);
+
   // Long-press (600ms, no significant finger travel) opens the same context
   // menu as a right-click. Coarse-only — mouse pointerdown is ignored so
   // desktop behavior (right-click only) is unchanged.

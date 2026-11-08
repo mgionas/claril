@@ -29,6 +29,8 @@ import type { ChatTabHandle } from "@/components/chat-tab";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
 import { AiSettingsDialog } from "@/components/ai-settings-dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useWorkbenchLayout } from "@/hooks/use-workbench-layout";
 import { cn } from "@/lib/utils";
 
 // bpmn-js touches the DOM, so it must run client-only.
@@ -80,6 +82,10 @@ export function BpmnWorkbench({
   const [chatBusy, setChatBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isOrg = diagramScope === "org";
+  // Wide: the AI drawer docks beside the canvas (shrinking it). Narrow
+  // (portrait / small viewport): it becomes a dismissible bottom Sheet so the
+  // canvas always keeps the full width (Task 9).
+  const layout = useWorkbenchLayout();
   const [inspectorOpen, setInspectorOpen] = useState(Boolean(initialThreadId));
   const [activeTab, setActiveTab] = useState<DrawerTab>(
     initialThreadId ? "comments" : aiConnected ? "chat" : "problems",
@@ -397,9 +403,53 @@ export function BpmnWorkbench({
     canvasApiRef.current?.focusElement(elementId);
   }
 
+  // The AI drawer element is identical in wide (docked) and narrow (bottom
+  // Sheet) layouts — same props either way, so there's no behavior/prop drift
+  // between the two render paths (Task 9).
+  const aiDrawer = (
+    <AiDrawer
+      open={inspectorOpen}
+      aiConnected={aiConnected}
+      findings={allFindings}
+      errorCount={errorCount}
+      warningCount={warningCount}
+      focusedElementId={focus.id}
+      focusNonce={focus.nonce}
+      aiBusy={aiBusy}
+      onChatBusyChange={setChatBusy}
+      chatHandleRef={chatHandleRef}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      isOrg={isOrg}
+      currentUserId={currentUserId}
+      diagramId={diagramId}
+      selectedElement={selectedElement}
+      liveElementIds={liveElementIds}
+      elementNames={elementNames}
+      composeRequest={composeRequest}
+      canResolveComments={canResolveComments}
+      initialThreadId={initialThreadId}
+      onFocusElement={handleFocusElement}
+      onCommentedElementsChange={handleCommentedElementsChange}
+      getChatContext={getChatContext}
+      initialChatMessages={initialChatMessages}
+      pendingProposalId={pendingProposalId}
+      resolutions={resolutions}
+      onProposal={handleProposal}
+      onApplyPlan={handleApplyPlan}
+      onDiscardPlan={handleDiscardPlan}
+      onKeepRefining={handleKeepRefining}
+      onGenerateDocs={handleGenerateDocs}
+      onReview={handleReview}
+      onSelect={handleSelectFinding}
+      onApplyFix={handleApplyFix}
+      onAskAiAboutFinding={handleAskAiAboutFinding}
+    />
+  );
+
   return (
     <main
-      className="flex h-screen w-screen overflow-hidden bg-canvas text-fg"
+      className="workbench-safe flex h-screen w-screen overflow-hidden bg-canvas text-fg"
       // Selection is held for the Comments tab (W16, Task 6); surfaced here so the
       // state is observed until the tab consumes it.
       data-selected-element={selectedElement?.id ?? undefined}
@@ -511,44 +561,24 @@ export function BpmnWorkbench({
         </button>
       </div>
 
-      <AiDrawer
-        open={inspectorOpen}
-        aiConnected={aiConnected}
-        findings={allFindings}
-        errorCount={errorCount}
-        warningCount={warningCount}
-        focusedElementId={focus.id}
-        focusNonce={focus.nonce}
-        aiBusy={aiBusy}
-        onChatBusyChange={setChatBusy}
-        chatHandleRef={chatHandleRef}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        isOrg={isOrg}
-        currentUserId={currentUserId}
-        diagramId={diagramId}
-        selectedElement={selectedElement}
-        liveElementIds={liveElementIds}
-        elementNames={elementNames}
-        composeRequest={composeRequest}
-        canResolveComments={canResolveComments}
-        initialThreadId={initialThreadId}
-        onFocusElement={handleFocusElement}
-        onCommentedElementsChange={handleCommentedElementsChange}
-        getChatContext={getChatContext}
-        initialChatMessages={initialChatMessages}
-        pendingProposalId={pendingProposalId}
-        resolutions={resolutions}
-        onProposal={handleProposal}
-        onApplyPlan={handleApplyPlan}
-        onDiscardPlan={handleDiscardPlan}
-        onKeepRefining={handleKeepRefining}
-        onGenerateDocs={handleGenerateDocs}
-        onReview={handleReview}
-        onSelect={handleSelectFinding}
-        onApplyFix={handleApplyFix}
-        onAskAiAboutFinding={handleAskAiAboutFinding}
-      />
+      {layout === "wide" ? (
+        aiDrawer
+      ) : (
+        // Narrow: the drawer becomes a dismissible bottom Sheet instead of a
+        // docked flex sibling, so the canvas area above keeps its full width.
+        // AiDrawer's own root renders at a fixed h-full/w-96 (sized for the
+        // docked layout); override both to fill the Sheet by targeting the
+        // element tags rather than AiDrawer's internal class names, so this
+        // stays robust to internal styling changes and needs no new prop.
+        <Sheet open={inspectorOpen} onOpenChange={setInspectorOpen}>
+          <SheetContent
+            side="bottom"
+            className="h-[70vh] p-0 [&_aside]:h-full [&_aside]:w-full [&_aside>div]:w-full"
+          >
+            {aiDrawer}
+          </SheetContent>
+        </Sheet>
+      )}
 
       <AiSettingsDialog
         open={settingsOpen}
