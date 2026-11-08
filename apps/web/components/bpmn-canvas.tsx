@@ -5,6 +5,8 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
+import touchGesturesModule from "@/lib/touch/touch-gestures-module";
+import { isCoarsePointer } from "@/lib/touch/pointer";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
 import { ElementPicker } from "@/components/element-picker";
@@ -219,7 +221,7 @@ export default function BpmnCanvas({
 
     const modeler = new BpmnModeler({
       container,
-      additionalModules: [minimapModule],
+      additionalModules: [minimapModule, touchGesturesModule],
       minimap: { open: true },
       // Custom renderer colors as CSS variables so they resolve live and flip
       // with the theme — covers both the main canvas and the minimap (whose
@@ -231,6 +233,13 @@ export default function BpmnCanvas({
       },
     } as ConstructorParameters<typeof BpmnModeler>[0]);
     modelerRef.current = modeler;
+    // On touch, require a larger finger travel before a drag becomes a MOVE,
+    // so taps and pans don't accidentally nudge elements. Verified API:
+    // diagram-js Dragging.setOptions({ threshold }) (default 5).
+    if (isCoarsePointer()) {
+      (modeler.get("dragging") as { setOptions: (o: { threshold: number }) => void })
+        .setOptions({ threshold: 12 });
+    }
     // React StrictMode (dev) mounts effects twice: mount → cleanup → mount.
     // The first modeler is destroyed while its async importXML is still in
     // flight; this flag stops us from touching a destroyed instance.
