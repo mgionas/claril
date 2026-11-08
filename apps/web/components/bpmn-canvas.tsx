@@ -6,7 +6,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
 import touchGesturesModule from "@/lib/touch/touch-gestures-module";
-import { isCoarsePointer } from "@/lib/touch/pointer";
+import { classifyPointer, isCoarsePointer } from "@/lib/touch/pointer";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { mountSelectionToolbar } from "@/components/canvas-selection-toolbar";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
@@ -198,6 +199,40 @@ export default function BpmnCanvas({
   const [bindTarget, setBindTarget] = useState<{ elementId: string; x: number; y: number } | null>(
     null,
   );
+  const isCoarse = useCoarsePointer();
+  // Palette tap-to-place: the factory type armed by a coarse tap on a palette
+  // item, consumed by the next canvas click (see the `claril:arm-create`
+  // listener below). Null when nothing is armed.
+  const armedCreateRef = useRef<{ factoryType: string; participant?: boolean } | null>(null);
+
+  // Open the context menu at a screen point, resolving the element under it the
+  // same way the right-click handler already does. Shared by right-click,
+  // long-press, and the toolbar's "more" dispatch (via openMenuForElement).
+  const openMenuAt = useCallback((x: number, y: number) => {
+    const node = document.elementFromPoint(x, y)?.closest(".djs-element") as Element | null;
+    setMenu({ x, y, elementId: node?.getAttribute("data-element-id") ?? null });
+  }, []);
+
+  // Open the context menu anchored to a known element (no screen point handy —
+  // e.g. the toolbar's "more" button only gives us an id). Falls back to the
+  // viewport center if the element's graphics can't be located.
+  const openMenuForElement = useCallback((element: { id: string } & Record<string, unknown>) => {
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    try {
+      const registry = modelerRef.current?.get("elementRegistry") as
+        | { getGraphics: (el: unknown) => SVGGraphicsElement | undefined }
+        | undefined;
+      const rect = registry?.getGraphics(element)?.getBoundingClientRect();
+      if (rect) {
+        x = rect.left + rect.width / 2;
+        y = rect.top + rect.height / 2;
+      }
+    } catch {
+      /* ignore — fall back to viewport center */
+    }
+    setMenu({ x, y, elementId: element.id });
+  }, []);
 
   // Load the diagram's element→asset bindings (and a manual refresh after edits).
   // Catalog is org-only, so skip entirely for personal diagrams.
@@ -708,6 +743,120 @@ export default function BpmnCanvas({
     }
   }, [focusElementId, focusNonce]);
 
+  // Long-press (600ms, no significant finger travel) opens the same context
+  // menu as a right-click. Coarse-only — mouse pointerdown is ignored so
+  // desktop behavior (right-click only) is unchanged.
+  useEffect(() => {
+    if (!isCoarse) return;
+    const el = containerRef.current;
+    if (!el) return;
+    let timer: number | null = null;
+    let startX = 0;
+    let startY = 0;
+    const down = (e: PointerEvent) => {
+      if (classifyPointer(e.pointerType) === "mouse") return;
+      startX = e.clientX;
+      startY = e.clientY;
+      timer = window.setTimeout(() => openMenuAt(e.clientX, e.clientY), 600);
+    };
+    const cancel = (e?: PointerEvent) => {
+      if (e && Math.hypot(e.clientX - startX, e.clientY - startY) < 10) return;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    const up = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", cancel);
+    el.addEventListener("pointerup", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", cancel);
+      el.removeEventListener("pointerup", up);
+      if (timer) clearTimeout(timer);
+    };
+  }, [isCoarse, openMenuAt]);
+
+  // The selection toolbar's "more" button dispatches this with the element id
+  // (it has no screen point handy) — resolve + open via openMenuForElement.
+  useEffect(() => {
+    const open = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      const modeler = modelerRef.current;
+      if (!id || !modeler) return;
+      try {
+        const registry = modeler.get("elementRegistry") as unknown as {
+          get: (id: string) => ({ id: string } & Record<string, unknown>) | undefined;
+        };
+        const element = registry.get(id);
+        if (element) openMenuForElement(element);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener("claril:open-context-menu", open);
+    return () => window.removeEventListener("claril:open-context-menu", open);
+  }, [openMenuForElement]);
+
+  // Palette tap-to-place: a coarse tap on a palette item arms a factory type
+  // (claril:arm-create); the next canvas click drops that shape at the tapped
+  // point, then disarms. Fine-pointer drag-start (canvas-palette.tsx's
+  // onPointerDown → create.start) is unaffected — this only ever fires when
+  // something is armed.
+  useEffect(() => {
+    const arm = (e: Event) => {
+      const detail = (e as CustomEvent<{ factoryType: string; participant?: boolean }>).detail;
+      if (detail?.factoryType) armedCreateRef.current = detail;
+    };
+    window.addEventListener("claril:arm-create", arm);
+    return () => window.removeEventListener("claril:arm-create", arm);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const place = (e: MouseEvent) => {
+      const armed = armedCreateRef.current;
+      if (!armed) return;
+      armedCreateRef.current = null;
+      const modeler = modelerRef.current;
+      if (!modeler) return;
+      try {
+        const canvas = modeler.get("canvas") as unknown as {
+          viewbox: () => { x: number; y: number; scale: number };
+          getRootElement: () => unknown;
+        };
+        const vb = canvas.viewbox();
+        const rect = el.getBoundingClientRect();
+        const point = {
+          x: vb.x + (e.clientX - rect.left) / vb.scale,
+          y: vb.y + (e.clientY - rect.top) / vb.scale,
+        };
+        const elementFactory = modeler.get("elementFactory") as unknown as {
+          createShape: (opts: { type: string }) => unknown;
+          createParticipantShape: () => unknown;
+        };
+        const modeling = modeler.get("modeling") as unknown as {
+          createShape: (shape: unknown, position: unknown, target: unknown) => void;
+        };
+        const shape = armed.participant
+          ? elementFactory.createParticipantShape()
+          : elementFactory.createShape({ type: armed.factoryType });
+        modeling.createShape(shape, point, canvas.getRootElement());
+      } catch {
+        /* ignore — leave the canvas untouched on failure */
+      }
+    };
+    el.addEventListener("click", place);
+    return () => el.removeEventListener("click", place);
+  }, []);
+
   // Render asset-binding badges as overlays, independent of finding overlays.
   useEffect(() => {
     const modeler = modelerRef.current;
@@ -777,13 +926,8 @@ export default function BpmnCanvas({
     <div
       className="absolute inset-0"
       onContextMenu={(e) => {
-        const node = (e.target as Element).closest?.(".djs-element") as Element | null;
         e.preventDefault();
-        setMenu({
-          x: e.clientX,
-          y: e.clientY,
-          elementId: node?.getAttribute("data-element-id") ?? null,
-        });
+        openMenuAt(e.clientX, e.clientY);
       }}
     >
       {/* Dedicated, React-untouched node for bpmn-js to render into. */}

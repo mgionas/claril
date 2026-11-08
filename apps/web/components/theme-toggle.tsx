@@ -36,6 +36,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       )}
     >
       <Icon className="size-3.5" />
+      <span className="sr-only coarse:not-sr-only coarse:text-xs">{LABEL[current]}</span>
     </button>
   );
 }

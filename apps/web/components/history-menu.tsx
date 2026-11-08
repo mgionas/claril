@@ -131,12 +131,14 @@ export function HistoryMenu({ diagramId, getCurrentXml, onRestored, onShowDiff }
         <button
           type="button"
           title="Version history"
+          aria-label="Version history"
           className={cn(
             "flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-2 py-1.5 text-fg-muted backdrop-blur transition-colors hover:text-fg",
             open && "text-accent",
           )}
         >
           <Clock className="size-3.5" />
+          <span className="sr-only coarse:not-sr-only coarse:text-xs">History</span>
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} className="w-96 p-0">

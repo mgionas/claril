@@ -109,9 +109,11 @@ export function TopBar({
               type="button"
               onClick={() => setExportOpen(true)}
               title="Export diagram"
+              aria-label="Export diagram"
               className="flex items-center gap-1.5 rounded-[10px] border border-hairline bg-panel/80 px-2 py-1.5 text-fg-muted backdrop-blur transition-colors hover:text-fg"
             >
               <Download className="size-3.5" />
+              <span className="sr-only coarse:not-sr-only coarse:ml-0.5 coarse:text-xs">Export</span>
             </button>
             <ExportDialog open={exportOpen} onOpenChange={setExportOpen} onExport={onExport} />
           </>
