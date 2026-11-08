@@ -11,4 +11,11 @@ export default defineConfig({
   resolve: {
     alias: [{ find: /^@\//, replacement: root }],
   },
+  // tsconfig.json sets jsx:"preserve" (Next.js transforms it at build time via
+  // SWC). Vite 8's default oxc transform mirrors that for app code, so .tsx
+  // test subjects fail to parse under vitest unless we override it here —
+  // test-only, doesn't affect the Next.js build pipeline.
+  oxc: {
+    jsx: { runtime: "automatic" },
+  },
 });

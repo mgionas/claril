@@ -7,6 +7,7 @@ import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
 import touchGesturesModule from "@/lib/touch/touch-gestures-module";
 import { isCoarsePointer } from "@/lib/touch/pointer";
+import { mountSelectionToolbar } from "@/components/canvas-selection-toolbar";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
 import { ElementPicker } from "@/components/element-picker";
@@ -240,6 +241,12 @@ export default function BpmnCanvas({
       (modeler.get("dragging") as { setOptions: (o: { threshold: number }) => void })
         .setOptions({ threshold: 12 });
     }
+    // Tap-driven replacement for the hover context-pad (coarse-pointer only;
+    // fine-pointer users keep the unchanged hover context-pad, no overlay).
+    const unmountToolbar = mountSelectionToolbar(
+      modeler as unknown as Parameters<typeof mountSelectionToolbar>[0],
+      { isCoarse: isCoarsePointer() },
+    );
     // React StrictMode (dev) mounts effects twice: mount → cleanup → mount.
     // The first modeler is destroyed while its async importXML is still in
     // flight; this flag stops us from touching a destroyed instance.
@@ -668,6 +675,7 @@ export default function BpmnCanvas({
     return () => {
       disposed = true;
       resizeObserver.disconnect();
+      unmountToolbar();
       modeler.destroy();
       modelerRef.current = null;
       markedRef.current = [];
