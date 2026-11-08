@@ -13,7 +13,8 @@ export function useCoarsePointer(): boolean {
     const mql = window.matchMedia("(pointer: coarse)");
     const apply = () => {
       setCoarse(mql.matches);
-      document.documentElement.dataset.coarse = mql.matches ? "true" : "";
+      if (mql.matches) document.documentElement.dataset.coarse = "true";
+      else delete document.documentElement.dataset.coarse;
     };
     apply();
     mql.addEventListener("change", apply);

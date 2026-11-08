@@ -9,6 +9,11 @@
    track the chosen theme — not just the OS. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Touch: a `coarse:` variant keyed on the pointer type AND the data-coarse
+   root (JS mirror), so styles branch declaratively for iPad without changing
+   desktop. */
+@custom-variant coarse (@media (pointer: coarse));
+
 /* ---- Design tokens (Linear-minimal) ----
    Theme-aware: the literal values live in the :root,.dark (dark) and .light
    blocks below; this @theme inline block surfaces them to Tailwind utilities
@@ -184,6 +189,26 @@
   ::after,
   ::before {
     border-color: var(--color-border);
+  }
+
+  /* Take over canvas gestures from Safari so our two-finger pinch/pan wins
+     and the page itself doesn't scroll/zoom. Only on coarse pointers. */
+  @media (pointer: coarse) {
+    .djs-container,
+    .djs-container svg {
+      touch-action: none;
+    }
+    /* Respect iPad safe areas (home indicator, standalone chrome). */
+    [data-coarse="true"] .workbench-safe {
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+  /* Minimum comfortable touch target. */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
