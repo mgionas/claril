@@ -29,7 +29,13 @@ import type { ChatTabHandle } from "@/components/chat-tab";
 import { CommandBar } from "@/components/command-bar";
 import { DocPanel } from "@/components/doc-panel";
 import { AiSettingsDialog } from "@/components/ai-settings-dialog";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useWorkbenchLayout } from "@/hooks/use-workbench-layout";
 import { cn } from "@/lib/utils";
 
@@ -575,6 +581,12 @@ export function BpmnWorkbench({
             side="bottom"
             className="h-[70vh] p-0 [&_aside]:h-full [&_aside]:w-full [&_aside>div]:w-full"
           >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Assistant</SheetTitle>
+              <SheetDescription>
+                AI chat, problems, and comments for this diagram.
+              </SheetDescription>
+            </SheetHeader>
             {aiDrawer}
           </SheetContent>
         </Sheet>
