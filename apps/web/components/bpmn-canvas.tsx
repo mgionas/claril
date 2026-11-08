@@ -767,6 +767,19 @@ export default function BpmnCanvas({
     };
   }, []);
 
+  // Stamp the container with the most recent pointer instrument (Task 10) so
+  // CSS and the Pencil module can branch on pen vs. finger vs. mouse. Inert
+  // for mouse users — it only ever sets an attribute.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const stamp = (e: PointerEvent) => {
+      el.dataset.pointer = classifyPointer(e.pointerType);
+    };
+    el.addEventListener("pointerdown", stamp, true);
+    return () => el.removeEventListener("pointerdown", stamp, true);
+  }, []);
+
   // Long-press (600ms, no significant finger travel) opens the same context
   // menu as a right-click. Coarse-only — mouse pointerdown is ignored so
   // desktop behavior (right-click only) is unchanged.
