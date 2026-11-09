@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
 import touchGesturesModule from "@/lib/touch/touch-gestures-module";
+import pencilConnectModule from "@/lib/touch/pencil-connect-module";
 import { classifyPointer, isCoarsePointer } from "@/lib/touch/pointer";
 import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { mountSelectionToolbar } from "@/components/canvas-selection-toolbar";
@@ -257,7 +258,7 @@ export default function BpmnCanvas({
 
     const modeler = new BpmnModeler({
       container,
-      additionalModules: [minimapModule, touchGesturesModule],
+      additionalModules: [minimapModule, touchGesturesModule, pencilConnectModule],
       minimap: { open: true },
       // Custom renderer colors as CSS variables so they resolve live and flip
       // with the theme — covers both the main canvas and the minimap (whose
@@ -770,14 +771,33 @@ export default function BpmnCanvas({
   // Stamp the container with the most recent pointer instrument (Task 10) so
   // CSS and the Pencil module can branch on pen vs. finger vs. mouse. Inert
   // for mouse users — it only ever sets an attribute.
+  //
+  // Palm rejection (Task 11, coarse-only): while the last stamp was "pen",
+  // swallow a `touch`-type pointerdown before diagram-js sees it, so a palm
+  // resting on the glass while drawing doesn't start a pan/select. Capture
+  // phase + same function reference on add/remove (the project's known leak
+  // pattern — a mismatched reference or missing capture flag silently leaves
+  // the listener attached after unmount).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    // Read the dataset BEFORE `stamp` runs, so a touch event doesn't see its
+    // own (about-to-be-written) classification — order of registration below
+    // matters: rejectPalm must be added first to run first.
+    const rejectPalm = (e: PointerEvent) => {
+      if (el.dataset.pointer === "pen" && e.pointerType === "touch") {
+        e.stopPropagation();
+      }
+    };
     const stamp = (e: PointerEvent) => {
       el.dataset.pointer = classifyPointer(e.pointerType);
     };
+    el.addEventListener("pointerdown", rejectPalm, true);
     el.addEventListener("pointerdown", stamp, true);
-    return () => el.removeEventListener("pointerdown", stamp, true);
+    return () => {
+      el.removeEventListener("pointerdown", rejectPalm, true);
+      el.removeEventListener("pointerdown", stamp, true);
+    };
   }, []);
 
   // Long-press (600ms, no significant finger travel) opens the same context
