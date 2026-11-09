@@ -14,3 +14,14 @@ export function classifyPointer(pointerType: string): "pen" | "finger" | "mouse"
   if (pointerType === "touch") return "finger";
   return "mouse";
 }
+
+/** Palm rejection: a finger touch landing within `windowMs` of the last pen
+ * activity is treated as an accidental palm contact and ignored. Pure. */
+export function shouldRejectPalm(
+  kind: "pen" | "finger" | "mouse",
+  lastPenActivityMs: number,
+  nowMs: number,
+  windowMs = 700,
+): boolean {
+  return kind === "finger" && lastPenActivityMs > 0 && nowMs - lastPenActivityMs < windowMs;
+}

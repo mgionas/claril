@@ -7,7 +7,7 @@ import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
 import touchGesturesModule from "@/lib/touch/touch-gestures-module";
 import pencilConnectModule from "@/lib/touch/pencil-connect-module";
-import { classifyPointer, isCoarsePointer } from "@/lib/touch/pointer";
+import { classifyPointer, isCoarsePointer, shouldRejectPalm } from "@/lib/touch/pointer";
 import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { mountSelectionToolbar } from "@/components/canvas-selection-toolbar";
 import { CanvasPalette } from "@/components/canvas-palette";
@@ -772,31 +772,40 @@ export default function BpmnCanvas({
   // CSS and the Pencil module can branch on pen vs. finger vs. mouse. Inert
   // for mouse users — it only ever sets an attribute.
   //
-  // Palm rejection (Task 11, coarse-only): while the last stamp was "pen",
-  // swallow a `touch`-type pointerdown before diagram-js sees it, so a palm
-  // resting on the glass while drawing doesn't start a pan/select. Capture
-  // phase + same function reference on add/remove (the project's known leak
-  // pattern — a mismatched reference or missing capture flag silently leaves
-  // the listener attached after unmount).
+  // Palm rejection (Task 11, coarse-only): a `touch`-type pointerdown that
+  // lands within `shouldRejectPalm`'s window of the last pen activity is
+  // swallowed before diagram-js sees it, so a palm resting on the glass
+  // while drawing doesn't start a pan/select. This is a single consolidated
+  // handler (not two sibling listeners) — a rejected touch event must not
+  // also run the stamping logic, or `dataset.pointer` would flip to
+  // "finger" and the very next palm contact would pass through rejected.
+  // `pointermove` on the pen refreshes `lastPen` so rejection holds for the
+  // whole stroke, not just the initial pointerdown; the window also means
+  // rejection auto-releases once the pen goes idle. Capture phase + same
+  // function references on add/remove (the project's known leak pattern —
+  // a mismatched reference or missing capture flag silently leaves the
+  // listener attached after unmount).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    // Read the dataset BEFORE `stamp` runs, so a touch event doesn't see its
-    // own (about-to-be-written) classification — order of registration below
-    // matters: rejectPalm must be added first to run first.
-    const rejectPalm = (e: PointerEvent) => {
-      if (el.dataset.pointer === "pen" && e.pointerType === "touch") {
-        e.stopPropagation();
+    let lastPen = 0;
+    const onDown = (e: PointerEvent) => {
+      const kind = classifyPointer(e.pointerType);
+      if (shouldRejectPalm(kind, lastPen, performance.now())) {
+        e.stopPropagation(); // ignore resting palm while pen is active
+        return; // and do NOT restamp — keep the pen context
       }
+      if (kind === "pen") lastPen = performance.now();
+      el.dataset.pointer = kind;
     };
-    const stamp = (e: PointerEvent) => {
-      el.dataset.pointer = classifyPointer(e.pointerType);
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "pen") lastPen = performance.now(); // keep pen "active" during a stroke
     };
-    el.addEventListener("pointerdown", rejectPalm, true);
-    el.addEventListener("pointerdown", stamp, true);
+    el.addEventListener("pointerdown", onDown, true);
+    el.addEventListener("pointermove", onMove, true);
     return () => {
-      el.removeEventListener("pointerdown", rejectPalm, true);
-      el.removeEventListener("pointerdown", stamp, true);
+      el.removeEventListener("pointerdown", onDown, true);
+      el.removeEventListener("pointermove", onMove, true);
     };
   }, []);
 
