@@ -8,6 +8,7 @@ import {
   FilePlus2,
   GitBranch,
   Loader2,
+  PenTool,
   Sparkles,
   Upload,
   Workflow,
@@ -37,6 +38,12 @@ const KIND_OPTIONS: {
   { kind: "bpmn", label: "BPMN process", description: "bpmn-js canvas", icon: Workflow },
   { kind: "sequence", label: "Sequence", description: "Mermaid", icon: GitBranch },
   { kind: "c4", label: "C4 model", description: "Mermaid", icon: Boxes },
+  {
+    kind: "board",
+    label: "Board",
+    description: "Freeform whiteboard — embed diagrams, notes, and drawings",
+    icon: PenTool,
+  },
 ];
 
 const inputClass =

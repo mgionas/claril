@@ -83,7 +83,7 @@ const numberFmt = new Intl.NumberFormat("en-US");
 
 export function DashboardOverview({ stats, userName, aiConnected }: DashboardOverviewProps) {
   const isOrg = stats.scope === "org";
-  const { bpmn, sequence, c4 } = stats.diagramsByType;
+  const { bpmn, sequence, c4, board } = stats.diagramsByType;
   const [newProjectOpen, setNewProjectOpen] = useState(false);
 
   // Derive which optional panels render so each grid's column count matches its
@@ -152,7 +152,7 @@ export function DashboardOverview({ stats, userName, aiConnected }: DashboardOve
             <StatCard
               label="Diagrams"
               value={numberFmt.format(stats.diagramCount)}
-              sub={`${bpmn} BPMN · ${sequence} Sequence · ${c4} C4`}
+              sub={`${bpmn} BPMN · ${sequence} Sequence · ${c4} C4 · ${board} Board`}
             />
             {showMembers && (
               <StatCard label="Members" value={numberFmt.format(stats.memberCount!)} />
@@ -167,7 +167,7 @@ export function DashboardOverview({ stats, userName, aiConnected }: DashboardOve
               chartCount >= 3 && "lg:grid-cols-3",
             )}
           >
-            <TypeDonut bpmn={bpmn} sequence={sequence} c4={c4} />
+            <TypeDonut bpmn={bpmn} sequence={sequence} c4={c4} board={board} />
             {showUsage && <UsageCard usage={stats.usage!} />}
             {showUsageChart && <UsageByModelChart byModel={stats.usage!.byModel} />}
           </div>
@@ -198,11 +198,22 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
   );
 }
 
-function TypeDonut({ bpmn, sequence, c4 }: { bpmn: number; sequence: number; c4: number }) {
+function TypeDonut({
+  bpmn,
+  sequence,
+  c4,
+  board,
+}: {
+  bpmn: number;
+  sequence: number;
+  c4: number;
+  board: number;
+}) {
   const data = [
     { type: "bpmn", count: bpmn, fill: "var(--color-bpmn)" },
     { type: "sequence", count: sequence, fill: "var(--color-sequence)" },
     { type: "c4", count: c4, fill: "var(--color-c4)" },
+    { type: "board", count: board, fill: "var(--color-board)" },
   ].filter((d) => d.count > 0);
 
   const config: ChartConfig = {
@@ -210,6 +221,7 @@ function TypeDonut({ bpmn, sequence, c4 }: { bpmn: number; sequence: number; c4:
     bpmn: { label: "BPMN", color: "var(--chart-1)" },
     sequence: { label: "Sequence", color: "var(--chart-2)" },
     c4: { label: "C4", color: "var(--chart-3)" },
+    board: { label: "Board", color: "var(--chart-4)" },
   };
 
   return (
