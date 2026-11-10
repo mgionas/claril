@@ -3,6 +3,7 @@
 import type { DiagramKind } from "@/lib/default-diagram";
 import { BpmnWorkbench } from "@/components/bpmn-workbench";
 import { MermaidWorkbench } from "@/components/mermaid-workbench";
+import { BoardWorkbench } from "@/components/board-workbench";
 
 interface WorkbenchProps {
   diagramId: string;
@@ -63,6 +64,20 @@ export function Workbench({
         initialThreadId={initialThreadId}
         initialDoc={initialDoc}
         initialChatMessages={initialChatMessages}
+      />
+    );
+  }
+
+  if (kind === "board") {
+    return (
+      <BoardWorkbench
+        diagramId={diagramId}
+        diagramName={diagramName}
+        initialContent={initialContent}
+        userName={userName}
+        aiConnected={aiConnected}
+        aiProvider={aiProvider}
+        diagramScope={diagramScope}
       />
     );
   }
