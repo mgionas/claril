@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
+import type { ExcalidrawInitialDataState } from "@excalidraw/excalidraw/types";
 import { deserializeBoard, serializeBoard } from "@/lib/board-scene";
 
 export interface BoardCanvasProps {
@@ -36,9 +37,9 @@ export default function BoardCanvas({ initialContent, onChange }: BoardCanvasPro
     <div className="h-full w-full">
       <Excalidraw
         initialData={
-          { elements: initial.elements, appState: initial.appState, files: initial.files } as never
+          { elements: initial.elements, appState: initial.appState, files: initial.files } as unknown as ExcalidrawInitialDataState
         }
-        onChange={handleChange as never}
+        onChange={handleChange}
       />
     </div>
   );
