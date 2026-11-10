@@ -76,8 +76,21 @@ export const defaultC4Diagram = `C4Context
     Rel(user, system, "Uses")
     Rel(system, email, "Sends email via")`;
 
+/**
+ * Empty Excalidraw scene JSON seed for new Board diagrams. The diagram content
+ * is the raw Excalidraw scene (elements/appState/files as JSON-as-code); the
+ * editor renders the live canvas.
+ */
+export const defaultBoardDiagram = JSON.stringify({
+  version: 1,
+  source: "claril-board",
+  elements: [],
+  appState: { viewBackgroundColor: "#ffffff" },
+  files: {},
+});
+
 /** Diagram kinds Claril can create. Mirrors the DB `diagram_type` enum. */
-export type DiagramKind = "bpmn" | "sequence" | "c4";
+export type DiagramKind = "bpmn" | "sequence" | "c4" | "board";
 
 /** Starter content for a freshly created diagram of the given kind. */
 export function seedForKind(kind: DiagramKind): string {
@@ -86,6 +99,8 @@ export function seedForKind(kind: DiagramKind): string {
       return defaultSequenceDiagram;
     case "c4":
       return defaultC4Diagram;
+    case "board":
+      return defaultBoardDiagram;
     case "bpmn":
     default:
       return defaultDiagram;
@@ -99,6 +114,8 @@ export function defaultNameForKind(kind: DiagramKind): string {
       return "Untitled sequence";
     case "c4":
       return "Untitled C4 model";
+    case "board":
+      return "Untitled board";
     case "bpmn":
     default:
       return "Untitled process";

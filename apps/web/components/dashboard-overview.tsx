@@ -10,6 +10,7 @@ import {
   FolderKanban,
   FolderPlus,
   GitBranch,
+  PenTool,
   Sparkles,
   Workflow,
 } from "lucide-react";
@@ -51,12 +52,14 @@ const KIND_ICON: Record<DiagramKind, typeof Workflow> = {
   bpmn: Workflow,
   sequence: GitBranch,
   c4: Boxes,
+  board: PenTool,
 };
 
 const KIND_LABEL: Record<DiagramKind, string> = {
   bpmn: "BPMN",
   sequence: "Sequence",
   c4: "C4",
+  board: "Board",
 };
 
 function firstName(name: string): string {

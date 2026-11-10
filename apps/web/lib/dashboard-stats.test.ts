@@ -8,7 +8,7 @@ describe("aggregateStats", () => {
   it("returns zeros for no projects", () => {
     expect(aggregateStats([])).toEqual({
       projectCount: 0, diagramCount: 0,
-      diagramsByType: { bpmn: 0, sequence: 0, c4: 0 }, recent: [],
+      diagramsByType: { bpmn: 0, sequence: 0, c4: 0, board: 0 }, recent: [],
     });
   });
   it("counts projects + diagrams by type and surfaces recent (newest first, capped)", () => {
@@ -21,7 +21,7 @@ describe("aggregateStats", () => {
     ]);
     expect(s.projectCount).toBe(2);
     expect(s.diagramCount).toBe(3);
-    expect(s.diagramsByType).toEqual({ bpmn: 1, sequence: 1, c4: 1 });
+    expect(s.diagramsByType).toEqual({ bpmn: 1, sequence: 1, c4: 1, board: 0 });
     expect(s.recent.map((r) => r.id)).toEqual(["d2", "d3", "d1"]);
     expect(s.recent[0]).toMatchObject({ id: "d2", name: "Seq", type: "sequence", projectName: "A" });
   });

@@ -15,7 +15,7 @@ import {
 export interface DiagramSummary {
   id: string;
   name: string;
-  type: "bpmn" | "sequence" | "c4";
+  type: DiagramKind;
   updatedAt: string;
 }
 

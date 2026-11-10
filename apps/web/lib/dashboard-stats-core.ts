@@ -1,10 +1,11 @@
 import type { ProjectWithDiagrams } from "@/lib/diagram-actions";
 import type { UsageSummary } from "@/lib/ai-usage";
+import type { DiagramKind } from "@/lib/default-diagram";
 
 export interface RecentDiagram {
   id: string;
   name: string;
-  type: "bpmn" | "sequence" | "c4";
+  type: DiagramKind;
   projectName: string;
   updatedAt: string;
 }
@@ -12,7 +13,7 @@ export interface RecentDiagram {
 export interface DashboardStatsCore {
   projectCount: number;
   diagramCount: number;
-  diagramsByType: { bpmn: number; sequence: number; c4: number };
+  diagramsByType: { bpmn: number; sequence: number; c4: number; board: number };
   recent: RecentDiagram[];
 }
 
@@ -26,7 +27,7 @@ export const RECENT_LIMIT = 6;
 
 /** PURE: counts + by-type + recent (newest first, capped) from the scope's projects. No I/O. */
 export function aggregateStats(projects: ProjectWithDiagrams[]): DashboardStatsCore {
-  const diagramsByType = { bpmn: 0, sequence: 0, c4: 0 };
+  const diagramsByType = { bpmn: 0, sequence: 0, c4: 0, board: 0 };
   let diagramCount = 0;
   const all: RecentDiagram[] = [];
   for (const p of projects) {

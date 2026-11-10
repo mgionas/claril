@@ -16,6 +16,7 @@ import {
   GitBranch,
   MoreHorizontal,
   Pencil,
+  PenTool,
   Plus,
   SquareArrowOutUpRight,
   Trash2,
@@ -114,12 +115,14 @@ const KIND_ICON: Record<DiagramKind, typeof Workflow> = {
   bpmn: Workflow,
   sequence: GitBranch,
   c4: Boxes,
+  board: PenTool,
 };
 
 const KIND_LABEL: Record<DiagramKind, string> = {
   bpmn: "BPMN",
   sequence: "Sequence",
   c4: "C4",
+  board: "Board",
 };
 
 

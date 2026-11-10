@@ -28,7 +28,7 @@ export default async function Home() {
       scope: ctx?.kind ?? "personal",
       projectCount: 0,
       diagramCount: 0,
-      diagramsByType: { bpmn: 0, sequence: 0, c4: 0 },
+      diagramsByType: { bpmn: 0, sequence: 0, c4: 0, board: 0 },
       recent: [],
     };
 

@@ -7,7 +7,7 @@ import { check, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueI
 import { sql } from "drizzle-orm";
 import { organization, user } from "./auth";
 
-export const diagramType = pgEnum("diagram_type", ["bpmn", "sequence", "c4"]);
+export const diagramType = pgEnum("diagram_type", ["bpmn", "sequence", "c4", "board"]);
 export const workspaceRole = pgEnum("workspace_role", ["admin", "editor", "viewer", "member"]);
 export const projectRole = pgEnum("project_role", ["owner", "editor", "viewer"]);
 
