@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Excalidraw, convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import type { ExcalidrawImperativeAPI, ExcalidrawInitialDataState } from "@excalidraw/excalidraw/types";
-import { Shapes } from "lucide-react";
+import { Network, Shapes } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { buildDiagramRefSkeleton, deserializeBoard, readDiagramRef, serializeBoard } from "@/lib/board-scene";
 import { getDiagramContentForEmbed, getEmbeddableDiagrams, type EmbeddableDiagram } from "@/lib/board-actions";
 import { renderBpmnToDataUrl } from "@/lib/board-svg";
+import { RelatedPanel } from "@/components/related-panel";
 
 export interface BoardCanvasProps {
   /** The board diagram's own id, used to scope the embed picker and to
@@ -45,6 +46,11 @@ export default function BoardCanvas({ diagramId, initialContent, onChange }: Boa
   const [pickerOpen, setPickerOpen] = useState(false);
   const [embeddable, setEmbeddable] = useState<EmbeddableDiagram[] | null>(null);
   const [inserting, setInserting] = useState(false);
+  // The diagram-ref of the single currently-selected tile, if any — drives
+  // the floating "Related" button. `relatedFor` is the diagram id the
+  // RelatedPanel is open for (set when the button is clicked).
+  const [selectedRef, setSelectedRef] = useState<{ diagramId: string } | null>(null);
+  const [relatedFor, setRelatedFor] = useState<string | null>(null);
 
   const handleChange = useCallback(
     (elements: readonly unknown[], appState: unknown, files: unknown) => {
@@ -55,6 +61,17 @@ export default function BoardCanvas({ diagramId, initialContent, onChange }: Boa
           files as Record<string, unknown>,
         ),
       );
+
+      const selectedElementIds = (appState as { selectedElementIds?: Record<string, boolean> })
+        .selectedElementIds;
+      const selectedIds = selectedElementIds ? Object.keys(selectedElementIds).filter((id) => selectedElementIds[id]) : [];
+      if (selectedIds.length === 1) {
+        const el = (elements as { id?: string }[]).find((e) => e.id === selectedIds[0]);
+        const ref = el ? readDiagramRef(el as never) : null;
+        setSelectedRef(ref ? { diagramId: ref.diagramId } : null);
+      } else {
+        setSelectedRef(null);
+      }
     },
     [onChange],
   );
@@ -144,7 +161,13 @@ export default function BoardCanvas({ diagramId, initialContent, onChange }: Boa
         }
         onChange={handleChange}
       />
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {selectedRef && (
+          <Button variant="outline" size="sm" onClick={() => setRelatedFor(selectedRef.diagramId)}>
+            <Network />
+            Related
+          </Button>
+        )}
         <Popover open={pickerOpen} onOpenChange={openPicker}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" disabled={!api}>
@@ -179,6 +202,7 @@ export default function BoardCanvas({ diagramId, initialContent, onChange }: Boa
           </PopoverContent>
         </Popover>
       </div>
+      {relatedFor && <RelatedPanel diagramId={relatedFor} onClose={() => setRelatedFor(null)} />}
     </div>
   );
 }
