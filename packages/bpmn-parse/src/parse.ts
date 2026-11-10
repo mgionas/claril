@@ -1,4 +1,10 @@
-import type { BpmnNode, ProcessGraph, SequenceFlow } from "@claril/logic-inspector";
+import type {
+  BpmnNode,
+  LaneInfo,
+  PoolInfo,
+  ProcessGraph,
+  SequenceFlow,
+} from "@claril/logic-inspector";
 // bpmn-moddle ships no type declarations and is consumed across package
 // boundaries, so we type its tiny surface locally rather than via an ambient
 // module declaration (which would not be visible to dependent packages).
@@ -136,9 +142,109 @@ function collect(
   }
 }
 
+/** Collect the ids of every flow NODE (not container, not sequence flow) under
+ * a process, recursing into sub-processes — used to bind nodes to their pool. */
+function collectNodeIds(element: ModdleElement, into: Set<string>): void {
+  for (const child of asArray<ModdleElement>(element.flowElements)) {
+    const childType = child.$type;
+    if (!childType || childType === "bpmn:SequenceFlow") continue;
+    if (!CONTAINER_TYPES.has(childType) && child.id) into.add(child.id);
+    if (FLOW_CONTAINER_TYPES.has(childType) || child.flowElements) collectNodeIds(child, into);
+  }
+}
+
+/** Walk a process's laneSets (recursing into nested childLaneSets) and record
+ * each lane plus the nodes it names via `flowNodeRef`. */
+function collectLanes(
+  element: ModdleElement,
+  poolName: string | undefined,
+  lanes: LaneInfo[],
+  laneNameByNode: Map<string, string>,
+): void {
+  for (const laneSet of asArray<ModdleElement>(element.laneSets)) {
+    for (const lane of asArray<ModdleElement>(laneSet.lanes)) {
+      if (!lane.id) continue;
+      const nodeIds = asArray<unknown>(lane.flowNodeRef)
+        .map(refId)
+        .filter((id): id is string => typeof id === "string");
+      lanes.push({
+        id: lane.id,
+        ...(lane.name ? { name: lane.name } : {}),
+        ...(poolName ? { pool: poolName } : {}),
+        nodeIds,
+      });
+      for (const nodeId of nodeIds) {
+        if (lane.name) laneNameByNode.set(nodeId, lane.name);
+      }
+      // Nested sub-lanes: a Lane may hold a childLaneSet.
+      if (lane.childLaneSet) {
+        collectLanes({ ...lane, laneSets: [lane.childLaneSet] } as ModdleElement, poolName, lanes, laneNameByNode);
+      }
+    }
+  }
+}
+
+/** Collaboration structure: pools (participants), message flows, and the maps
+ * needed to bind each flow node to its lane and pool. Empty when the diagram is
+ * a single plain process. */
+function collectCollaboration(definitions: ModdleElement): {
+  pools: PoolInfo[];
+  lanes: LaneInfo[];
+  messageFlows: SequenceFlow[];
+  laneNameByNode: Map<string, string>;
+  poolByNode: Map<string, string>;
+} {
+  const roots = asArray<ModdleElement>(definitions.rootElements);
+  const collaboration = roots.find((r) => r.$type === "bpmn:Collaboration");
+  const participants = collaboration
+    ? asArray<ModdleElement>(collaboration.participants)
+    : [];
+
+  const pools: PoolInfo[] = participants
+    .filter((p) => p.id)
+    .map((p) => ({ id: p.id as string, ...(p.name ? { name: p.name } : {}) }));
+
+  const messageFlows: SequenceFlow[] = collaboration
+    ? asArray<ModdleElement>(collaboration.messageFlows).flatMap((mf) => {
+        const sourceRef = refId(mf.sourceRef);
+        const targetRef = refId(mf.targetRef);
+        return mf.id && sourceRef && targetRef
+          ? [{ id: mf.id, sourceRef, targetRef, ...(mf.name ? { name: mf.name } : {}) }]
+          : [];
+      })
+    : [];
+
+  // processId -> pool (participant) name.
+  const poolNameByProcessId = new Map<string, string>();
+  for (const p of participants) {
+    const processId = refId(p.processRef);
+    if (processId && p.name) poolNameByProcessId.set(processId, p.name);
+  }
+  const solePool = pools.length === 1 ? pools[0]?.name : undefined;
+
+  const lanes: LaneInfo[] = [];
+  const laneNameByNode = new Map<string, string>();
+  const poolByNode = new Map<string, string>();
+  for (const process of roots.filter((r) => r.$type === "bpmn:Process")) {
+    const poolName =
+      (process.id ? poolNameByProcessId.get(process.id) : undefined) ?? solePool;
+    collectLanes(process, poolName, lanes, laneNameByNode);
+    if (poolName) {
+      const ids = new Set<string>();
+      collectNodeIds(process, ids);
+      for (const id of ids) poolByNode.set(id, poolName);
+    }
+  }
+
+  return { pools, lanes, messageFlows, laneNameByNode, poolByNode };
+}
+
 /**
  * Convert a parsed `bpmn:Definitions` moddle root into a ProcessGraph. The
- * graph's `id` is the first process id found (if any).
+ * graph's `id` is the first process id found (if any). Swimlane/pool structure
+ * and message flows are resolved semantically (participants + `flowNodeRef`),
+ * mirroring the browser registry parser's shape so AI grounding sees the same
+ * POOLS & LANES picture headlessly (CLI / MCP / eval harness).
  */
 export function definitionsToGraph(definitions: ModdleElement): ProcessGraph {
   const nodes: BpmnNode[] = [];
@@ -146,6 +252,16 @@ export function definitionsToGraph(definitions: ModdleElement): ProcessGraph {
   const seen = new Set<string>();
 
   collect(definitions, nodes, flows, seen);
+
+  const { pools, lanes, messageFlows, laneNameByNode, poolByNode } =
+    collectCollaboration(definitions);
+
+  for (const node of nodes) {
+    const lane = laneNameByNode.get(node.id);
+    const pool = poolByNode.get(node.id);
+    if (lane) node.lane = lane;
+    if (pool) node.pool = pool;
+  }
 
   const firstProcess = asArray<ModdleElement>(definitions.rootElements).find(
     (root) => root.$type === "bpmn:Process",
@@ -155,6 +271,9 @@ export function definitionsToGraph(definitions: ModdleElement): ProcessGraph {
     ...(firstProcess?.id ? { id: firstProcess.id } : {}),
     nodes,
     flows,
+    ...(lanes.length > 0 ? { lanes } : {}),
+    ...(pools.length > 0 ? { pools } : {}),
+    ...(messageFlows.length > 0 ? { messageFlows } : {}),
   };
 }
 
