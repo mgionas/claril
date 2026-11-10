@@ -52,7 +52,11 @@ export function BoardWorkbench(props: BoardWorkbenchProps) {
       </div>
 
       <div className="min-h-0 flex-1">
-        <BoardCanvas initialContent={props.initialContent} onChange={handleChange} />
+        <BoardCanvas
+          diagramId={props.diagramId}
+          initialContent={props.initialContent}
+          onChange={handleChange}
+        />
       </div>
 
       <AiSettingsDialog
