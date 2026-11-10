@@ -5,6 +5,11 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import minimapModule from "diagram-js-minimap";
+import touchGesturesModule from "@/lib/touch/touch-gestures-module";
+import pencilConnectModule from "@/lib/touch/pencil-connect-module";
+import { classifyPointer, isCoarsePointer, shouldRejectPalm } from "@/lib/touch/pointer";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
+import { mountSelectionToolbar } from "@/components/canvas-selection-toolbar";
 import { CanvasPalette } from "@/components/canvas-palette";
 import { CanvasContextMenu, type MenuState } from "@/components/canvas-context-menu";
 import { ElementPicker } from "@/components/element-picker";
@@ -195,6 +200,40 @@ export default function BpmnCanvas({
   const [bindTarget, setBindTarget] = useState<{ elementId: string; x: number; y: number } | null>(
     null,
   );
+  const isCoarse = useCoarsePointer();
+  // Palette tap-to-place: the factory type armed by a coarse tap on a palette
+  // item, consumed by the next canvas click (see the `claril:arm-create`
+  // listener below). Null when nothing is armed.
+  const armedCreateRef = useRef<{ factoryType: string; participant?: boolean } | null>(null);
+
+  // Open the context menu at a screen point, resolving the element under it the
+  // same way the right-click handler already does. Shared by right-click,
+  // long-press, and the toolbar's "more" dispatch (via openMenuForElement).
+  const openMenuAt = useCallback((x: number, y: number) => {
+    const node = document.elementFromPoint(x, y)?.closest(".djs-element") as Element | null;
+    setMenu({ x, y, elementId: node?.getAttribute("data-element-id") ?? null });
+  }, []);
+
+  // Open the context menu anchored to a known element (no screen point handy —
+  // e.g. the toolbar's "more" button only gives us an id). Falls back to the
+  // viewport center if the element's graphics can't be located.
+  const openMenuForElement = useCallback((element: { id: string } & Record<string, unknown>) => {
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    try {
+      const registry = modelerRef.current?.get("elementRegistry") as
+        | { getGraphics: (el: unknown) => SVGGraphicsElement | undefined }
+        | undefined;
+      const rect = registry?.getGraphics(element)?.getBoundingClientRect();
+      if (rect) {
+        x = rect.left + rect.width / 2;
+        y = rect.top + rect.height / 2;
+      }
+    } catch {
+      /* ignore — fall back to viewport center */
+    }
+    setMenu({ x, y, elementId: element.id });
+  }, []);
 
   // Load the diagram's element→asset bindings (and a manual refresh after edits).
   // Catalog is org-only, so skip entirely for personal diagrams.
@@ -219,7 +258,7 @@ export default function BpmnCanvas({
 
     const modeler = new BpmnModeler({
       container,
-      additionalModules: [minimapModule],
+      additionalModules: [minimapModule, touchGesturesModule, pencilConnectModule],
       minimap: { open: true },
       // Custom renderer colors as CSS variables so they resolve live and flip
       // with the theme — covers both the main canvas and the minimap (whose
@@ -231,6 +270,19 @@ export default function BpmnCanvas({
       },
     } as ConstructorParameters<typeof BpmnModeler>[0]);
     modelerRef.current = modeler;
+    // On touch, require a larger finger travel before a drag becomes a MOVE,
+    // so taps and pans don't accidentally nudge elements. Verified API:
+    // diagram-js Dragging.setOptions({ threshold }) (default 5).
+    if (isCoarsePointer()) {
+      (modeler.get("dragging") as { setOptions: (o: { threshold: number }) => void })
+        .setOptions({ threshold: 12 });
+    }
+    // Tap-driven replacement for the hover context-pad (coarse-pointer only;
+    // fine-pointer users keep the unchanged hover context-pad, no overlay).
+    const unmountToolbar = mountSelectionToolbar(
+      modeler as unknown as Parameters<typeof mountSelectionToolbar>[0],
+      { isCoarse: isCoarsePointer() },
+    );
     // React StrictMode (dev) mounts effects twice: mount → cleanup → mount.
     // The first modeler is destroyed while its async importXML is still in
     // flight; this flag stops us from touching a destroyed instance.
@@ -659,6 +711,7 @@ export default function BpmnCanvas({
     return () => {
       disposed = true;
       resizeObserver.disconnect();
+      unmountToolbar();
       modeler.destroy();
       modelerRef.current = null;
       markedRef.current = [];
@@ -690,6 +743,196 @@ export default function BpmnCanvas({
       // Ignore.
     }
   }, [focusElementId, focusNonce]);
+
+  // Re-fit the viewport on device rotation (Task 9). The browser fires
+  // `orientationchange` before layout (safe-area insets, Sheet panels, etc.)
+  // has settled, so the fit is deferred a tick; the modeler is read live via
+  // the ref rather than captured, since it may be re-created across effect
+  // runs this listener doesn't depend on.
+  useEffect(() => {
+    let timer: number | null = null;
+    const refit = () => {
+      if (timer !== null) clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        const canvas = modelerRef.current?.get("canvas") as
+          | { zoom: (v: string) => void }
+          | undefined;
+        canvas?.zoom("fit-viewport");
+      }, 150);
+    };
+    window.addEventListener("orientationchange", refit);
+    return () => {
+      window.removeEventListener("orientationchange", refit);
+      if (timer !== null) clearTimeout(timer);
+    };
+  }, []);
+
+  // Stamp the active pointer type for palm-rejection and as a hook for future
+  // pen-precision CSS (no consumer yet).
+  //
+  // Palm rejection (Task 11, coarse-only): a `touch`-type pointerdown that
+  // lands within `shouldRejectPalm`'s window of the last pen activity is
+  // swallowed before diagram-js sees it, so a palm resting on the glass
+  // while drawing doesn't start a pan/select. This is a single consolidated
+  // handler (not two sibling listeners) — a rejected touch event must not
+  // also run the stamping logic, or `dataset.pointer` would flip to
+  // "finger" and the very next palm contact would pass through rejected.
+  // `pointermove` on the pen refreshes `lastPen` so rejection holds for the
+  // whole stroke, not just the initial pointerdown; the window also means
+  // rejection auto-releases once the pen goes idle. Capture phase + same
+  // function references on add/remove (the project's known leak pattern —
+  // a mismatched reference or missing capture flag silently leaves the
+  // listener attached after unmount).
+  //
+  // Coarse-only: this is all touch/pen territory (palm rejection has no
+  // meaning for a mouse), so on a fine pointer the effect attaches nothing —
+  // desktop runs none of this code.
+  useEffect(() => {
+    if (!isCoarse) return;
+    const el = containerRef.current;
+    if (!el) return;
+    let lastPen = 0;
+    const onDown = (e: PointerEvent) => {
+      const kind = classifyPointer(e.pointerType);
+      if (shouldRejectPalm(kind, lastPen, performance.now())) {
+        e.stopPropagation(); // ignore resting palm while pen is active
+        return; // and do NOT restamp — keep the pen context
+      }
+      if (kind === "pen") lastPen = performance.now();
+      el.dataset.pointer = kind;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "pen") lastPen = performance.now(); // keep pen "active" during a stroke
+    };
+    el.addEventListener("pointerdown", onDown, true);
+    el.addEventListener("pointermove", onMove, true);
+    return () => {
+      el.removeEventListener("pointerdown", onDown, true);
+      el.removeEventListener("pointermove", onMove, true);
+    };
+  }, [isCoarse]);
+
+  // Long-press (600ms, no significant finger travel) opens the same context
+  // menu as a right-click. Coarse-only — mouse pointerdown is ignored so
+  // desktop behavior (right-click only) is unchanged.
+  useEffect(() => {
+    if (!isCoarse) return;
+    const el = containerRef.current;
+    if (!el) return;
+    let timer: number | null = null;
+    let startX = 0;
+    let startY = 0;
+    const down = (e: PointerEvent) => {
+      // Clear any timer orphaned by a prior finger's pointerdown (e.g. finger-1
+      // of a two-finger pinch) before arming a new one — otherwise it fires
+      // ~600ms later and pops a context menu mid-gesture.
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (classifyPointer(e.pointerType) === "mouse") return;
+      startX = e.clientX;
+      startY = e.clientY;
+      timer = window.setTimeout(() => openMenuAt(e.clientX, e.clientY), 600);
+    };
+    const cancel = (e?: PointerEvent) => {
+      if (e && Math.hypot(e.clientX - startX, e.clientY - startY) < 10) return;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    const up = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", cancel);
+    el.addEventListener("pointerup", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", cancel);
+      el.removeEventListener("pointerup", up);
+      if (timer) clearTimeout(timer);
+    };
+  }, [isCoarse, openMenuAt]);
+
+  // The selection toolbar's "more" button dispatches this with the element id
+  // (it has no screen point handy) — resolve + open via openMenuForElement.
+  useEffect(() => {
+    const open = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      const modeler = modelerRef.current;
+      if (!id || !modeler) return;
+      try {
+        const registry = modeler.get("elementRegistry") as unknown as {
+          get: (id: string) => ({ id: string } & Record<string, unknown>) | undefined;
+        };
+        const element = registry.get(id);
+        if (element) openMenuForElement(element);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener("claril:open-context-menu", open);
+    return () => window.removeEventListener("claril:open-context-menu", open);
+  }, [openMenuForElement]);
+
+  // Palette tap-to-place: a coarse tap on a palette item arms a factory type
+  // (claril:arm-create); the next canvas click drops that shape at the tapped
+  // point, then disarms. Fine-pointer drag-start (canvas-palette.tsx's
+  // onPointerDown → create.start) is unaffected — this only ever fires when
+  // something is armed.
+  useEffect(() => {
+    const arm = (e: Event) => {
+      const detail = (e as CustomEvent<{ factoryType: string; participant?: boolean }>).detail;
+      if (detail?.factoryType) armedCreateRef.current = detail;
+    };
+    window.addEventListener("claril:arm-create", arm);
+    return () => window.removeEventListener("claril:arm-create", arm);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const place = (e: MouseEvent) => {
+      const armed = armedCreateRef.current;
+      if (!armed) return;
+      armedCreateRef.current = null;
+      const modeler = modelerRef.current;
+      if (!modeler) return;
+      try {
+        const canvas = modeler.get("canvas") as unknown as {
+          viewbox: () => { x: number; y: number; scale: number };
+          getRootElement: () => unknown;
+        };
+        const vb = canvas.viewbox();
+        const rect = el.getBoundingClientRect();
+        const point = {
+          x: vb.x + (e.clientX - rect.left) / vb.scale,
+          y: vb.y + (e.clientY - rect.top) / vb.scale,
+        };
+        const elementFactory = modeler.get("elementFactory") as unknown as {
+          createShape: (opts: { type: string }) => unknown;
+          createParticipantShape: () => unknown;
+        };
+        const modeling = modeler.get("modeling") as unknown as {
+          createShape: (shape: unknown, position: unknown, target: unknown) => void;
+        };
+        const shape = armed.participant
+          ? elementFactory.createParticipantShape()
+          : elementFactory.createShape({ type: armed.factoryType });
+        modeling.createShape(shape, point, canvas.getRootElement());
+      } catch {
+        /* ignore — leave the canvas untouched on failure */
+      }
+    };
+    el.addEventListener("click", place);
+    return () => el.removeEventListener("click", place);
+  }, []);
 
   // Render asset-binding badges as overlays, independent of finding overlays.
   useEffect(() => {
@@ -760,13 +1003,8 @@ export default function BpmnCanvas({
     <div
       className="absolute inset-0"
       onContextMenu={(e) => {
-        const node = (e.target as Element).closest?.(".djs-element") as Element | null;
         e.preventDefault();
-        setMenu({
-          x: e.clientX,
-          y: e.clientY,
-          elementId: node?.getAttribute("data-element-id") ?? null,
-        });
+        openMenuAt(e.clientX, e.clientY);
       }}
     >
       {/* Dedicated, React-untouched node for bpmn-js to render into. */}

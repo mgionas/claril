@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, MouseEvent } from "react";
+import type { ComponentType, PointerEvent } from "react";
 import {
   BoxSelect,
   Circle,
@@ -14,6 +14,8 @@ import {
   Square,
   Table,
 } from "lucide-react";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
+import { classifyPointer } from "@/lib/touch/pointer";
 
 /** Minimal structural view of the bpmn-js services we drive. */
 interface ModelerServices {
@@ -46,10 +48,11 @@ const TOOLS = [
 ] as const;
 
 /**
- * Custom slim palette — the always-visible "menu". Create tools (drag-to-place),
+ * Custom slim palette — the always-visible "menu". Create tools (drag-to-place
+ * on fine pointers; tap-to-place on coarse pointers — see onActivate below),
  * hand/lasso/space/global-connect tools, and a "More…" button that opens the
- * grouped element picker. The default bpmn-js palette and context pad are hidden;
- * this + the right-click menu are the action surfaces.
+ * grouped element picker. The default bpmn-js palette and context pad are
+ * hidden; this + the right-click menu are the action surfaces.
  */
 export function CanvasPalette({
   modeler,
@@ -58,7 +61,9 @@ export function CanvasPalette({
   modeler: ModelerServices;
   onMore: (x: number, y: number) => void;
 }) {
-  function startCreate(event: MouseEvent, item: CreateItem) {
+  const isCoarse = useCoarsePointer();
+
+  function startCreate(event: PointerEvent, item: CreateItem) {
     try {
       const factory = modeler.get("elementFactory");
       const shape = item.participant
@@ -68,6 +73,19 @@ export function CanvasPalette({
     } catch {
       /* modeler not ready / mid-teardown */
     }
+  }
+
+  // Coarse tap: arm the shape so the next canvas tap drops it there (dragging
+  // doesn't work well with touch). bpmn-canvas.tsx listens for this and
+  // performs the actual placement. No-op on fine pointers — they place via
+  // the drag-start below instead.
+  function onActivate(item: CreateItem) {
+    if (!isCoarse) return;
+    window.dispatchEvent(
+      new CustomEvent("claril:arm-create", {
+        detail: { factoryType: item.type, participant: item.participant },
+      }),
+    );
   }
 
   function activateTool(service: string) {
@@ -84,9 +102,14 @@ export function CanvasPalette({
         <button
           key={item.label}
           type="button"
-          title={`Drag onto the canvas: ${item.label}`}
-          onMouseDown={(e) => startCreate(e, item)}
-          className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
+          title={`${isCoarse ? "Tap" : "Drag onto the canvas"}: ${item.label}`}
+          // Fine pointers (mouse) start the existing drag; coarse pointers
+          // (touch/pen) arm tap-to-place on click instead — see onActivate.
+          onPointerDown={(e) => {
+            if (classifyPointer(e.pointerType) === "mouse") startCreate(e, item);
+          }}
+          onClick={() => onActivate(item)}
+          className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent coarse:size-11"
         >
           <item.Icon className="size-4" />
         </button>
@@ -100,7 +123,7 @@ export function CanvasPalette({
           type="button"
           title={label}
           onClick={() => activateTool(id)}
-          className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
+          className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent coarse:size-11"
         >
           <Icon className="size-4" />
         </button>
@@ -115,7 +138,7 @@ export function CanvasPalette({
           const rect = e.currentTarget.getBoundingClientRect();
           onMore(rect.right + 8, rect.top);
         }}
-        className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent"
+        className="flex size-9 items-center justify-center rounded-[6px] text-fg-muted transition-colors hover:bg-elevated hover:text-accent coarse:size-11"
       >
         <Plus className="size-4" />
       </button>

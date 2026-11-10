@@ -97,11 +97,24 @@ export function CommandBar({
       <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center">
         <div className="pointer-events-auto flex flex-col items-stretch gap-1.5">
           <div className="flex items-center gap-1 self-center rounded-full border border-hairline bg-panel/80 p-1 backdrop-blur">
+            {/* Hidden tooltip ("⌘K") doesn't open on touch — show an explicit,
+                always-tappable entry point on coarse pointers instead. Opens
+                the same dialog via the same state as the shortcut/button next
+                to it; not a second command palette. */}
+            <button
+              type="button"
+              onClick={() => setShortcutsOpen(true)}
+              aria-label="Open command menu"
+              className="touch-target hidden items-center gap-2 rounded-full px-3 py-1.5 text-fg-muted transition-colors hover:bg-elevated hover:text-fg coarse:flex"
+            >
+              <Command className="size-4" />
+              <span className="text-sm">Menu</span>
+            </button>
             <button
               type="button"
               onClick={() => setShortcutsOpen(true)}
               title="Keyboard shortcuts (⌘K)"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-fg-muted transition-colors hover:bg-elevated hover:text-fg"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-fg-muted transition-colors hover:bg-elevated hover:text-fg coarse:hidden"
             >
               <Command className="size-3.5" />
               <span className="text-xs">K</span>

@@ -690,7 +690,7 @@ function DiagramRow({
         <TableCell className="px-3 text-right">
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle opacity-0 outline-none transition-all hover:bg-elevated hover:text-fg focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent/50 group-hover:opacity-100 disabled:opacity-50 aria-expanded:opacity-100"
+              className="grid size-7 shrink-0 place-items-center rounded-[6px] text-fg-subtle opacity-0 outline-none transition-all hover:bg-elevated hover:text-fg focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-accent/50 group-hover:opacity-100 coarse:size-11 coarse:opacity-100 disabled:opacity-50 aria-expanded:opacity-100"
               aria-label="Diagram actions"
               disabled={pending}
             >

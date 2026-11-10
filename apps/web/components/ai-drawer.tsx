@@ -92,6 +92,9 @@ export function AiDrawer(props: AiDrawerProps) {
   );
 
   return (
+    // NOTE: bpmn-workbench's narrow bottom-Sheet overrides this root's width
+    // via a tag-scoped `[&_aside>div]:w-full` selector. If you change this
+    // root <aside>/<div> nesting, update that override in bpmn-workbench.tsx.
     <aside
       className={cn(
         "h-full shrink-0 overflow-hidden transition-[width] duration-200 ease-out",

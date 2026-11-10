@@ -311,7 +311,7 @@ export function CatalogAdmin({ initialTypes, initialAssets, usageCounts = {} }: 
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-7 text-fg-muted opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+                                  className="size-7 text-fg-muted opacity-0 transition-opacity group-hover:opacity-100 coarse:size-11 coarse:opacity-100 data-[state=open]:opacity-100"
                                   aria-label={`Actions for ${a.name}`}
                                 >
                                   <MoreHorizontal className="size-4" />
