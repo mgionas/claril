@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupRelationsByAsset, type RelationRow } from "./related";
+import { buildRelationsPrompt, groupRelationsByAsset, type RelationRow } from "./related";
 
 const rows: RelationRow[] = [
   { assetId: "A", assetName: "Payment Service", diagramId: "SRC", diagramName: "Checkout BPMN", diagramKind: "bpmn", elementId: "e1" },
@@ -21,5 +21,18 @@ describe("groupRelationsByAsset", () => {
   it("includes assets bound only in other diagrams (asset B)", () => {
     const g = groupRelationsByAsset(rows, "SRC");
     expect(g.find((x) => x.asset.id === "B")?.relatedDiagrams[0].id).toBe("SEQ");
+  });
+});
+
+describe("buildRelationsPrompt", () => {
+  it("buildRelationsPrompt lists only the given relations (no invention)", () => {
+    const p = buildRelationsPrompt("Checkout BPMN", [
+      { asset: { id: "A", name: "Payment Service" }, relatedDiagrams: [{ id: "C4", name: "Billing", kind: "c4", elementIds: ["c1"] }] },
+    ]);
+    expect(p).toContain("Checkout BPMN");
+    expect(p).toContain("Payment Service");
+    expect(p).toContain("Billing");
+    expect(p).toContain("c4");
+    expect(p.toLowerCase()).toContain("only the relationships listed"); // grounding guard phrase
   });
 });

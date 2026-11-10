@@ -13,6 +13,7 @@ export { advise, adviseWithUsage, type AdviseInput } from "./advisor";
 export { describeGrounding as describeGroundingPrompt, describeFindings } from "./advisor";
 export { graphHash, describeSynopsis } from "./synopsis";
 export { generateProcessDoc, generateProcessDocWithUsage, type DocGenInput } from "./docgen";
+export { summarizeRelationsWithUsage } from "./relations";
 export { generateBpmnXml, generateBpmnXmlWithUsage } from "./generate-bpmn";
 export {
   describeAssetContext,

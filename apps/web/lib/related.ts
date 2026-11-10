@@ -32,3 +32,17 @@ export function groupRelationsByAsset(rows: RelationRow[], sourceDiagramId: stri
   }
   return [...byAsset.values()];
 }
+
+/** Build the grounding prompt for the AI relation narrative. The model must
+ * narrate ONLY the listed relations — never invent. Pure. */
+export function buildRelationsPrompt(sourceName: string, groups: RelatedGroup[]): string {
+  const lines = groups.map(
+    (g) => `- ${g.asset.name}: also used in ${g.relatedDiagrams.map((d) => `"${d.name}" (${d.kind})`).join(", ")}`,
+  );
+  return [
+    `The current diagram is "${sourceName}". Its catalog assets also appear in other diagrams:`,
+    ...lines,
+    "",
+    "Write 2-3 sentences reminding the architect of these cross-diagram connections and why they might matter (shared services, consistency, impact). Mention ONLY the relationships listed above — do not invent any others. Be concise and concrete.",
+  ].join("\n");
+}

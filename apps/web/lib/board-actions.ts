@@ -2,10 +2,12 @@
 
 import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@claril/db";
-import { diagramContext } from "@/lib/ai";
+import { diagramContext, getAiConfig } from "@/lib/ai";
 import { requireUserId } from "@/lib/session";
 import { assertDiagramAccess } from "@/lib/tenancy";
-import { groupRelationsByAsset, type RelatedGroup, type RelationRow } from "@/lib/related";
+import { buildRelationsPrompt, groupRelationsByAsset, type RelatedGroup, type RelationRow } from "@/lib/related";
+import { summarizeRelationsWithUsage } from "@claril/ai-advisor";
+import { recordAiUsage, projectIdForDiagram } from "@/lib/ai-usage";
 
 export interface EmbeddableDiagram {
   id: string;
@@ -118,4 +120,48 @@ export async function getRelatedForDiagram(diagramId: string): Promise<RelatedGr
     );
 
   return groupRelationsByAsset(rows as RelationRow[], diagramId);
+}
+
+/**
+ * AI narrative over the deterministic relations — reminds the architect of
+ * cross-diagram connections in prose, grounded ONLY on what
+ * `getRelatedForDiagram` found (never invented). `null` when there are no
+ * relations or no AI provider is configured; the caller falls back to
+ * showing the deterministic list only.
+ */
+export async function summarizeRelations(diagramId: string): Promise<{ text: string } | null> {
+  const userId = await requireUserId();
+  const groups = await getRelatedForDiagram(diagramId);
+  if (groups.length === 0) return null;
+
+  const { ctx, orgId } = await diagramContext(userId, diagramId);
+  const config = await getAiConfig(ctx);
+  if (!config) return null; // graceful degrade — caller shows the list only
+
+  const rows = await db
+    .select({ name: schema.diagram.name })
+    .from(schema.diagram)
+    .where(eq(schema.diagram.id, diagramId))
+    .limit(1);
+  const sourceName = rows[0]?.name ?? "this diagram";
+
+  const { value, usage } = await summarizeRelationsWithUsage(
+    { prompt: buildRelationsPrompt(sourceName, groups) },
+    config,
+  );
+
+  if (orgId) {
+    const projectId = await projectIdForDiagram(diagramId);
+    await recordAiUsage({
+      organizationId: orgId,
+      projectId,
+      diagramId,
+      kind: "advisor",
+      provider: config.provider,
+      model: config.model ?? "unknown",
+      usage,
+    });
+  }
+
+  return { text: value };
 }
