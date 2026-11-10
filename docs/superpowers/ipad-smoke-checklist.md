@@ -21,7 +21,8 @@ Run on a physical iPad in Safari, BOTH landscape and portrait, finger + Apple Pe
 ## Apple Pencil
 - [ ] Pencil drag node→node draws a sequence flow (message flow across pools).
 - [ ] Resting palm does not pan while drawing with the Pencil.
-- [ ] Bendpoint/reconnect handles are grabbable with the Pencil.
+- [ ] Bendpoint/reconnect handles (default size, not enlarged) are usable with the Pencil's
+      precise tip. Enlarged pen-precision handles are a deferred follow-up, not yet built.
 
 ## Acceptance (definition of done)
 - [ ] Build a 2-pool, ~10-node diagram end-to-end by touch — palette-add, move,

@@ -768,9 +768,8 @@ export default function BpmnCanvas({
     };
   }, []);
 
-  // Stamp the container with the most recent pointer instrument (Task 10) so
-  // CSS and the Pencil module can branch on pen vs. finger vs. mouse. Inert
-  // for mouse users — it only ever sets an attribute.
+  // Stamp the active pointer type for palm-rejection and as a hook for future
+  // pen-precision CSS (no consumer yet).
   //
   // Palm rejection (Task 11, coarse-only): a `touch`-type pointerdown that
   // lands within `shouldRejectPalm`'s window of the last pen activity is
@@ -785,7 +784,12 @@ export default function BpmnCanvas({
   // function references on add/remove (the project's known leak pattern —
   // a mismatched reference or missing capture flag silently leaves the
   // listener attached after unmount).
+  //
+  // Coarse-only: this is all touch/pen territory (palm rejection has no
+  // meaning for a mouse), so on a fine pointer the effect attaches nothing —
+  // desktop runs none of this code.
   useEffect(() => {
+    if (!isCoarse) return;
     const el = containerRef.current;
     if (!el) return;
     let lastPen = 0;
@@ -807,7 +811,7 @@ export default function BpmnCanvas({
       el.removeEventListener("pointerdown", onDown, true);
       el.removeEventListener("pointermove", onMove, true);
     };
-  }, []);
+  }, [isCoarse]);
 
   // Long-press (600ms, no significant finger travel) opens the same context
   // menu as a right-click. Coarse-only — mouse pointerdown is ignored so
@@ -820,6 +824,13 @@ export default function BpmnCanvas({
     let startX = 0;
     let startY = 0;
     const down = (e: PointerEvent) => {
+      // Clear any timer orphaned by a prior finger's pointerdown (e.g. finger-1
+      // of a two-finger pinch) before arming a new one — otherwise it fires
+      // ~600ms later and pops a context menu mid-gesture.
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
       if (classifyPointer(e.pointerType) === "mouse") return;
       startX = e.clientX;
       startY = e.clientY;

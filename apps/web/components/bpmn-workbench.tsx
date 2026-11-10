@@ -579,7 +579,7 @@ export function BpmnWorkbench({
         <Sheet open={inspectorOpen} onOpenChange={setInspectorOpen}>
           <SheetContent
             side="bottom"
-            className="h-[70vh] p-0 [&_aside]:h-full [&_aside]:w-full [&_aside>div]:w-full"
+            className="h-[70vh] p-0 pb-[env(safe-area-inset-bottom)] [&_aside]:h-full [&_aside]:w-full [&_aside>div]:w-full"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Assistant</SheetTitle>
